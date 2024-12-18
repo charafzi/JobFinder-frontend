@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { useNavigation} from '@react-navigation/native';
+import { Color } from '../../constants/Color';
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);
@@ -32,14 +33,15 @@ const FormLogin = () => {
     };
 
     return (
-        <View >
+        <View>
             <Text style={styles.inputTitle}>Email</Text>
             <Controller
                 name='email'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                        placeholder='Brandonelouis@gmail.com '
+                        placeholder='Brandonelouis@gmail.com'
+                        placeholderTextColor={Color.placeholderText}
                         value={value}
                         style={[styles.textInput, value && { fontWeight: "600" }]}
                         onBlur={onBlur}
@@ -66,19 +68,19 @@ const FormLogin = () => {
                     <View style={[styles.textInputContainer]}>
                         <TextInput
                             placeholder='Enter Password'
+                            placeholderTextColor={Color.placeholderText}
                             autoComplete='new-password'
                             secureTextEntry={securePassword}
                             value={value}
                             onBlur={onBlur}
                             onChangeText={onChange}
                             style={{ flex: 1 }}
-                            onFocus={() => console.log("TextInput focused")}
                         />
                         <TouchableOpacity onPress={() => setSecurePassword(!securePassword)}>
                             {securePassword ? (
-                                <Feather name="eye-off" size={24} color="gray" />
+                                <Feather name="eye-off" size={24} color="#60778C" />
                             ) : (
-                                <Feather name="eye" size={24} color="gray" />
+                                <Feather name="eye" size={24} color="#60778C" />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -92,10 +94,10 @@ const FormLogin = () => {
             <View style={styles.bottomForm}>
                 <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity style={styles.remember}></TouchableOpacity>
-                    <Text>Remember me</Text>
+                    <Text style={[{color: '#AAA6B9'}, styles.rememberText]}>Remember me</Text>
                 </View>
                 <TouchableOpacity onPress={handleForgotPassword}>
-                    <Text>Forgot Password ?</Text>
+                    <Text style={[{color: Color.text}, styles.rememberText]}>Forgot Password ?</Text>
                 </TouchableOpacity>
             </View>
 
@@ -111,62 +113,53 @@ export default FormLogin
 
 const styles = StyleSheet.create({
     inputTitle: {
-        fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 12,
+        fontWeight:'700',
+        color: Color.text,
     },
     textInput: {
         marginVertical: 10,
-        padding: 10,
-        borderWidth: .2,
+        paddingHorizontal:20,
+        backgroundColor:'#FFFFFF',
         borderRadius: 10,
-        height: 60,
+        height: 50,
     },
     textInputContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 10,
+        paddingHorizontal: 15,
         marginVertical: 10,
-        borderWidth: .2,
+        backgroundColor:'#FFFFFF',
         borderRadius: 10,
         height: 60,
         alignItems: 'center',
-    },
-    submitButton: {
-        backgroundColor: "darkblue",
-        margin: 20,
-        paddingHorizontal: 60,
-        paddingVertical: 20,
-        borderRadius: 10,
-        alignSelf: 'center',
-    },
-    submitText: {
-        paddingHorizontal: 10,
-        color: "#ffffff",
-        fontWeight: "bold",
-        fontSize: 18
     },
     errorText: {
         color: "red"
     },
     remember: {
-        backgroundColor: 'violet',
+        backgroundColor: Color.remeberMe,
         borderRadius: 5,
         padding: 10,
         marginRight: 10,
     },
+    rememberText: {
+        fontSize: 12,
+        fontWeight:'400',
+    },
     loginButton: {
-        backgroundColor: 'darkblue',
-        padding: 20,
-        margin: 10,
+        backgroundColor: Color.selectedbutton,
+        margin: 20,
+        paddingHorizontal: 60,
+        paddingVertical: 20,
         borderRadius: 10,
-        alignItems: 'center',
     },
     loginText: {
-        fontSize: 16,
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    
+        paddingHorizontal: 60,
+        color: "#ffffff",
+        fontWeight: "700",
+        fontSize: 14
+    },   
     bottomForm: {
         flexDirection: 'row',
         justifyContent: "space-between",

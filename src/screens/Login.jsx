@@ -1,24 +1,23 @@
-import { Image, Keyboard, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import { Image, Keyboard, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 import React from 'react'
-import { useNavigation } from '@react-navigation/native';
 import FormLogin from '../components/FormLogin';
+import { Color } from '../../constants/Color';
 
 
 
-const Login = () => {
-    const navigation = useNavigation();
+const Login = ({ navigation }) => {
     const pressHandler = () => {
         navigation.navigate("register");
     }
 
     return (
-
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <SafeAreaView style={styles.container}>
-                <ScrollView>
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View>
                     <View style={styles.headerContainer}>
                         <Text style={styles.title}>Welcome Back</Text>
-                        <Text style={styles.subtitle}>Lorem ipsum dolor sit amet</Text>
+                        <Text style={styles.subtitle}>Please enter your details to sign in</Text>
                     </View>
                     <FormLogin />
                     <TouchableOpacity style={styles.googleButton}>
@@ -31,12 +30,9 @@ const Login = () => {
                             <Text style={styles.signupLinkText}>Sign up</Text>
                         </TouchableOpacity>
                     </View>
-                </ScrollView>
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
-
-
-
+                </View>
+            </TouchableWithoutFeedback>
+        </SafeAreaView>
     )
 }
 
@@ -45,22 +41,27 @@ export default Login
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingVertical:10,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: 'center',
+        backgroundColor: Color.background,
     },
     headerContainer: {
-        paddingVertical: 30,
+        marginBottom: 30,
         alignItems: "center",
     },
     title: {
+        textAlign:'center',
         fontWeight: '700',
-        fontSize: 35,
+        fontSize: 30,
         padding: 10,
+        color: Color.text,
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 12,
+        fontWeight: '400',
         textAlign: "center",
+        color: Color.subtitle,
+        marginBottom: 20,
     },
     signup: {
         flexDirection: 'row',
@@ -68,31 +69,35 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     signupLinkText: {
-        color: 'gold',
+        color: Color.link,
         textDecorationLine: 'underline',
-        fontSize: 14,
+        fontSize: 12,
+        fontWeight: '600',
     },
     signupText: {
-        color: 'blue',
-        fontSize: 14,
+        color: Color.subtitle,
+        fontSize: 12,
+        fontWeight: '400',
         marginRight: 10,
     },
     googleButton: {
         flexDirection: "row",
         justifyContent: 'space-around',
-        backgroundColor: 'lightblue',
+        backgroundColor: Color.unselectedbutton,
         padding: 20,
         margin: 10,
         borderRadius: 10,
         alignItems: 'center',
     },
     googleText: {
-        fontSize: 16,
-        color: 'black',
+        fontSize: 14,
+        fontWeight: '700',
+        color: Color.selectedbutton,
         fontWeight: 'bold',
     },
     googleIcon: {
         width: 30,
         height: 30,
+        marginRight: 10,
     },
 })
