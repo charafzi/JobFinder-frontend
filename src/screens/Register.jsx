@@ -1,58 +1,53 @@
-import { Image, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import { Keyboard, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 import React, { useState } from 'react'
 import RegisterCandidat from '../components/RegisterCandidat';
-import { useNavigation } from '@react-navigation/native';
 import RegisterEntreprise from '../components/RegisterEntreprise';
+import { Color } from '../../constants/Color';
 
-const Register = () => {
+const Register = ({ navigation }) => {
 
-    const [isCandidat, setIsCandidat] = useState(true);
-    const navigation = useNavigation();
+    const [isCandidat, setIsCandidat] = useState(true);   
 
     const pressHandler = () => {
         navigation.navigate("login");
     }
 
     return (
-
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <SafeAreaView style={styles.container}>
-                <KeyboardAvoidingView
-                    style={{ flex: 1 }}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                >
-                    <ScrollView>
-                        <View style={styles.headerContainer}>
-                            <Text style={styles.title}>Create an Account</Text>
-                            <View style={styles.userType}>
-                                <TouchableOpacity
-                                    style={[styles.userTypeButton, { backgroundColor: isCandidat ? 'blue' : 'green' }]}
-                                    onPress={() => { setIsCandidat(true) }}
-                                >
-                                    <Text style={styles.userTypeText}>CANDIDAT</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.userTypeButton, { backgroundColor: !isCandidat ? 'blue' : 'green' }]}
-                                    onPress={() => { setIsCandidat(false) }}
-                                >
-                                    <Text style={styles.userTypeText}>ENTREPRISE</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        {isCandidat ?
-                            <RegisterCandidat /> :
-                            <RegisterEntreprise />
-                        }
-                        <View style={styles.loginContainer}>
-                            <Text style={styles.loginText}>You already have an account?</Text>
-                            <TouchableOpacity onPress={pressHandler}>
-                                <Text style={styles.loginLinkText}>Sign in</Text>
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View>
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.title}>Create an Account</Text>
+                        <View style={styles.userType}>
+                            <TouchableOpacity
+                                style={[styles.userTypeButton, { backgroundColor: isCandidat ? Color.selectedbutton : Color.unselectedbutton }]}
+                                onPress={() => { setIsCandidat(true) }}
+                            >
+                                <Text style={styles.userTypeText}>CANDIDAT</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.userTypeButton, { backgroundColor: !isCandidat ? Color.selectedbutton : Color.unselectedbutton }]}
+                                onPress={() => { setIsCandidat(false) }}
+                            >
+                                <Text style={styles.userTypeText}>ENTREPRISE</Text>
                             </TouchableOpacity>
                         </View>
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </SafeAreaView>
-        </TouchableWithoutFeedback>
+                    </View>
+                    {isCandidat ?
+                        <RegisterCandidat /> :
+                        <RegisterEntreprise />
+                    }
+                    <View style={styles.loginContainer}>
+                        <Text style={styles.loginText}>You already have an account?</Text>
+                        <TouchableOpacity onPress={pressHandler}>
+                            <Text style={styles.loginLinkText}>Sign in</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </TouchableWithoutFeedback>
+        </SafeAreaView>
+
 
     )
 }
@@ -62,26 +57,21 @@ export default Register
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingVertical: 10,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: 'center',
+        backgroundColor: Color.background,
     },
     headerContainer: {
-        paddingVertical: 30,
+        marginBottom: 30,
         alignItems: "center",
     },
     title: {
         textAlign: 'center',
         fontWeight: '700',
-        fontSize: 35,
-        padding: 10,
-        paddingBottom: 20,
+        fontSize: 30,
+        marginBottom: 20,
+        color: Color.text,
     },
-    subtitle: {
-        fontSize: 16,
-        textAlign: "center",
-    },
-
     userType: {
         flexDirection: 'row',
         justifyContent: "space-between",
@@ -96,7 +86,8 @@ const styles = StyleSheet.create({
     userTypeText: {
         color: 'white',
         textAlign: "center",
-        fontWeight: "bold",
+        fontSize: 14,
+        fontWeight:'700',
     },
     loginContainer: {
         flexDirection: 'row',
@@ -104,13 +95,15 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     loginLinkText: {
-        color: 'gold',
+        color: Color.link,
         textDecorationLine: 'underline',
-        fontSize: 14,
+        fontSize: 12,
+        fontWeight:'600',
     },
     loginText: {
-        color: 'blue',
-        fontSize: 14,
+        color: Color.subtitle,
+        fontSize: 12,
+        fontWeight:'400',
         marginRight: 10,
     },
 
