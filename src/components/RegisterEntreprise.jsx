@@ -2,7 +2,7 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
-import { Color } from '../../constants/Color';
+import { Color } from '../constants/Color';
 
 const RegisterEntreprise = () => {
     const [securePassword, setSecurePassword] = useState(true);

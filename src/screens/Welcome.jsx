@@ -1,6 +1,6 @@
 import { Image, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
-import { Color } from '../../constants/Color'
+import { Color } from '../constants/Color'
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Welcome = ({ navigation }) => {

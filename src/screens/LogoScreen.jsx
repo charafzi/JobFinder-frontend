@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from 'react-native'
 import React, { useEffect } from 'react'
-import { Color } from '../../constants/Color'
+import { Color } from '../constants/Color'
 
 const LogoScreen = ({ navigation }) => {
     useEffect(() => {
