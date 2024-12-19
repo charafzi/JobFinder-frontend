@@ -1,7 +1,7 @@
 import { Image, Keyboard, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Color } from '../../constants/Color'
+import { Color } from '../constants/Color'
 import { Controller, useForm } from 'react-hook-form'
 
 const ForgotPassword = ({ navigation }) => {

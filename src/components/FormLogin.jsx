@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { useNavigation} from '@react-navigation/native';
-import { Color } from '../../constants/Color';
+import { Color } from '../constants/Color';
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);

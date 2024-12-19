@@ -1,7 +1,7 @@
 import { Image, Keyboard, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 import React from 'react'
 import FormLogin from '../components/FormLogin';
-import { Color } from '../../constants/Color';
+import { Color } from '../constants/Color';
 
 
 
