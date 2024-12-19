@@ -1,9 +1,10 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { useNavigation} from '@react-navigation/native';
 import { Color } from '../constants/Color';
+import axios from 'axios';
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);
@@ -22,14 +23,40 @@ const FormLogin = () => {
     }
 
     const submit = async (data) => {
-        try {
-            const response = await axios.post('/login', data);
-            console.log(response.data);
+        const ipAdress = "192.168.1.2";
+        const apiLogin = "http://"+ipAdress+":8091/api/auth/login";
+        axios.post(apiLogin, data)
+        .then(response => {
+            console.log("Status Code:", response.status);
             alert('Login avec succès');
-        } catch (error) {
-            console.error('Error sending appointment request:', error);
-            alert("Erreur lors de login");
-        }
+        })
+        .catch(error => {
+            if (error.response) {
+                let status = error.response.status;
+            
+                if (status === 404 || status === 401) {
+                    Alert.alert("Login Error", "Email or password is incorrect.");
+                } else {
+                    Alert.alert("An error occurred", "Please try again later.");
+                    console.log("Unexpected Error Status Code:", status);
+                }
+            } else {
+                Alert.alert("Network Error", "Unable to connect to the server. Please check your internet connection and try again.");
+                console.log("Network or Unexpected Error:", error.message);
+            }
+        });
+
+        
+
+
+        // try {
+        //     const response = await axios.post(apiLogin, data);
+        //     console.log(response.data);
+           
+        // } catch (error) {
+        //     console.error('Error sending appointment request:', error, " response : ",response);
+        //     alert("Erreur lors de login");
+        // }
     };
 
     return (

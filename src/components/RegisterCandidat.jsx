@@ -1,8 +1,10 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View , Alert} from 'react-native'
 import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
+import axios from 'axios';
+
 
 const RegisterCandidat = () => {
     const [securePassword, setSecurePassword] = useState(true);
@@ -16,20 +18,24 @@ const RegisterCandidat = () => {
     } = useForm();
 
     const submit = async (data) => {
-        try {
-            const response = await axios.post('/register-candidat', data);
-            console.log(response.data);
-            alert('Register candidat avec succès');
-        } catch (error) {
-            console.error('Error sending appointment request:', error);
-            alert("Erreur lors de register candidat");
-        }
+        const ipAdress = "192.168.1.2";
+        const apiRegisterCandidat = "http://"+ipAdress+":8091/api/auth/registerCandidat";
+        console.log(data);
+        axios.post(apiRegisterCandidat, data)
+        .then(response => {
+            console.log("Status Code:", response.status);
+            Alert.alert("Register Success", "Your account was registered successfully. Login to access your account.");
+        })
+        .catch(error => {
+            Alert.alert("Register Error", "Error during registering your account. Please try again.");
+            console.log("Status Code:", response.status);
+        });
     };
     return (
         <View>
             <Text style={styles.inputTitle}>First Name</Text>
             <Controller
-                name='FirstName'
+                name='firstName'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -43,12 +49,12 @@ const RegisterCandidat = () => {
                 )}
                 rules={{ required: true, minLength: 2 }}
             />
-            {errors?.FirstName?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre prenom complet</Text>}
-            {errors?.FirstName?.type === "minLength" && <Text style={styles.errorText}>Votre prenom pas correct</Text>}
+            {errors?.firstName?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre prenom complet</Text>}
+            {errors?.firstName?.type === "minLength" && <Text style={styles.errorText}>Votre prenom pas correct</Text>}
 
             <Text style={styles.inputTitle}>Last Name</Text>
             <Controller
-                name='LastName'
+                name='lastName'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -62,12 +68,12 @@ const RegisterCandidat = () => {
                 )}
                 rules={{ required: true, minLength: 3 }}
             />
-            {errors?.LastName?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre nom complet</Text>}
-            {errors?.LastName?.type === "minLength" && <Text style={styles.errorText}>Votre nom pas correct</Text>}
+            {errors?.lastName?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre nom complet</Text>}
+            {errors?.lastName?.type === "minLength" && <Text style={styles.errorText}>Votre nom pas correct</Text>}
 
             <Text style={styles.inputTitle}>Phone Number</Text>
             <Controller
-                name='PhoneNumber'
+                name='phoneNumber'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -82,8 +88,8 @@ const RegisterCandidat = () => {
                 )}
                 rules={{ required: true, pattern: { value: /^(6|7)\d{8}$/, message: "Entrer un numéro de téléphone valide" } }}
             />
-            {errors?.PhoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
-            {errors?.PhoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}
+            {errors?.phoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
+            {errors?.phoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}
 
             <Text style={styles.inputTitle}>Email</Text>
             <Controller
