@@ -3,6 +3,7 @@ import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { Controller, useForm } from 'react-hook-form'
+import { forgotpassword } from '../../assets'
 
 const ForgotPassword = ({ navigation }) => {
 
@@ -21,7 +22,7 @@ const ForgotPassword = ({ navigation }) => {
     const submit = async (data) => {
         try {
             const response = await axios.post('/reset-password', data);
-            navigation.navigate('checkEmail', {data})
+            navigation.navigate('checkEmail', {data});
             console.log(response.data);
             alert('reset code sent');
         } catch (error) {
@@ -39,7 +40,7 @@ const ForgotPassword = ({ navigation }) => {
                         <Text style={styles.title}>Forgot Password?</Text>
                         <Text style={[styles.subtitle, {lineHeight:20}]}>To reset your password, you need your email or mobile number that can be authenticated</Text>
                     </View>
-                    <Image source={require('../../assets/forgotpassword.png')} style={styles.image}/>
+                    <Image source={forgotpassword} style={styles.image}/>
                     <Text style={styles.inputTitle}>Email</Text>
                     <Controller
                         name='email'
