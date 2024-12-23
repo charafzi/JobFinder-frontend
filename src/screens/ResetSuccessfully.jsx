@@ -2,6 +2,7 @@ import { Image, Keyboard, Linking, StatusBar, StyleSheet, Text, TextInput, Touch
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
+import { resetsuccessfully } from '../../assets'
 
 const ResetSuccessfully = ({ navigation }) => {
 
@@ -18,7 +19,7 @@ const ResetSuccessfully = ({ navigation }) => {
                         <Text style={styles.title}>Successfully</Text>
                         <Text style={[styles.subtitle, {lineHeight:20}]}>Your password has been updated, please change your password regularly to avoid this happening</Text>
                     </View>
-                    <Image source={require('../../assets/resetsuccessfully.png')} style={styles.image} />
+                    <Image source={resetsuccessfully} style={styles.image} />
                     <TouchableOpacity style={styles.backLoginButton} onPress={handleBackToLogin}>
                         <Text style={styles.backLoginText}>BACK TO LOGIN</Text>
                     </TouchableOpacity>

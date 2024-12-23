@@ -3,17 +3,16 @@ import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
-import axios from 'axios';
+import axiosInstance from '../config/axiosConfig';
 
 const RegisterEntreprise = () => {
     const [securePassword, setSecurePassword] = useState(true);
     const { control, handleSubmit, watch, formState: { errors } } = useForm();
 
     const submit = async (data) => {
-        const ipAdress = "192.168.1.2";
-        const apiRegisterEntreprise= "http://"+ipAdress+":8091/api/auth/registerEntreprise";
+        const apiRegisterEntreprise= "/registerEntreprise";
         console.log(data);
-        axios.post(apiRegisterEntreprise, data)
+        axiosInstance.post(apiRegisterEntreprise, data)
         .then(response => {
             console.log("Status Code:", response.status);
             Alert.alert("Register Success", "Your account was registered successfully. Login to access your account.");

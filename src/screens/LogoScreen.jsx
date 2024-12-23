@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native'
 import React, { useEffect } from 'react'
 import { Color } from '../constants/Color'
+import { logo } from '../../assets'
 
 const LogoScreen = ({ navigation }) => {
     useEffect(() => {
@@ -10,7 +11,7 @@ const LogoScreen = ({ navigation }) => {
     },[navigation])
     return (
         <View style={styles.container}>
-            <Image source={require('../../assets/logo.png')} style={styles.logo}/>
+            <Image source={logo} style={styles.logo}/>
             <Text style={styles.logoText}>JobFinder</Text>
         </View>
     )

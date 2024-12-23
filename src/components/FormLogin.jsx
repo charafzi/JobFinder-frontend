@@ -2,9 +2,9 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'reac
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
-import { useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Color } from '../constants/Color';
-import axios from 'axios';
+import axiosInstance from '../config/axiosConfig';
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);
@@ -23,40 +23,27 @@ const FormLogin = () => {
     }
 
     const submit = async (data) => {
-        const ipAdress = "192.168.1.2";
-        const apiLogin = "http://"+ipAdress+":8091/api/auth/login";
-        axios.post(apiLogin, data)
-        .then(response => {
-            console.log("Status Code:", response.status);
-            alert('Login avec succès');
-        })
-        .catch(error => {
-            if (error.response) {
-                let status = error.response.status;
-            
-                if (status === 404 || status === 401) {
-                    Alert.alert("Login Error", "Email or password is incorrect.");
+        const apiLogin = "/login";
+        axiosInstance.post(apiLogin, data)
+            .then(response => {
+                console.log("Status Code:", response.status);
+                alert('Login avec succès');
+            })
+            .catch(error => {
+                if (error.response) {
+                    let status = error.response.status;
+
+                    if (status === 404 || status === 401) {
+                        Alert.alert("Login Error", "Email or password is incorrect.");
+                    } else {
+                        Alert.alert("An error occurred", "Please try again later.");
+                        console.log("Unexpected Error Status Code:", status);
+                    }
                 } else {
-                    Alert.alert("An error occurred", "Please try again later.");
-                    console.log("Unexpected Error Status Code:", status);
+                    Alert.alert("Network Error", "Unable to connect to the server. Please check your internet connection and try again.");
+                    console.log("Network or Unexpected Error:", error.message);
                 }
-            } else {
-                Alert.alert("Network Error", "Unable to connect to the server. Please check your internet connection and try again.");
-                console.log("Network or Unexpected Error:", error.message);
-            }
-        });
-
-        
-
-
-        // try {
-        //     const response = await axios.post(apiLogin, data);
-        //     console.log(response.data);
-           
-        // } catch (error) {
-        //     console.error('Error sending appointment request:', error, " response : ",response);
-        //     alert("Erreur lors de login");
-        // }
+            });
     };
 
     return (
@@ -121,17 +108,17 @@ const FormLogin = () => {
             <View style={styles.bottomForm}>
                 <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity style={styles.remember}></TouchableOpacity>
-                    <Text style={[{color: '#AAA6B9'}, styles.rememberText]}>Remember me</Text>
+                    <Text style={[{ color: '#AAA6B9' }, styles.rememberText]}>Remember me</Text>
                 </View>
                 <TouchableOpacity onPress={handleForgotPassword}>
-                    <Text style={[{color: Color.text}, styles.rememberText]}>Forgot Password ?</Text>
+                    <Text style={[{ color: Color.text }, styles.rememberText]}>Forgot Password ?</Text>
                 </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.loginButton} onPress={handleSubmit(submit)}>
                 <Text style={styles.loginText}>LOGIN</Text>
             </TouchableOpacity>
-            
+
         </View>
     )
 }
@@ -141,13 +128,13 @@ export default FormLogin
 const styles = StyleSheet.create({
     inputTitle: {
         fontSize: 12,
-        fontWeight:'700',
+        fontWeight: '700',
         color: Color.text,
     },
     textInput: {
         marginVertical: 10,
-        paddingHorizontal:20,
-        backgroundColor:'#FFFFFF',
+        paddingHorizontal: 20,
+        backgroundColor: '#FFFFFF',
         borderRadius: 10,
         height: 50,
     },
@@ -156,13 +143,15 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 15,
         marginVertical: 10,
-        backgroundColor:'#FFFFFF',
+        backgroundColor: '#FFFFFF',
         borderRadius: 10,
         height: 60,
         alignItems: 'center',
     },
     errorText: {
-        color: "red"
+        color: "red",
+        fontWeight: '500',
+        paddingBottom:10,
     },
     remember: {
         backgroundColor: Color.remeberMe,
@@ -172,7 +161,7 @@ const styles = StyleSheet.create({
     },
     rememberText: {
         fontSize: 12,
-        fontWeight:'400',
+        fontWeight: '400',
     },
     loginButton: {
         backgroundColor: Color.selectedbutton,
@@ -186,7 +175,7 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         fontWeight: "700",
         fontSize: 14
-    },   
+    },
     bottomForm: {
         flexDirection: 'row',
         justifyContent: "space-between",
