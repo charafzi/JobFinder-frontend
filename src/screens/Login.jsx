@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     },
     googleText: {
         fontSize: 14,
-        fontWeight: '700',
         color: Color.selectedbutton,
         fontWeight: 'bold',
     },

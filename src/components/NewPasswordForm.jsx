@@ -4,9 +4,12 @@ import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
 import axiosInstance from '../config/axiosConfig';
-import { useNavigation } from 'expo-router';
+import {useNavigation} from "@react-navigation/native";
+import {showToast} from "../utils/showToast";
+import LoadingIndicator from "./LoadingIndicator";
 
-const NewPasswordForm = () => {
+const NewPasswordForm = ({email}) => {
+    const [isLoading, setIsLoading] = useState(false);
     const [securePassword, setSecurePassword] = useState(true);
     const navigation = useNavigation();
     const {
@@ -19,16 +22,27 @@ const NewPasswordForm = () => {
     } = useForm();
 
     const submit = async (data) => {
-        const apiUpdatePassword = "/UpdatePassword";
+        setIsLoading(true);
+        let errorMessage='';
+        const apiUpdatePassword = "/api/auth/resetPassword";
         console.log(data);
-        axiosInstance.post(apiUpdatePassword, data)
+        axiosInstance.post(apiUpdatePassword, {email : email, newPassword: data.password})
         .then(response => {
+            setIsLoading(false);
             navigation.navigate('resetSuccessfully');
             console.log("Status Code:", response.status);
-            Alert.alert("Update Password Success", "Your password was updated successfully. Login to access your account.");
+            showToast('success',"Password Updated Successful");
         })
         .catch(error => {
-            Alert.alert("Update Password Error", "Error during updating your password. Please try again.");
+            setIsLoading(false);
+            if(error.response){
+                if(error.response.status === 400){
+                    errorMessage = "The new password cannot be the same as the old password.";
+                }else{
+                    errorMessage="Error during updating your password. Please try again";
+                }
+            }
+            showToast('error', 'Error', errorMessage);
             console.log("Status Code:", response.status);
         });
     };
@@ -103,10 +117,11 @@ const NewPasswordForm = () => {
                 <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
             )}
 
-            <TouchableOpacity style={styles.submitButton}
-                onPress={handleSubmit(submit)}
-            >
-                <Text style={styles.submitText}>RESET PASSWORD</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit(submit)} disabled={isLoading}>
+                <View style={styles.buttonContent}>
+                    {!isLoading && <Text style={styles.submitText}>RESET PASSWORD</Text>}
+                    <LoadingIndicator isLoading={isLoading} />
+                </View>
             </TouchableOpacity>
         </View>
   )
@@ -140,9 +155,12 @@ const styles = StyleSheet.create({
     },
     submitButton: {
         backgroundColor: Color.selectedbutton,
-        marginHorizontal: 20,
+        margin: 20,
+        paddingHorizontal: 60,
         paddingVertical: 20,
         borderRadius: 10,
+        height: 60, // Fixed height
+        justifyContent: 'center', // Center content vertically
     },
     submitText: {
         color: "#ffffff",
@@ -152,7 +170,8 @@ const styles = StyleSheet.create({
     },
     errorText: {
         color: "red",
-        fontWeight:'500',
+        fontWeight:'700',
+        fontSize : 12,
         paddingBottom:10,
     },
 })

@@ -17,7 +17,7 @@ const RegisterCandidat = () => {
     } = useForm();
 
     const submit = async (data) => {
-        const apiRegisterCandidat = "/registerCandidat";
+        const apiRegisterCandidat = "/api/auth/registerCandidat";
         console.log(data);
         axiosInstance.post(apiRegisterCandidat, data)
         .then(response => {
@@ -233,7 +233,8 @@ const styles = StyleSheet.create({
     },
     errorText: {
         color: "red",
-        fontWeight:'500',
+        fontWeight:'700',
         paddingBottom:10,
+        fontSize : 12,
     },
 })

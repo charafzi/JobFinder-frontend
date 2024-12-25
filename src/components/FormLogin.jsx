@@ -1,14 +1,17 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import {StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator} from 'react-native';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { Color } from '../constants/Color';
-import axiosInstance from '../config/axiosConfig';
+import axiosInstance, {API_BASE_URL} from '../config/axiosConfig';
+import {showToast} from "../utils/showToast";
+import LoadingIndicator from "./LoadingIndicator";
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);
     const navigation = useNavigation();
+    const [isLoading, setIsLoading] = useState(false);
 
     const {
         control,
@@ -23,26 +26,31 @@ const FormLogin = () => {
     }
 
     const submit = async (data) => {
-        const apiLogin = "/login";
-        axiosInstance.post(apiLogin, data)
+        setIsLoading(true);
+        let errorMessage = '';
+        const apiLogin = "/api/auth/login";
+        await axiosInstance.post(apiLogin, data)
             .then(response => {
+                setIsLoading(false);
                 console.log("Status Code:", response.status);
-                alert('Login avec succès');
+                showToast('success',"Login Successful", "Welcome back !");
             })
             .catch(error => {
+                setIsLoading(false);
+                console.log('Error at login : ',error);
                 if (error.response) {
                     let status = error.response.status;
-
-                    if (status === 404 || status === 401) {
-                        Alert.alert("Login Error", "Email or password is incorrect.");
-                    } else {
-                        Alert.alert("An error occurred", "Please try again later.");
-                        console.log("Unexpected Error Status Code:", status);
+                    if (status === 404) {
+                        errorMessage = 'No account registered with this email. Try to sign up.';
+                    } else if(status === 401) {
+                        errorMessage = 'Password is incorrect.';
+                    }else{
+                        errorMessage = 'An error occurred.';
                     }
                 } else {
-                    Alert.alert("Network Error", "Unable to connect to the server. Please check your internet connection and try again.");
-                    console.log("Network or Unexpected Error:", error.message);
+                    errorMessage = 'Unable to connect to the server. Please check your internet connection.';
                 }
+                showToast('error', 'Login failed', errorMessage);
             });
     };
 
@@ -115,8 +123,11 @@ const FormLogin = () => {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleSubmit(submit)}>
-                <Text style={styles.loginText}>LOGIN</Text>
+            <TouchableOpacity style={styles.loginButton} onPress={handleSubmit(submit)} disabled={isLoading}>
+                <View style={styles.buttonContent}>
+                    {!isLoading && <Text style={styles.loginText}>LOGIN</Text>}
+                    <LoadingIndicator isLoading={isLoading} />
+                </View>
             </TouchableOpacity>
 
         </View>
@@ -150,7 +161,8 @@ const styles = StyleSheet.create({
     },
     errorText: {
         color: "red",
-        fontWeight: '500',
+        fontWeight: "700",
+        fontSize : 12,
         paddingBottom:10,
     },
     remember: {
@@ -169,9 +181,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 60,
         paddingVertical: 20,
         borderRadius: 10,
+        height: 60, // Fixed height
+        justifyContent: 'center', // Center content vertically
     },
     loginText: {
-        paddingHorizontal: 60,
         color: "#ffffff",
         fontWeight: "700",
         fontSize: 14
@@ -180,5 +193,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: "space-between",
         marginVertical: 15
+    },
+    spinner: {
+        paddingHorizontal: 60,
+        color: "#ffffff",
+        fontSize: 14
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 60,
     },
 })

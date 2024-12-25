@@ -1,13 +1,16 @@
 import { Alert, Image, Keyboard, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
-import React from 'react'
+import React, {useState} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { OtpInput } from 'react-native-otp-entry'
 import { Controller, useForm } from 'react-hook-form'
 import axiosInstance from '../config/axiosConfig'
 import { checkyouremail } from '../../assets'
+import {showToast} from "../utils/showToast";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const CheckEmail = ({ navigation, route }) => {
+    const [isLoading, setIsLoading] = useState(false);
     const {
         control,
         handleSubmit,
@@ -15,23 +18,27 @@ const CheckEmail = ({ navigation, route }) => {
             errors
         }
     } = useForm();
-
-    const { data } = route.params;
     const handleBackToLogin = () => {
         navigation.navigate('login');
     }
-
+    const email = route.params.email
     const onSubmit = async (data) => {
-        const apiVerifyOTP = "/verify-otp";
-        try {
-            const response = await axiosInstance.post(apiVerifyOTP, { otp: data.otp });
-            navigation.navigate('newPassword');
-            console.log('OTP verified:', response.data);
-            Alert.alert('Success', 'OTP verified successfully!');
-        } catch (error) {
-            console.error('Error verifying OTP:', error);
-            Alert.alert('Error', 'Failed to verify OTP. Please try again.');
-        }
+        setIsLoading(true);
+        const apiVerifyOTP = "/api/auth/validate-otp?email="+route.params.email+"&otp="+data.otp;
+        console.log(apiVerifyOTP)
+        console.log(route)
+        await axiosInstance.get(apiVerifyOTP)
+            .then(response=>{
+                setIsLoading(false);
+                showToast('success', 'OTP verified successfully');
+                console.log(response.status);
+                navigation.navigate('newPassword', {email : route.params.email});
+            })
+            .catch(error=>{
+                setIsLoading(false);
+                showToast('error', 'Error','OTP is incorrect or expired.');
+                console.log('Error verifying OTP:', error);
+            });
     };
 
     const resendHandler = async () => {
@@ -54,7 +61,7 @@ const CheckEmail = ({ navigation, route }) => {
                     <View style={styles.headerContainer}>
                         <Text style={styles.title}>Check Your Email</Text>
                         <Text style={styles.subtitle}>We have sent the OTP code to the email address</Text>
-                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{route.params?.email || 'brandonelouis@gmial.com'}</Text>
+                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{route.params?.email}</Text>
                     </View>
                     <Image source={checkyouremail} style={styles.image} />
                     <Controller
@@ -93,8 +100,11 @@ const CheckEmail = ({ navigation, route }) => {
                         )}
                     />
                     {errors.otp && <Text style={styles.errorText}>{errors.otp.message}</Text>}
-                    <TouchableOpacity style={styles.confirmCodeButton} onPress={handleSubmit(onSubmit)} accessibilityLabel="Confirm OTP button">
-                        <Text style={styles.confirmCodeText}>CONFIRM CODE</Text>
+                    <TouchableOpacity style={styles.confirmCodeButton} onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+                        <View style={styles.buttonContent}>
+                            {!isLoading && <Text style={styles.confirmCodeText}>CONFIRM CODE</Text>}
+                            <LoadingIndicator isLoading={isLoading} />
+                        </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.backLoginButton} onPress={handleBackToLogin}>
                         <Text style={styles.backLoginText}>BACK TO LOGIN</Text>
@@ -139,8 +149,11 @@ const styles = StyleSheet.create({
     confirmCodeButton: {
         backgroundColor: Color.selectedbutton,
         margin: 20,
+        paddingHorizontal: 60,
         paddingVertical: 20,
         borderRadius: 10,
+        height: 60, // Fixed height
+        justifyContent: 'center', // Center content vertically
     },
     confirmCodeText: {
         textAlign: 'center',
