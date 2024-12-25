@@ -29,7 +29,7 @@ const FormLogin = () => {
         setIsLoading(true);
         let errorMessage = '';
         const apiLogin = "/api/auth/login";
-        axiosInstance.post(apiLogin, data)
+        await axiosInstance.post(apiLogin, data)
             .then(response => {
                 setIsLoading(false);
                 console.log("Status Code:", response.status);

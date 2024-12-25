@@ -4,8 +4,6 @@ import { Color } from '../constants/Color';
 import { newpassword } from '../../assets';
 import NewPasswordForm from "../components/NewPasswordForm";
 
-//TODO chuf mail makitsifetch (undefined)
-
 const NewPassword = ({route}) => {
     return (
         <SafeAreaView style={styles.container}>
@@ -17,7 +15,7 @@ const NewPassword = ({route}) => {
                         <Text style={styles.subtitle}>Enter your new password. The new password must be different from the old one.</Text>
                     </View>
                     <Image source={newpassword} style={styles.image} />
-                    <NewPasswordForm route={route}/>
+                    <NewPasswordForm email={route.params.email} />
                 </View>
             </TouchableWithoutFeedback>
         </SafeAreaView>
