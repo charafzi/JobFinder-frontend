@@ -15,17 +15,16 @@ const CheckEmail = ({ navigation, route }) => {
             errors
         }
     } = useForm();
-
-    const { data } = route.params;
     const handleBackToLogin = () => {
         navigation.navigate('login');
     }
-
+    const email = route.params.email
     const onSubmit = async (data) => {
-        const apiVerifyOTP = "/verify-otp";
+        const apiVerifyOTP = "/api/auth/validate-otp?email="+route.params.email+"&otp="+data.otp;
+        console.log("api : "+apiVerifyOTP);
         try {
-            const response = await axiosInstance.post(apiVerifyOTP, { otp: data.otp });
-            navigation.navigate('newPassword');
+            const response = await axiosInstance.get(apiVerifyOTP);
+            navigation.navigate('newPassword', {email});
             console.log('OTP verified:', response.data);
             Alert.alert('Success', 'OTP verified successfully!');
         } catch (error) {
@@ -54,7 +53,7 @@ const CheckEmail = ({ navigation, route }) => {
                     <View style={styles.headerContainer}>
                         <Text style={styles.title}>Check Your Email</Text>
                         <Text style={styles.subtitle}>We have sent the OTP code to the email address</Text>
-                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{route.params?.email || 'brandonelouis@gmial.com'}</Text>
+                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{route.params?.email}</Text>
                     </View>
                     <Image source={checkyouremail} style={styles.image} />
                     <Controller

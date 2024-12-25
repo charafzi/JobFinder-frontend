@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { Controller, useForm } from 'react-hook-form'
 import { forgotpassword } from '../../assets'
+import axiosInstance from "../config/axiosConfig";
 
 const ForgotPassword = ({ navigation }) => {
 
@@ -21,13 +22,14 @@ const ForgotPassword = ({ navigation }) => {
 
     const submit = async (data) => {
         try {
-            const response = await axios.post('/reset-password', data);
+            const sendOTPAPI = '/api/auth/send-otp?email='+data.email;
+            console.log(sendOTPAPI);
+            const response = await axiosInstance.get(sendOTPAPI);
+            console.log(response);
             navigation.navigate('checkEmail', {data});
-            console.log(response.data);
-            alert('reset code sent');
         } catch (error) {
             console.error('Error sending appointment request:', error);
-            alert("Erreur lors de reset password");
+            alert("Error during sending OTP code. Please try again.");
         }
     };
 

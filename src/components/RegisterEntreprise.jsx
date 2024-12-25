@@ -233,6 +233,9 @@ const styles = StyleSheet.create({
         fontSize: 14
     },
     errorText: {
-        color: "red"
+        color: "red",
+        fontWeight:'700',
+        fontSize : 12,
+        paddingBottom:10,
     },
 })

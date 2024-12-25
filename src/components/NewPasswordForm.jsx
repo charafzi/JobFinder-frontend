@@ -4,9 +4,9 @@ import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
 import axiosInstance from '../config/axiosConfig';
-import { useNavigation } from 'expo-router';
+import {useNavigation} from "@react-navigation/native";
 
-const NewPasswordForm = () => {
+const NewPasswordForm = ({route}) => {
     const [securePassword, setSecurePassword] = useState(true);
     const navigation = useNavigation();
     const {
@@ -19,9 +19,10 @@ const NewPasswordForm = () => {
     } = useForm();
 
     const submit = async (data) => {
-        const apiUpdatePassword = "/UpdatePassword";
+        const apiUpdatePassword = "/api/auth/resetPassword";
         console.log(data);
-        axiosInstance.post(apiUpdatePassword, data)
+        console.log({email : route.params, newPassword: data.password})
+        axiosInstance.post(apiUpdatePassword, {email : route.params.email, newPassword: data.password})
         .then(response => {
             navigation.navigate('resetSuccessfully');
             console.log("Status Code:", response.status);
@@ -152,7 +153,8 @@ const styles = StyleSheet.create({
     },
     errorText: {
         color: "red",
-        fontWeight:'500',
+        fontWeight:'700',
+        fontSize : 12,
         paddingBottom:10,
     },
 })

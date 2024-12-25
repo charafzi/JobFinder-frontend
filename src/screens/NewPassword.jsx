@@ -1,11 +1,12 @@
 import { Image, Keyboard, SafeAreaView, StatusBar, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
 import React from 'react'
 import { Color } from '../constants/Color';
-import NewPasswordForm from '../components/NewPasswordForm';
 import { newpassword } from '../../assets';
+import NewPasswordForm from "../components/NewPasswordForm";
 
+//TODO chuf mail makitsifetch (undefined)
 
-const NewPassword = () => {
+const NewPassword = ({route}) => {
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
@@ -16,7 +17,7 @@ const NewPassword = () => {
                         <Text style={styles.subtitle}>Enter your new password. The new password must be different from the old one.</Text>
                     </View>
                     <Image source={newpassword} style={styles.image} />
-                    <NewPasswordForm /> 
+                    <NewPasswordForm route={route}/>
                 </View>
             </TouchableWithoutFeedback>
         </SafeAreaView>
