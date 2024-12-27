@@ -4,22 +4,33 @@ import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
 import axiosInstance from '../config/axiosConfig';
+import {showToast} from "../utils/showToast";
 
 const RegisterEntreprise = () => {
     const [securePassword, setSecurePassword] = useState(true);
     const { control, handleSubmit, watch, formState: { errors } } = useForm();
 
     const submit = async (data) => {
-        const apiRegisterEntreprise= "/registerEntreprise";
-        console.log(data);
-        axiosInstance.post(apiRegisterEntreprise, data)
+        const apiRegisterEntreprise= "/api/auth/registerEntreprise";
+        const request = {
+            "nom": data.name,
+            "adress": {
+                "city" : data.city,
+                "adress" : data.adress
+            },
+            "phoneNumber": data.phoneNumber,
+            "email": data.email,
+            "password": data.password
+        };
+        console.log(request)
+        axiosInstance.post(apiRegisterEntreprise, request)
         .then(response => {
             console.log("Status Code:", response.status);
-            Alert.alert("Register Success", "Your account was registered successfully. Login to access your account.");
+            showToast('success',"Your account was registered successfully. Login to access your account.");
         })
         .catch(error => {
-            Alert.alert("Register Error", "Error during registering your account. Please try again.");
-            console.log("Status Code:", response.status);
+            showToast('error',"Register Error","Error during registering your account. Please try again.");
+            console.log("Status Code:", error.status);
         });
     };
     return (
@@ -43,13 +54,37 @@ const RegisterEntreprise = () => {
             {errors?.name?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre nom d'entreprise complet</Text>}
             {errors?.name?.type === "minLength" && <Text style={styles.errorText}>Votre nom d'entreprise pas correct</Text>}
 
-            <Text style={styles.inputTitle}>Adresse</Text>
+            <Text style={styles.inputTitle}>City</Text>
             <Controller
-                name='adresse'
+                name='city'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                        placeholder='California, US'
+                        placeholder='New York'
+                        placeholderTextColor={Color.placeholderText}
+                        value={value}
+                        style={[styles.textInput, value && { fontWeight: "600" }]}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                    />
+                )}
+                rules={{
+                    required: 'Veuillez saisir votre nom d\'entreprise complet',
+                    minLength: { value: 2, message: 'Votre nom d\'entreprise est trop court' },
+                }}
+
+            />
+            {errors?.name && (
+                <Text style={styles.errorText}>{errors.name.message}</Text>
+            )}
+
+            <Text style={styles.inputTitle}>Adress</Text>
+            <Controller
+                name='adress'
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                        placeholder='12, California Street'
                         placeholderTextColor={Color.placeholderText}
                         value={value}
                         style={[styles.textInput, value && { fontWeight: "600" }]}
@@ -83,7 +118,7 @@ const RegisterEntreprise = () => {
                         keyboardType='number-pad'
                     />
                 )}
-                rules={{ required: true, pattern: { value: /^(6|7)\d{8}$/, message: "Entrer un numéro de téléphone valide" } }}
+                rules={{ required: true, pattern: { value: /^((\+212|0)[\s]?[6|7][\s]?\d{2}[\s]?\d{2}[\s]?\d{2}[\s]?\d{2})$/, message: "Entrer un numéro de téléphone valide" } }}
             />
             {errors?.phoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
             {errors?.phoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}
