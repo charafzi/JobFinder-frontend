@@ -1,16 +1,20 @@
-import { Alert, Image, Keyboard, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
-import React, {useState} from 'react'
+import {Image, Keyboard, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import React, {useEffect, useState} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { OtpInput } from 'react-native-otp-entry'
 import { Controller, useForm } from 'react-hook-form'
-import axiosInstance from '../config/axiosConfig'
 import { checkyouremail } from '../../assets'
 import {showToast} from "../utils/showToast";
 import LoadingIndicator from "../components/LoadingIndicator";
+import {useDispatch, useSelector} from "react-redux";
+import {forgotPassword} from "../redux/actions/forgotPasswordAction";
+import {checkEmail} from "../redux/actions/checkMailAction";
 
 const CheckEmail = ({ navigation, route }) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const {isLoading, otpIsValid, error} = useSelector((state)=> state.checkEmail);
+    const [submittedEmail, setSubmittedEmail] = useState("");
+    const dispatch = useDispatch();
     const {
         control,
         handleSubmit,
@@ -18,31 +22,30 @@ const CheckEmail = ({ navigation, route }) => {
             errors
         }
     } = useForm();
+
     const handleBackToLogin = () => {
         navigation.navigate('login');
     }
-    const email = route.params.email
+
+    useEffect(() => {
+        if(error){
+            showToast('error',"Error during sending OTP code", error);
+        }
+    }, [error]);
+
+    useEffect(() => {
+        if(otpIsValid){
+            navigation.navigate('newPassword', {email : submittedEmail});
+        }
+    }, [otpIsValid,submittedEmail, navigation]);
+
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        const apiVerifyOTP = "/api/auth/validate-otp?email="+route.params.email+"&otp="+data.otp;
-        console.log(apiVerifyOTP)
-        console.log(route)
-        await axiosInstance.get(apiVerifyOTP)
-            .then(response=>{
-                setIsLoading(false);
-                showToast('success', 'OTP verified successfully');
-                console.log(response.status);
-                navigation.navigate('newPassword', {email : route.params.email});
-            })
-            .catch(error=>{
-                setIsLoading(false);
-                showToast('error', 'Error','OTP is incorrect or expired.');
-                console.log('Error verifying OTP:', error);
-            });
+        dispatch(checkEmail({email : route.params.email, otp: data.otp}))
+        setSubmittedEmail(route.params.email);
     };
 
     const resendHandler = async () => {
-        const apiResend = '/reset-password';
+        /*const apiResend = '/reset-password';
         try {
             const response = await axios.post(apiResend, data);
             console.log(response.data);
@@ -50,7 +53,7 @@ const CheckEmail = ({ navigation, route }) => {
         } catch (error) {
             console.error('Error sending appointment request:', error);
             alert("Erreur lors de reset password");
-        }
+        }*/
     };
 
     return (

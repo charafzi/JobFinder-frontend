@@ -1,15 +1,17 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View , Alert} from 'react-native'
-import React, { useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
-import axiosInstance from '../config/axiosConfig';
 import {useNavigation} from "@react-navigation/native";
 import {showToast} from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
+import {useDispatch, useSelector} from "react-redux";
+import {resetPassword} from "../redux/actions/resetPasswordAction";
 
 const NewPasswordForm = ({email}) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const {isLoading, passwordChanged, error} = useSelector((state)=> state.resetPassword);
+    const dispatch = useDispatch();
     const [securePassword, setSecurePassword] = useState(true);
     const navigation = useNavigation();
     const {
@@ -21,30 +23,21 @@ const NewPasswordForm = ({email}) => {
         }
     } = useForm();
 
-    const submit = async (data) => {
-        setIsLoading(true);
-        let errorMessage='';
-        const apiUpdatePassword = "/api/auth/resetPassword";
-        console.log(data);
-        axiosInstance.post(apiUpdatePassword, {email : email, newPassword: data.password})
-        .then(response => {
-            setIsLoading(false);
+    useEffect(() => {
+        if(error){
+            showToast('error',"Error", error);
+        }
+    }, [error]);
+
+    useEffect(() => {
+        if(passwordChanged){
             navigation.navigate('resetSuccessfully');
-            console.log("Status Code:", response.status);
-            showToast('success',"Password Updated Successful");
-        })
-        .catch(error => {
-            setIsLoading(false);
-            if(error.response){
-                if(error.response.status === 400){
-                    errorMessage = "The new password cannot be the same as the old password.";
-                }else{
-                    errorMessage="Error during updating your password. Please try again";
-                }
-            }
-            showToast('error', 'Error', errorMessage);
-            console.log("Status Code:", response.status);
-        });
+            showToast('success',"Password Updated Successfully");
+        }
+    }, [navigation, passwordChanged]);
+
+    const submit = async (data) => {
+        dispatch(resetPassword({email: email, newPassword: data.password}));
     };
     return (
         <View>
