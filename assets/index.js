@@ -1,18 +1,11 @@
-import forgotpassword from './forgotpassword.png';
-import HomeAnnonce from './HomeAnnonce.png';
-import logo from './logo.png';
-import newpassword from './newpassword.png';
-import resetsuccessfully from './resetsuccessfully.png';
-import welcome from './welcome.png';
-import checkyouremail from './checkyouremail.png';
-import google from './google.png';
-export {
-    forgotpassword,
-    HomeAnnonce,
-    logo,
-    newpassword,
-    resetsuccessfully,
-    welcome,
-    checkyouremail,
-    google,
-}
+export { default as forgotpassword } from "./forgotpassword.png";
+export { default as HomeAnnonce } from "./HomeAnnonce.png";
+export { default as logo } from "./logo.png";
+export { default as newpassword } from "./newpassword.png";
+export { default as resetsuccessfully } from "./resetsuccessfully.png";
+export { default as welcome } from "./welcome.png";
+export { default as checkyouremail } from "./checkyouremail.png";
+export { default as google } from "./google.png";
+export { default as profile } from "./profile.png";
+export { default as designicon } from "./designicon.png";
+export { default as remotejobs } from "./remotejobs.png";
