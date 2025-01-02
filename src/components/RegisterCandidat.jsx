@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
 import axiosInstance from '../config/axiosConfig';
+import {showToast} from "../utils/showToast";
 
 const RegisterCandidat = () => {
     const [securePassword, setSecurePassword] = useState(true);
@@ -22,10 +23,10 @@ const RegisterCandidat = () => {
         axiosInstance.post(apiRegisterCandidat, data)
         .then(response => {
             console.log("Status Code:", response.status);
-            Alert.alert("Register Success", "Your account was registered successfully. Login to access your account.");
+            showToast('success',"Your account was registered successfully. Login to access your account.");
         })
         .catch(error => {
-            Alert.alert("Register Error", "Error during registering your account. Please try again.");
+            showToast('error',"Register Error","Error during registering your account. Please try again.");
             console.log("Status Code:", response.status);
         });
     };
@@ -84,7 +85,7 @@ const RegisterCandidat = () => {
                         keyboardType='number-pad'
                     />
                 )}
-                rules={{ required: true, pattern: { value: /^(6|7)\d{8}$/, message: "Entrer un numéro de téléphone valide" } }}
+                rules={{ required: true, pattern: { value: /^((\+212|0)[\s]?[6|7][\s]?\d{2}[\s]?\d{2}[\s]?\d{2}[\s]?\d{2})$/, message: "Entrer un numéro de téléphone valide" } }}
             />
             {errors?.phoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
             {errors?.phoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}

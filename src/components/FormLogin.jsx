@@ -1,17 +1,19 @@
 import {StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator} from 'react-native';
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { Color } from '../constants/Color';
-import axiosInstance, {API_BASE_URL} from '../config/axiosConfig';
 import {showToast} from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
+import {useDispatch, useSelector} from "react-redux";
+import {login} from "../redux/actions/authAction";
 
 const FormLogin = () => {
     const [securePassword, setSecurePassword] = useState(true);
     const navigation = useNavigation();
-    const [isLoading, setIsLoading] = useState(false);
+    const dispatch = useDispatch();
+    const {isLoading, isLoggedIn, error} = useSelector((state) => state.auth);
 
     const {
         control,
@@ -21,37 +23,25 @@ const FormLogin = () => {
         }
     } = useForm();
 
+    useEffect(() => {
+        if(isLoggedIn){
+            showToast('success',"Login Successful", "Welcome back !");
+        }
+
+    }, [isLoggedIn]);
+
+    useEffect(() => {
+        if(error){
+            showToast('error', 'Login failed', error);
+        }
+    }, [error]);
+
     const handleForgotPassword = () => {
         navigation.navigate('forgotpassword');
     }
 
     const submit = async (data) => {
-        setIsLoading(true);
-        let errorMessage = '';
-        const apiLogin = "/api/auth/login";
-        await axiosInstance.post(apiLogin, data)
-            .then(response => {
-                setIsLoading(false);
-                console.log("Status Code:", response.status);
-                showToast('success',"Login Successful", "Welcome back !");
-            })
-            .catch(error => {
-                setIsLoading(false);
-                console.log('Error at login : ',error);
-                if (error.response) {
-                    let status = error.response.status;
-                    if (status === 404) {
-                        errorMessage = 'No account registered with this email. Try to sign up.';
-                    } else if(status === 401) {
-                        errorMessage = 'Password is incorrect.';
-                    }else{
-                        errorMessage = 'An error occurred.';
-                    }
-                } else {
-                    errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-                }
-                showToast('error', 'Login failed', errorMessage);
-            });
+        dispatch(login(data));
     };
 
     return (

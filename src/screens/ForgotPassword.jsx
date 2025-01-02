@@ -1,5 +1,5 @@
 import { Image, Keyboard, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { Controller, useForm } from 'react-hook-form'
@@ -7,9 +7,13 @@ import { forgotpassword } from '../../assets'
 import axiosInstance from "../config/axiosConfig";
 import {showToast} from "../utils/showToast";
 import LoadingIndicator from "../components/LoadingIndicator";
+import {useDispatch, useSelector} from "react-redux";
+import {forgotPassword} from "../redux/actions/forgotPasswordAction";
 
 const ForgotPassword = ({ navigation }) => {
-    const [isLoading, setIsLoading] = useState(false);
+    const {isLoading, mailIsSent, error} = useSelector((state)=> state.forgotPassword);
+    const [submittedEmail, setSubmittedEmail] = useState("");
+    const dispatch = useDispatch();
     const {
         control,
         handleSubmit,
@@ -22,27 +26,21 @@ const ForgotPassword = ({ navigation }) => {
         navigation.navigate('login');
     }
 
-    const submit = async (data) => {
-        setIsLoading(true);
-        let errorMessage = "";
-        const sendOTPAPI = '/api/auth/send-otp?email='+data.email;
-        await axiosInstance.get(sendOTPAPI)
-            .then((response)=>{
-                navigation.navigate('checkEmail', {email : data.email});
-                setIsLoading(false);
-            })
-            .catch((error)=>{
-                setIsLoading(false);
-                if(error.response){
-                    if(error.response.status===404){
-                        errorMessage = "No user registered with this email.";
-                    }else{
-                        errorMessage = "Error at server. Please try again.";
-                    }
-                }
-                showToast('error',"Error during sending OTP code", errorMessage);
-            });
+    useEffect(() => {
+        if(error){
+            showToast('error',"Error during sending OTP code", error);
+        }
+    }, [error]);
 
+    useEffect(() => {
+        if(mailIsSent){
+            navigation.navigate('checkEmail', {email : submittedEmail});
+        }
+    }, [mailIsSent,submittedEmail, navigation]);
+
+    const submit = async (data) => {
+        setSubmittedEmail(data.email);
+        dispatch(forgotPassword(data.email));
     }
 
     return (
