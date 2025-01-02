@@ -1,28 +1,32 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import Feather from '@expo/vector-icons/Feather';
 import { Color } from '../constants/Color';
+import axiosInstance from '../config/axiosConfig';
 
 const RegisterEntreprise = () => {
     const [securePassword, setSecurePassword] = useState(true);
     const { control, handleSubmit, watch, formState: { errors } } = useForm();
 
     const submit = async (data) => {
-        try {
-            const response = await axios.post('/register-candidat', data);
-            console.log(response.data);
-            alert('Register candidat avec succès');
-        } catch (error) {
-            console.error('Error sending appointment request:', error);
-            alert("Erreur lors de register candidat");
-        }
+        const apiRegisterEntreprise= "/registerEntreprise";
+        console.log(data);
+        axiosInstance.post(apiRegisterEntreprise, data)
+        .then(response => {
+            console.log("Status Code:", response.status);
+            Alert.alert("Register Success", "Your account was registered successfully. Login to access your account.");
+        })
+        .catch(error => {
+            Alert.alert("Register Error", "Error during registering your account. Please try again.");
+            console.log("Status Code:", response.status);
+        });
     };
     return (
         <View>
             <Text style={styles.inputTitle}>Entreprise Name</Text>
             <Controller
-                name='EntrepriseName'
+                name='name'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -36,12 +40,12 @@ const RegisterEntreprise = () => {
                 )}
                 rules={{ required: true, minLength: 2 }}
             />
-            {errors?.EntrepriseName?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre nom d'entreprise complet</Text>}
-            {errors?.EntrepriseName?.type === "minLength" && <Text style={styles.errorText}>Votre nom d'entreprise pas correct</Text>}
+            {errors?.name?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre nom d'entreprise complet</Text>}
+            {errors?.name?.type === "minLength" && <Text style={styles.errorText}>Votre nom d'entreprise pas correct</Text>}
 
             <Text style={styles.inputTitle}>Adresse</Text>
             <Controller
-                name='Adresse'
+                name='adresse'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -59,14 +63,14 @@ const RegisterEntreprise = () => {
                 }}
 
             />
-            {errors?.EntrepriseName && (
-                <Text style={styles.errorText}>{errors.EntrepriseName.message}</Text>
+            {errors?.name && (
+                <Text style={styles.errorText}>{errors.name.message}</Text>
             )}
 
 
             <Text style={styles.inputTitle}>Phone Number</Text>
             <Controller
-                name='PhoneNumber'
+                name='phoneNumber'
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
@@ -81,8 +85,8 @@ const RegisterEntreprise = () => {
                 )}
                 rules={{ required: true, pattern: { value: /^(6|7)\d{8}$/, message: "Entrer un numéro de téléphone valide" } }}
             />
-            {errors?.PhoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
-            {errors?.PhoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}
+            {errors?.phoneNumber?.type === "required" && <Text style={styles.errorText}>Veuillez saisir Votre téléphone</Text>}
+            {errors?.phoneNumber?.type === "pattern" && <Text style={styles.errorText}>Entrer un numéro de téléphone valide</Text>}
 
             <Text style={styles.inputTitle}>Email</Text>
             <Controller
@@ -229,6 +233,9 @@ const styles = StyleSheet.create({
         fontSize: 14
     },
     errorText: {
-        color: "red"
+        color: "red",
+        fontWeight:'700',
+        fontSize : 12,
+        paddingBottom:10,
     },
 })

@@ -2,6 +2,7 @@ import { Image, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, Vie
 import React from 'react'
 import { Color } from '../constants/Color'
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { welcome } from '../../assets';
 
 const Welcome = ({ navigation }) => {
     const pressHandler = () => {
@@ -12,7 +13,7 @@ const Welcome = ({ navigation }) => {
             <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
             <Text style={styles.title}>JobFinder</Text>
             <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Image source={require('../../assets/welcome.png')} style={styles.image} />
+                <Image source={welcome} style={styles.image} />
             </View>
             <View>
                 <Text style={styles.text}>Find Your</Text>

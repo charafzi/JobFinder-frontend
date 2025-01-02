@@ -1,24 +1,50 @@
-import { Image, Keyboard, Linking, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
-import React from 'react'
+import { Alert, Image, Keyboard, StatusBar, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import React, {useState} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
+import { OtpInput } from 'react-native-otp-entry'
+import { Controller, useForm } from 'react-hook-form'
+import axiosInstance from '../config/axiosConfig'
+import { checkyouremail } from '../../assets'
+import {showToast} from "../utils/showToast";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const CheckEmail = ({ navigation, route }) => {
-    const { data } = route.params;
-
+    const [isLoading, setIsLoading] = useState(false);
+    const {
+        control,
+        handleSubmit,
+        formState: {
+            errors
+        }
+    } = useForm();
     const handleBackToLogin = () => {
         navigation.navigate('login');
     }
-
-    const handleOpenEmeil = () => {
-        Linking.openURL('mailto:').catch(() => {
-            console.error('Impossible d’ouvrir l’application de messagerie');
-          });
+    const email = route.params.email
+    const onSubmit = async (data) => {
+        setIsLoading(true);
+        const apiVerifyOTP = "/api/auth/validate-otp?email="+route.params.email+"&otp="+data.otp;
+        console.log(apiVerifyOTP)
+        console.log(route)
+        await axiosInstance.get(apiVerifyOTP)
+            .then(response=>{
+                setIsLoading(false);
+                showToast('success', 'OTP verified successfully');
+                console.log(response.status);
+                navigation.navigate('newPassword', {email : route.params.email});
+            })
+            .catch(error=>{
+                setIsLoading(false);
+                showToast('error', 'Error','OTP is incorrect or expired.');
+                console.log('Error verifying OTP:', error);
+            });
     };
 
     const resendHandler = async () => {
+        const apiResend = '/reset-password';
         try {
-            const response = await axios.post('/reset-password', data);
+            const response = await axios.post(apiResend, data);
             console.log(response.data);
             alert('reset code sent successfully!');
         } catch (error) {
@@ -34,12 +60,51 @@ const CheckEmail = ({ navigation, route }) => {
                 <View>
                     <View style={styles.headerContainer}>
                         <Text style={styles.title}>Check Your Email</Text>
-                        <Text style={styles.subtitle}>We have sent the reset password to the email address</Text>
-                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{ data.email }</Text>
+                        <Text style={styles.subtitle}>We have sent the OTP code to the email address</Text>
+                        <Text style={[styles.subtitle, { fontWeight: 'bold' }]}>{route.params?.email}</Text>
                     </View>
-                    <Image source={require('../../assets/checkyouremail.png')} style={styles.image} />
-                    <TouchableOpacity style={styles.openEmailButton} onPress={handleOpenEmeil}>
-                        <Text style={styles.openEmailText}>OPEN YOUR EMAIL</Text>
+                    <Image source={checkyouremail} style={styles.image} />
+                    <Controller
+                        name='otp'
+                        control={control}
+                        rules={{
+                            required: 'OTP is required',
+                            pattern: {
+                                value: /^\d{6}$/,
+                                message: 'OTP must be a 6-digit number',
+                            },
+                            minLength: {
+                                value: 6,
+                                message: 'OTP must be 6 digits',
+                            },
+                            maxLength: {
+                                value: 6,
+                                message: 'OTP must be 6 digits',
+                            },
+                        }}
+                        render={({ field: { onChange, onBlur, value } }) => (
+                            <OtpInput
+                                focusColor={Color.link}
+                                onFocus={() => console.log("Focused")}
+                                onBlur={onBlur}
+                                onTextChange={onChange}
+                                onFilled={(text) => {
+                                    console.log(`OTP is ${text}`)
+                                }}
+                                theme={{
+                                    containerStyle: styles.OTPcontainer,
+                                    pinCodeContainerStyle: styles.OTPpinCodeContainer,
+                                    pinCodeTextStyle: styles.OTPpinCodeText,
+                                }}
+                            />
+                        )}
+                    />
+                    {errors.otp && <Text style={styles.errorText}>{errors.otp.message}</Text>}
+                    <TouchableOpacity style={styles.confirmCodeButton} onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+                        <View style={styles.buttonContent}>
+                            {!isLoading && <Text style={styles.confirmCodeText}>CONFIRM CODE</Text>}
+                            <LoadingIndicator isLoading={isLoading} />
+                        </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.backLoginButton} onPress={handleBackToLogin}>
                         <Text style={styles.backLoginText}>BACK TO LOGIN</Text>
@@ -81,13 +146,16 @@ const styles = StyleSheet.create({
         textAlign: "center",
         color: Color.subtitle,
     },
-    openEmailButton: {
+    confirmCodeButton: {
         backgroundColor: Color.selectedbutton,
         margin: 20,
+        paddingHorizontal: 60,
         paddingVertical: 20,
         borderRadius: 10,
+        height: 60, // Fixed height
+        justifyContent: 'center', // Center content vertically
     },
-    openEmailText: {
+    confirmCodeText: {
         textAlign: 'center',
         color: "#ffffff",
         fontWeight: "700",
@@ -126,5 +194,21 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '400',
         marginRight: 10,
+    },
+    OTPcontainer: {
+        margin: 10,
+        padding: 20,
+    },
+    OTPpinCodeContainer: {
+        width: 50,
+        height: 60,
+    },
+    OTPpinCodeText: {
+        color: Color.link,
+    },
+    errorText: {
+        color: "red",
+        marginLeft: 30,
+        fontWeight: '500'
     },
 })

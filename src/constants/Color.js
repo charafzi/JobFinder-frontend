@@ -7,4 +7,7 @@ export const Color = {
     unselectedbutton: '#D6CDFE',
     remeberMe: '#E6E1FF',
     link: '#FF9228',
+    success : '#5cb85c',
+    error : '#eb6060',
+    spinner : '#FF9228'
 }

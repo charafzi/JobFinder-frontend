@@ -2,6 +2,7 @@ import { Image, Keyboard, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOp
 import React from 'react'
 import FormLogin from '../components/FormLogin';
 import { Color } from '../constants/Color';
+import { google } from '../../assets';
 
 
 
@@ -21,7 +22,7 @@ const Login = ({ navigation }) => {
                     </View>
                     <FormLogin />
                     <TouchableOpacity style={styles.googleButton}>
-                        <Image source={require('../../assets/google.png')} style={styles.googleIcon} />
+                        <Image source={google} style={styles.googleIcon} />
                         <Text style={styles.googleText}>SIGN IN WITH GOOGLE</Text>
                     </TouchableOpacity>
                     <View style={styles.signup}>
@@ -82,22 +83,21 @@ const styles = StyleSheet.create({
     },
     googleButton: {
         flexDirection: "row",
-        justifyContent: 'space-around',
+        justifyContent: 'space-evenly',
         backgroundColor: Color.unselectedbutton,
-        padding: 20,
-        margin: 10,
+        paddingVertical: 20,
+        marginHorizontal: 20,
+        marginVertical:10,
         borderRadius: 10,
         alignItems: 'center',
     },
     googleText: {
         fontSize: 14,
-        fontWeight: '700',
         color: Color.selectedbutton,
         fontWeight: 'bold',
     },
     googleIcon: {
         width: 30,
         height: 30,
-        marginRight: 10,
     },
 })

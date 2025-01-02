@@ -1,11 +1,15 @@
 import { Image, Keyboard, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
-import React from 'react'
+import React, {useState} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Color } from '../constants/Color'
 import { Controller, useForm } from 'react-hook-form'
+import { forgotpassword } from '../../assets'
+import axiosInstance from "../config/axiosConfig";
+import {showToast} from "../utils/showToast";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const ForgotPassword = ({ navigation }) => {
-
+    const [isLoading, setIsLoading] = useState(false);
     const {
         control,
         handleSubmit,
@@ -19,16 +23,27 @@ const ForgotPassword = ({ navigation }) => {
     }
 
     const submit = async (data) => {
-        try {
-            const response = await axios.post('/reset-password', data);
-            navigation.navigate('checkEmail', {data})
-            console.log(response.data);
-            alert('reset code sent');
-        } catch (error) {
-            console.error('Error sending appointment request:', error);
-            alert("Erreur lors de reset password");
-        }
-    };
+        setIsLoading(true);
+        let errorMessage = "";
+        const sendOTPAPI = '/api/auth/send-otp?email='+data.email;
+        await axiosInstance.get(sendOTPAPI)
+            .then((response)=>{
+                navigation.navigate('checkEmail', {email : data.email});
+                setIsLoading(false);
+            })
+            .catch((error)=>{
+                setIsLoading(false);
+                if(error.response){
+                    if(error.response.status===404){
+                        errorMessage = "No user registered with this email.";
+                    }else{
+                        errorMessage = "Error at server. Please try again.";
+                    }
+                }
+                showToast('error',"Error during sending OTP code", errorMessage);
+            });
+
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -39,7 +54,7 @@ const ForgotPassword = ({ navigation }) => {
                         <Text style={styles.title}>Forgot Password?</Text>
                         <Text style={[styles.subtitle, {lineHeight:20}]}>To reset your password, you need your email or mobile number that can be authenticated</Text>
                     </View>
-                    <Image source={require('../../assets/forgotpassword.png')} style={styles.image}/>
+                    <Image source={forgotpassword} style={styles.image}/>
                     <Text style={styles.inputTitle}>Email</Text>
                     <Controller
                         name='email'
@@ -66,8 +81,11 @@ const ForgotPassword = ({ navigation }) => {
                     {errors?.email?.type === "required" && <Text style={styles.errorText}>Veuillez saisir votre email</Text>}
                     {errors?.email?.type === "pattern" && <Text style={styles.errorText}>{errors?.email?.message}</Text>}
 
-                    <TouchableOpacity style={styles.resetButton} onPress={handleSubmit(submit)}>
-                        <Text style={styles.resetText}>RESET PASSWORD</Text>
+                    <TouchableOpacity style={styles.resetButton} onPress={handleSubmit(submit)} disabled={isLoading}>
+                        <View style={styles.buttonContent}>
+                            {!isLoading && <Text style={styles.resetText}>RESET PASSWORD</Text>}
+                            <LoadingIndicator isLoading={isLoading} />
+                        </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.backLoginButton} onPress={handleBackToLogin}>
                         <Text style={styles.backLoginText}>BACK TO LOGIN</Text>
@@ -121,8 +139,11 @@ const styles = StyleSheet.create({
     resetButton: {
         backgroundColor: Color.selectedbutton,
         margin: 20,
+        paddingHorizontal: 60,
         paddingVertical: 20,
         borderRadius: 10,
+        height: 60, // Fixed height
+        justifyContent: 'center', // Center content vertically
     },
     resetText: {
         textAlign: 'center',
@@ -146,5 +167,11 @@ const styles = StyleSheet.create({
         alignSelf:'center',
         padding:10,
         margin:60,
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 60,
     },
 })
