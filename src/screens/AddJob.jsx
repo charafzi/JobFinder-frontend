@@ -16,7 +16,12 @@ import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
 import dayjs from "dayjs";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { ContractTypeModal, DateModal, ExigencesModal, FormField } from "../components";
+import {
+  ContractTypeModal,
+  DateModal,
+  ExigencesModal,
+  FormField,
+} from "../components";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
