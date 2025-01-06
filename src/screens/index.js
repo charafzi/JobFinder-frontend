@@ -12,3 +12,4 @@ export { default as NewPassword } from "./NewPassword";
 export { default as Register } from "./Register";
 export { default as ResetSuccessfully } from "./ResetSuccessfully";
 export { default as Welcome } from "./Welcome";
+export {default as Map} from "./MapScreen"

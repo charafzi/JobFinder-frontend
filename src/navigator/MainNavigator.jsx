@@ -9,6 +9,7 @@ import {
   Register,
   ResetSuccessfully,
   Welcome,
+    Map
 } from "../screens";
 import { TabNavigator } from ".";
 
@@ -16,7 +17,7 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"Map"}>
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
       <Stack.Screen name="login" component={Login} />
@@ -26,7 +27,7 @@ const StackNavigator = () => {
       <Stack.Screen name="newPassword" component={NewPassword} />
       <Stack.Screen name="resetSuccessfully" component={ResetSuccessfully} />
       <Stack.Screen name="tabNavigator" component={TabNavigator} />
-      <Stack.Screen name="resetSuccessfully" component={ResetSuccessfully} />
+        <Stack.Screen name={"Map"} component={Map}/>
     </Stack.Navigator>
   );
 };

@@ -20,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/splash-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.jobfinder"
     },
     "web": {
       "favicon": "./assets/favicon.png"
