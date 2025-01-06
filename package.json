@@ -11,6 +11,7 @@
     "eject": "npx expo prebuild"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.0.4",
     "@gorhom/bottom-sheet": "^5.0.6",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/drawer": "^7.1.1",
@@ -38,7 +39,8 @@
     "react-native-ui-datepicker": "^2.0.4",
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
-    "redux-thunk": "^3.1.0"
+    "redux-thunk": "^3.1.0",
+    "expo-linear-gradient": "~14.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

@@ -1,15 +1,15 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import {
-  CheckEmail,
-  ForgotPassword,
-  Login,
-  LogoScreen,
-  NewPassword,
-  Register,
-  ResetSuccessfully,
-  Welcome,
-    Map
+    CheckEmail,
+    ForgotPassword,
+    Login,
+    LogoScreen,
+    NewPassword,
+    Register,
+    ResetSuccessfully,
+    Welcome,
+    Map, Search
 } from "../screens";
 import { TabNavigator } from ".";
 
@@ -17,7 +17,7 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"Map"}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"Search"}>
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
       <Stack.Screen name="login" component={Login} />
@@ -28,6 +28,7 @@ const StackNavigator = () => {
       <Stack.Screen name="resetSuccessfully" component={ResetSuccessfully} />
       <Stack.Screen name="tabNavigator" component={TabNavigator} />
         <Stack.Screen name={"Map"} component={Map}/>
+        <Stack.Screen name={"Search"} component={Search}></Stack.Screen>
     </Stack.Navigator>
   );
 };

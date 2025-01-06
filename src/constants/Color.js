@@ -11,5 +11,8 @@ export const Color = {
   error: "#eb6060",
   spinner: "#FF9228",
   highLightText: "#FF9228",
-  boxBackground : "#E6E1FF"
+  boxBackground : "#E6E1FF",
+  icon : "#F9F9F9",
+  icon2 : "#FF9228",
+  icon3: "#38354c"
 };
