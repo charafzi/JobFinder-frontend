@@ -3,7 +3,7 @@ import AuthReducer from "./reducers/authReducer";
 import forgotPasswordReducer from "./reducers/forgotPasswordReducer";
 import checkEmailReducer from "./reducers/checkEmailReducer";
 import resetPasswordReducer from "./reducers/resetPasswordReducer";
-import offresReducer from './slices/offres/mapOffresSlice';
+import offresReducer from './slices/offres/offreSlice';
 
 const rootReducer = combineReducers({
   auth: AuthReducer,

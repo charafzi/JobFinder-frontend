@@ -14,5 +14,7 @@ export const Color = {
   boxBackground : "#E6E1FF",
   icon : "#F9F9F9",
   icon2 : "#FF9228",
-  icon3: "#38354c"
+  icon3: "#38354c",
+  primary: "#130160",
+  secondary: "#FF9228"
 };

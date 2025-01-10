@@ -14,3 +14,4 @@ export { default as ResetSuccessfully } from "./ResetSuccessfully";
 export { default as Welcome } from "./Welcome";
 export {default as Map} from "./MapScreen"
 export {default as Search} from "./SearchScreen";
+export {default as Filter} from './FilterScreen'

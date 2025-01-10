@@ -7,15 +7,16 @@ import * as Location from "expo-location";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "../utils/showToast";
-import getOffresNearby from "../redux/slices/offres";
 import {Color} from "../constants/Color";
+import {getOffresNearby} from "../redux/slices/offres/mapOffresThunk";
+import {clearMapOffres} from "../redux/slices/offres/offreSlice";
 
 
 const MapScreen = () => {
     const insets = useSafeAreaInsets();
     const mapRef = useRef(null);
     const dispatch = useDispatch();
-    const { offres, isLoading, error } = useSelector((state) => state.offres);
+    const { mapOffres, isLoading, error } = useSelector((state) => state.offres);
     const [selectedOffre, setSelectedOffre] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
@@ -24,7 +25,12 @@ const MapScreen = () => {
         longitude: -7.4019606,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
-    });
+    })
+
+    useEffect(() => {
+        //clear map offers initially
+        dispatch(clearMapOffres());
+    }, [dispatch]);
 
     const showModal = () => {
         setModalVisible(true);
@@ -115,7 +121,7 @@ const MapScreen = () => {
                     showsUserLocation={true}
                     showsMyLocationButton={true}
                 >
-                    {offres?.map((offre, index) => (
+                    {mapOffres?.map((offre, index) => (
                         <Marker
                             key={index}
                             coordinate={{

@@ -9,7 +9,7 @@ import {
     Register,
     ResetSuccessfully,
     Welcome,
-    Map, Search
+    Map, Search, Filter
 } from "../screens";
 import { TabNavigator } from ".";
 
@@ -17,7 +17,7 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"Search"}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"Map"}>
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
       <Stack.Screen name="login" component={Login} />
@@ -29,6 +29,7 @@ const StackNavigator = () => {
       <Stack.Screen name="tabNavigator" component={TabNavigator} />
         <Stack.Screen name={"Map"} component={Map}/>
         <Stack.Screen name={"Search"} component={Search}></Stack.Screen>
+        <Stack.Screen name={"Filter"} component={Filter}></Stack.Screen>
     </Stack.Navigator>
   );
 };

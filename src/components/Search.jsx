@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
+import {useNavigation} from "@react-navigation/native";
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigation = useNavigation();
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -29,7 +31,7 @@ const Search = () => {
           value={searchQuery}
         />
       </View>
-      <TouchableOpacity style={styles.filterContainer}>
+      <TouchableOpacity style={styles.filterContainer} onPress={()=> {navigation.navigate("Filter")}}>
         <Ionicons name="filter-sharp" size={28} color="white" />
       </TouchableOpacity>
     </View>

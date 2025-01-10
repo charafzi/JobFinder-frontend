@@ -5,39 +5,70 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {Search} from "./index";
 import { LinearGradient } from "expo-linear-gradient";
+import {useNavigation} from "@react-navigation/native";
 
+const NAVBAR_THEMES = {
+    purple: {
+        colors: ["#38354c", "#3A317B"],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 1 },
+        titleColor: "#fff",
+        iconColor: Color.icon
+    },
+    default: {
+        colors: [Color.background, Color.background],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 1 },
+        titleColor: Color.text,
+        iconColor: Color.text
+    },
+};
 
 const TopNavBar = ({
                     title = "",
                     showBackButton = true,
-                    onBackPress = () => {},
+                    onBackPress,
                     showProfile = true,
                     profilePicUri = "",
                     onProfilePress = () => {},
                     showNotification = true,
                     onNotificationPress = () => {},
-                    showSearchBar = true
+                    showSearchBar = false,
+                   theme = "default"
                    }) => {
     const insets = useSafeAreaInsets();
+    const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
+    const navigation = useNavigation();
+
+    const handleBackPress =() =>{
+        if (onBackPress) {
+            // If custom onBackPress is provided, use it
+            onBackPress();
+        } else {
+            navigation.goBack();
+        }
+
+    }
+
     return (
        <LinearGradient
-           colors={["#38354c", "#3A317B"]}
-           start={{ x: 0, y: 0 }}
-           end={{ x: 1, y: 1 }}
+           colors={colorConfig.colors}
+           start={colorConfig.start}
+           end={colorConfig.end}
            style={[styles.container,{paddingTop: insets.top}]}
        >
-           <View style={styles.navBar}>
+           <View style={[styles.navBar,{height: showSearchBar ? 80 : 60}] }>
                {showBackButton && (
-                   <TouchableOpacity onPress={onBackPress}>
+                   <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
                        <AntDesign
                            name="left"
                            size={24}
-                           color={Color.icon}
+                           color={colorConfig.iconColor}
                            style={styles.icon}
                        />
                    </TouchableOpacity>
                )}
-               <Text style={styles.title}>{title}</Text>
+               <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
 
                <View style={styles.rightIcons}>
                    {showNotification && (
@@ -45,7 +76,7 @@ const TopNavBar = ({
                            <AntDesign
                                name="notification"
                                size={24}
-                               color={Color.icon}
+                               color={colorConfig.iconColor}
                                style={styles.icon}
                            />
                        </TouchableOpacity>
@@ -73,30 +104,29 @@ const TopNavBar = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        minHeight: 100,
+        minHeight: 40,
         flexDirection: "column",
         justifyContent: "flex-start",
         borderBottomRightRadius: 15,
-        borderBottomLeftRadius: 15
+        borderBottomLeftRadius: 15,
     },
     navBar: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 16,
-        paddingVertical: 15,
+        paddingVertical: 8,
         backgroundColor: "transparent",
         width: '100%',
     },
     backButton: {
-        padding: 8,
     },
     title: {
         fontSize: 18,
-        color: "#fff",
         fontWeight: "bold",
         flex: 1,
         textAlign: 'center',
+        marginRight: 40,
     },
     rightIcons: {
         flexDirection: "row",
