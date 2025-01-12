@@ -9,7 +9,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "../utils/showToast";
 import {Color} from "../constants/Color";
 import {getOffresNearby} from "../redux/slices/offres/mapOffresThunk";
-import {clearMapOffres} from "../redux/slices/offres/offreSlice";
+import {addOffreToMap, clearMapOffres} from "../redux/slices/offres/offreSlice";
+import {WEBSOCKETIO_URL} from "../config/axiosConfig";
+import io from 'socket.io-client';
 
 
 const MapScreen = () => {
@@ -20,6 +22,7 @@ const MapScreen = () => {
     const [selectedOffre, setSelectedOffre] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+    const [socket, setSocket] = useState(null);
     const [region, setRegion] = useState({
         latitude: 33.697904,
         longitude: -7.4019606,
@@ -32,6 +35,79 @@ const MapScreen = () => {
         dispatch(clearMapOffres());
     }, [dispatch]);
 
+    useEffect(() => {
+        // Connexion au serveur WebSocket
+        console.log("CONNECTING TO:", WEBSOCKETIO_URL);
+
+        const socketConnection = io(WEBSOCKETIO_URL, {
+            transports: ['polling', 'websocket'],
+            upgrade: true,
+            rememberUpgrade: true,
+            forceNew: true,
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5,
+            timeout: 20000,
+            autoConnect: true
+        });
+        
+        setSocket(socketConnection);
+
+        // Événements de débogage supplémentaires
+        socketConnection.io.on("upgrade", () => {
+            console.log("Transport upgraded to WebSocket");
+        });
+
+        socketConnection.io.on("upgrade_error", (err) => {
+            console.log("Upgrade failed:", err);
+        });
+
+        socketConnection.on('connect', () => {
+            console.log('WebSocket connected successfully');
+            console.log('Socket ID:', socketConnection.id);
+            console.log('Transport:', socketConnection.io?.engine?.transport?.name);
+            console.log('Protocol:', socketConnection.io?.engine?.protocol);
+        });
+
+        socketConnection.on('connect_error', (error) => {
+            console.log('Connection Error Full Details:', error);
+            console.log('Connection Error Details:', {
+                error: error.message,
+                type: error.type,
+                description: error.description,
+                transport: socketConnection.io?.engine?.transport?.name
+            });
+            
+            // Tentative de reconnexion avec polling uniquement si websocket échoue
+            if (socketConnection.io?.engine?.transport?.name === 'websocket') {
+                console.log('Switching to polling...');
+                socketConnection.io.opts.transports = ['polling'];
+                socketConnection.connect();
+            }
+        });
+
+        socketConnection.on('disconnect', (reason) => {
+            console.log('WebSocket disconnected:', reason);
+            if (reason === 'transport close' || reason === 'transport error') {
+                console.log('Attempting to reconnect with polling...');
+                socketConnection.io.opts.transports = ['polling'];
+                socketConnection.connect();
+            }
+        });
+
+        socketConnection.on('offre_created', (data) => {
+            console.log("Nouvelle offre reçue:", data);
+            dispatch(addOffreToMap(data));
+        });
+
+        return () => {
+            if (socketConnection) {
+                socketConnection.disconnect();
+                console.log('Socket déconnecté proprement');
+            }
+        };
+    }, []);
     const showModal = () => {
         setModalVisible(true);
         Animated.spring(slideAnim, {
@@ -207,7 +283,8 @@ const styles = StyleSheet.create({
     loader: {
         position: 'absolute',
         top: '50%',
-        alignSelf: 'center'
+        alignSelf: 'center',
+        color: Color.secondary
     },
     modalOverlay: {
         flex: 1,

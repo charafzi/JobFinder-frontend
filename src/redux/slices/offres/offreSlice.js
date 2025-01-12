@@ -38,6 +38,9 @@ const OffreSlice = createSlice({
             state.error = null;
             state.last = false;
         },
+        addOffreToMap : (state,action)=>{
+            state.mapOffres.push(action.payload);
+        }
     },
     extraReducers: (builder)=>{
         builder
@@ -70,5 +73,5 @@ const OffreSlice = createSlice({
 
 })
 
-export const { clearMapOffres,clearSearchOffres } = OffreSlice.actions;
+export const { clearMapOffres,clearSearchOffres,addOffreToMap } = OffreSlice.actions;
 export default OffreSlice.reducer;
