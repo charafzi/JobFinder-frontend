@@ -1,13 +1,20 @@
 export const Color = {
-    background: '#F9F9F9',
-    text: '#0D0140',
-    subtitle: '#524B6B',
-    placeholderText: '#0D014099',
-    selectedbutton: '#130160',
-    unselectedbutton: '#D6CDFE',
-    remeberMe: '#E6E1FF',
-    link: '#FF9228',
-    success : '#5cb85c',
-    error : '#eb6060',
-    spinner : '#FF9228'
-}
+  background: "#F9F9F9",
+  text: "#0D0140",
+  subtitle: "#524B6B",
+  placeholderText: "#0D014099",
+  selectedbutton: "#130160",
+  unselectedbutton: "#D6CDFE",
+  remeberMe: "#E6E1FF",
+  link: "#FF9228",
+  success: "#5cb85c",
+  error: "#eb6060",
+  spinner: "#FF9228",
+  highLightText: "#FF9228",
+  boxBackground : "#E6E1FF",
+  icon : "#F9F9F9",
+  icon2 : "#FF9228",
+  icon3: "#38354c",
+  primary: "#130160",
+  secondary: "#FF9228"
+};
