@@ -57,7 +57,7 @@ const DateModal = ({
   );
 };
 
-export default DateModal;
+export default React.memo(DateModal);
 
 const styles = StyleSheet.create({
   dateModalContainer: {

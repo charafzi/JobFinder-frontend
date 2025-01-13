@@ -1,8 +1,14 @@
 import React from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Color } from "../constants/Color";
+import { Controller } from "react-hook-form";
 
-const ContractTypeModal = ({ handleCloseModal, showModal, handleSetValue }) => {
+const ContractTypeModal = ({
+  handleCloseModal,
+  showModal,
+  handleSetValue,
+  control,
+}) => {
   const contratOptions = ["CDD", "CDI", "Stage", "Freelance"];
   return (
     <Modal
@@ -25,41 +31,53 @@ const ContractTypeModal = ({ handleCloseModal, showModal, handleSetValue }) => {
               }}
             ></View>
           </TouchableOpacity>
-          <View style={{ width: "80%", alignSelf: "center" }}>
-            <Text
-              style={[{ textAlign: "center", marginVertical: 10 }, styles.text]}
-            >
-              Choose the type of workplace
-            </Text>
-            <Text
-              style={[
-                { textAlign: "center", marginVertical: 10 },
-                styles.subtext,
-              ]}
-            >
-              Decide and choose the type of place to work according to what you
-              want
-            </Text>
-          </View>
-          {contratOptions.map((option) => (
-            <TouchableOpacity
-              key={option}
-              style={styles.modalOption}
-              onPress={() => {
-                handleSetValue(option);
-                handleCloseModal();
-              }}
-            >
-              <Text style={styles.modalText}>{option}</Text>
-            </TouchableOpacity>
-          ))}
+          <Controller
+            control={control}
+            name="typeContrat"
+            render={({ field: { onChange } }) => (
+              <>
+                <View style={{ width: "80%", alignSelf: "center" }}>
+                  <Text
+                    style={[
+                      { textAlign: "center", marginVertical: 10 },
+                      styles.text,
+                    ]}
+                  >
+                    Choisir le type de contrat
+                  </Text>
+                  <Text
+                    style={[
+                      { textAlign: "center", marginVertical: 10 },
+                      styles.subtext,
+                    ]}
+                  >
+                    Decide and choose the type of place to work according to
+                    what you want
+                  </Text>
+                </View>
+                {contratOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={styles.modalOption}
+                    onPress={() => {
+                      handleSetValue(option);
+                      onChange(option);
+                      handleCloseModal();
+                    }}
+                  >
+                    <Text style={styles.modalText}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
+          />
         </View>
       </View>
     </Modal>
   );
 };
 
-export default ContractTypeModal;
+export default React.memo(ContractTypeModal);
 
 const styles = StyleSheet.create({
   container: {
