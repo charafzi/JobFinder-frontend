@@ -25,7 +25,7 @@ const JobPreviewHeader = ({ navigation, entrepriseName, entrepriseVille }) => {
   );
 };
 
-export default JobPreviewHeader;
+export default React.memo(JobPreviewHeader);
 
 const styles = StyleSheet.create({
   headerContainer: {

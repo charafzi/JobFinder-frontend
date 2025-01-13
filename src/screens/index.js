@@ -1,9 +1,7 @@
 export { default as AddJob } from "./AddJob";
 export { default as CheckEmail } from "./CheckEmail";
 export { default as EntrepriseHomeScreen } from "./EntrepriseHomeScreen";
-export { default as EntrepriseMessages } from "./EntrepriseMessages";
 export { default as EntrepriseProjects } from "./EntrepriseProjects";
-export { default as EntrepriseUsersScreen } from "./EntrepriseUsersScreen";
 export { default as ForgotPassword } from "./ForgotPassword";
 export { default as JobPreview } from "./JobPreview";
 export { default as Login } from "./Login";

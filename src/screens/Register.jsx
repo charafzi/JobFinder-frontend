@@ -9,9 +9,8 @@ import {
   View,
 } from "react-native";
 import React, { useState } from "react";
-import RegisterCandidat from "../components/RegisterCandidat";
-import RegisterEntreprise from "../components/RegisterEntreprise";
 import { Color } from "../constants/Color";
+import { RegisterCandidat, RegisterEntreprise } from "../components";
 
 const Register = ({ navigation }) => {
   const [isCandidat, setIsCandidat] = useState(true);

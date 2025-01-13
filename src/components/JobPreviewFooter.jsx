@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Color } from "../constants/Color";
+import React from "react";
 
 const JobPreviewFooter = ({ onPhotoPress }) => {
   return (
@@ -15,7 +16,7 @@ const JobPreviewFooter = ({ onPhotoPress }) => {
   );
 };
 
-export default JobPreviewFooter;
+export default React.memo(JobPreviewFooter);
 
 const styles = StyleSheet.create({
   footer: {
