@@ -32,7 +32,7 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
     const formattedPublicationDate = useMemo(() => formatDate(jobPoste.publicationDate), [jobPoste.publicationDate]);
     const formattedDeadlineDate = useMemo(() => formatDate(jobPoste.deadlineDate), [jobPoste.deadlineDate]);
 
-    //console.log("RENDRED ID="+jobPoste.id);
+    console.log("RENDRED ID="+jobPoste.id);
 
     return (
         <View style={styles.jobCardContainer}>
@@ -86,11 +86,7 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
         </View>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.jobPoste.id === nextProps.jobPoste.id &&
-           prevProps.jobPoste.position === nextProps.jobPoste.position &&
-           prevProps.jobPoste.description === nextProps.jobPoste.description &&
-           prevProps.jobPoste.publicationDate === nextProps.jobPoste.publicationDate &&
-           prevProps.jobPoste.deadlineDate === nextProps.jobPoste.deadlineDate;
+    return prevProps.jobPoste.id === nextProps.jobPoste.id
 });
 
 export default JobPreviewSearchPreview;

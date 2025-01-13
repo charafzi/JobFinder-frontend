@@ -49,15 +49,13 @@ const SearchScreen = ()=>{
 
     // save the current position at scrolling list when new data is fetched
     useEffect(() => {
-        if (flatListRef.current && currentScrollPosition.current > 0 && searchOffresList.length > 0) {
-            setTimeout(() => {
-                flatListRef.current.scrollToOffset({
-                    offset: currentScrollPosition.current,
-                    animated: false
-                });
-            }, 100);
+        if (flatListRef.current && currentScrollPosition.current > 0 && params.page > 0) {
+            flatListRef.current.scrollToOffset({
+                offset: currentScrollPosition.current,
+                animated: false
+            });
         }
-    }, [searchOffresList]);
+    }, [params.page]);
 
     const keyExtractor = React.useCallback((item) => item.id.toString(), []);
 
