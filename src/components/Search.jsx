@@ -5,26 +5,34 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
 import {useNavigation} from "@react-navigation/native";
 import {useDispatch, useSelector} from "react-redux";
-import {setKeyword} from "../redux/slices/offres/offreSlice";
+import {clearSearchOffres, setKeyword} from "../redux/slices/offres/offreSlice";
+import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
 
 const Search = () => {
   const dispatch = useDispatch();
-  const { params: { keyword } = {} } = useSelector((state) => state.offres);
+  const { params } = useSelector((state) => state.offres);
+  const { keyword } = params;
   const [searchQuery, setSearchQuery] = useState("");
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (keyword?.trim() && keyword !== searchQuery) {
+    // update SearchQuery if keyword changed
+    if (keyword !== searchQuery) {
       setSearchQuery(keyword);
     }
   }, [keyword]);
 
-  const handleSearch = (query) => {
+  const handleSearch = (event) => {
+    let query = event?.nativeEvent?.text || "";
+    query = query.trim();
+
     setSearchQuery(query);
-    dispatch(searchOffres({keyword: query}));
+    dispatch(clearSearchOffres())
+    dispatch(searchOffres({...params,keyword : query, page : 0}));
   };
 
   const handleFilterPress = ()=>{
+    // update keyword state to conserve query when navigating to filter page
     dispatch(setKeyword(searchQuery));
     navigation.navigate("Filter")
   }
@@ -38,12 +46,14 @@ const Search = () => {
           style={styles.icon}
         />
         <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
           placeholder="Search"
           placeholderTextColor={Color.placeholderText}
           autoCorrect={false}
           style={{ flex: 1 }}
           clearButtonMode="always"
-          onChangeText={handleSearch}
+          onSubmitEditing={handleSearch}
         />
       </View>
       <TouchableOpacity style={styles.filterContainer} onPress={handleFilterPress}>

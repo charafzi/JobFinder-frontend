@@ -5,30 +5,23 @@ import React, {useCallback, useState} from "react";
 import {StyleSheet} from "react-native";
 import {Color} from "../constants/Color";
 import Slider from "rn-range-slider";
-import LoadingIndicator from "../components/LoadingIndicator";
 import {useDispatch, useSelector} from "react-redux";
 import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
 import {useNavigation} from "@react-navigation/native";
+import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
 
 const FilterScreen = () =>{
     const dispatch = useDispatch();
     const navigation = useNavigation();
     const {
-        keyword,
-        typeContrat,
-        salaryMin,
-        salaryMax,
-        page,
-        size,
-        sortBy,
-        sortDirection,
+        params
     }
-    = useSelector((state)=>state.offres.params)
-    const [selectedContractType, setSelectedContractType] = useState([]);
-    const [sort,setSort] = useState("");
-    const [SortDirection,setSortDirection] = useState("");
-    const [low, setLow] = useState(0);
-    const [high, setHigh] = useState(100);
+    = useSelector((state)=>state.offres)
+    const [selectedContractType, setSelectedContractType] = useState(params.typeContrat || []);
+    const [sort,setSort] = useState(params.sortBy === 'PUB_DATE' ? 'Publication Date' : 'Salary');
+    const [SortDirection,setSortDirection] = useState(params.sortDirection || "ASC");
+    const [low, setLow] = useState(params.salaryMin || 0);
+    const [high, setHigh] = useState(params.salaryMax || 100);
     const contractType = [
         {key:'1', value:'CDD'},
         {key:'2', value:'CDI'},
@@ -67,18 +60,19 @@ const FilterScreen = () =>{
             default:
                 sortByConverted = 'PUB_DATE';
         }
-         dispatch(searchOffres({
-             keyword,
-             typeContrat: selectedContractType.length ? selectedContractType : null,
-             salaryMin: low,
-             salaryMax: high,
-             page: 0,
-             size,
-             sortBy: sortByConverted,
-             sortDirection: SortDirection || "ASC",
-         }))
-        navigation.goBack();
 
+        const newParams = {
+            page: 0,
+            typeContrat: selectedContractType.length ? selectedContractType : null,
+            salaryMin: low,
+            salaryMax: high,
+            sortBy: sortByConverted,
+            sortDirection: SortDirection || "ASC",
+        };
+
+        dispatch(clearSearchOffres());
+        dispatch(searchOffres(newParams));
+        navigation.goBack();
     }
 
     return(

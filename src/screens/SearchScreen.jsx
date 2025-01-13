@@ -1,29 +1,93 @@
 import {FlatList, Image, ScrollView, Text, TouchableHighlight, TouchableOpacity, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
 import JobCardSearchPreview from "../components/JobCardSearchPreview";
-import {Search} from "../components";
-import React from "react";
+import {LoadingIndicator, Search} from "../components";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {StyleSheet} from "react-native";
 import {useDispatch, useSelector} from "react-redux";
 import {Color} from "../constants/Color";
+import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
 const SearchScreen = ()=>{
     const dispatch = useDispatch();
-    const { searchOffres,isLoading, params: { keyword, page } = {},last } = useSelector((state) => state.offres);
+    const { searchOffresList, isLoading, params, last, totalPages } = useSelector((state) => state.offres);
+    const currentScrollPosition = useRef(0);
+    const flatListRef = useRef(null);
+    const isLoadingMore = useRef(false);
 
     const handleLoadMore = async () => {
-        if (!last) {
-            await dispatch(
-                searchOffres({
-                    keyword,
-                    page: page + 1,
-                })
-            );
+        if (!totalPages) return;
+
+        //console.log("PAGE NUMBER ", params.page);
+        //console.log("TOTAL PAGES ", totalPages);
+
+        if (!isLoading && !last && params.page < totalPages - 1 && !isLoadingMore.current) {
+            try {
+                isLoadingMore.current = true;
+                const nextPage = params.page + 1;
+                await dispatch(searchOffres({
+                    ...params,
+                    page: nextPage
+                }));
+            } finally {
+                isLoadingMore.current = false;
+            }
         }
     };
 
+    // this for storing the position of scrolling
+    const handleScroll = (event) => {
+        currentScrollPosition.current = event.nativeEvent.contentOffset.y;
+    };
+
+    useEffect(() => {
+        if(params.page === 0){
+            currentScrollPosition.current=0;
+        }
+    }, [params.page]);
+
+    // save the current position at scrolling list when new data is fetched
+    useEffect(() => {
+        if (flatListRef.current && currentScrollPosition.current > 0 && searchOffresList.length > 0) {
+            setTimeout(() => {
+                flatListRef.current.scrollToOffset({
+                    offset: currentScrollPosition.current,
+                    animated: false
+                });
+            }, 100);
+        }
+    }, [searchOffresList]);
+
+    const keyExtractor = React.useCallback((item) => item.id.toString(), []);
+
+    const renderItem = React.useCallback(({ item }) => (
+        <JobCardSearchPreview key={item.id} jobPoste={item} />
+    ), []);
+
+    const renderFooter = () => {
+        return (
+            <View style={styles.footerContainer}>
+                {isLoading ? (
+                    <LoadingIndicator
+                    size={"large"}
+                    ></LoadingIndicator>
+                ) : (
+                    <View style={styles.noMoreResultContainer}>
+                        <AntDesign
+                            name="inbox"
+                            size={25}
+                            color={Color.placeholderText}
+                        />
+                        <Text style={styles.noMoreResult}>No More Job Offers</Text>
+                    </View>
+                )}
+            </View>
+        );
+    };
+
     return (
-        <View>
+        <View style={styles.mainContainer}>
             <TopNavBar
                 showBackButton={false}
                 theme={"purple"}
@@ -32,45 +96,35 @@ const SearchScreen = ()=>{
                 <Search></Search>
             </View>
 
-            <FlatList
-                data={searchOffres}
-                contentContainerStyle={{
-                    paddingBottom: 60,
-                }}
-                scrollIndicatorInsets={{ right: 1, bottom: 60 }}
-                ListEmptyComponent={
-                    <View style={styles.noResultContainer}>
-                        <Image source={require('../../assets/no_result.png')}>
-                        </Image>
-                        <Text style={styles.noResult}>No results found</Text>
-                        <Text style={styles.noResultDesc}>The search could not be found, please check spelling or write another word.</Text>
-                    </View>
-                }
-                renderItem={({item, index, separators}) => (
-                    <JobCardSearchPreview
-                        jobPoste={item}
-                    ></JobCardSearchPreview>
-                )}
-                ListFooterComponent={
-                    !last ? (
-                        <TouchableOpacity
-                            style={styles.loadMoreButton}
-                            onPress={handleLoadMore}
-                            disabled={isLoading}
-                        >
-                            <Text style={styles.loadMoreText}>
-                                {isLoading ? "Loading..." : "Load More"}
-                            </Text>
-                        </TouchableOpacity>
-                    ) : null
-                }
-                keyExtractor={(item, index) => `${item.id}-${index}`}
-            />
+            {isLoading && <LoadingIndicator></LoadingIndicator>}
+
+            {!isLoading && <FlatList
+                data={searchOffresList}
+                contentContainerStyle={styles.flatListContent}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.75}
+                ListFooterComponentStyle={styles.footerList}
+                ListFooterComponent={renderFooter}
+                ref={flatListRef}
+                windowSize={5}
+                initialNumToRender={5}
+                removeClippedSubviews={true}
+                updateCellsBatchingPeriod={50}
+                onScroll={handleScroll}
+            />}
         </View>
     )
 }
 
 const styles = StyleSheet.create({
+    mainContainer:{
+      flex : 1
+    },
+    flatListContent: {
+        flexGrow: 1,
+    },
     searchBar: {
         paddingHorizontal: 5,
         marginTop: 10,
@@ -108,6 +162,21 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
+    noMoreResultContainer:{
+      display: "flex",
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "center"
+    },
+    noMoreResult:{
+        fontSize: 12,
+        fontWeight: "bold",
+        color: Color.placeholderText,
+        padding: 10
+    },
+    footerList: {
+        paddingBottom: 20
+    }
 })
 
 export default SearchScreen;

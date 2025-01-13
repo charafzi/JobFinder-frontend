@@ -1,20 +1,45 @@
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import { logo } from "../../assets";
 import { Color } from "../constants/Color";
-import React from "react";
+import React, {useRef, useCallback, useMemo} from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
-const JobPreviewSearchPreview = ({ jobPoste }) => {
-    const handleViewPress = ()=> {
-        console.log("Icon press")
-    }
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+};
+
+const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
+    const handleViewPress = useCallback(() => {
+        console.log("Icon press", jobPoste.id);
+    }, [jobPoste.id]);
+
+    const requirements = useMemo(() => {
+        return (jobPoste?.requirements || ["Java", "Design", "Full Time"]).map((requirement, index) => (
+            <View key={index} style={styles.requirementBox}>
+                <Text style={styles.requirementText}>{requirement}</Text>
+            </View>
+        ));
+    }, [jobPoste?.requirements]);
+
+    const formattedPublicationDate = useMemo(() => formatDate(jobPoste.publicationDate), [jobPoste.publicationDate]);
+    const formattedDeadlineDate = useMemo(() => formatDate(jobPoste.deadlineDate), [jobPoste.deadlineDate]);
+
+    //console.log("RENDRED ID="+jobPoste.id);
+
     return (
         <View style={styles.jobCardContainer}>
             <View style={styles.topContainer}>
+                <Text>ID = {jobPoste.id}</Text>
                 <Image source={logo} style={styles.companyLogo} resizeMode="center" />
-                <TouchableOpacity onPress={()=>{
-                    handleViewPress()}}
-                >
+                <TouchableOpacity onPress={handleViewPress}>
                     <AntDesign
                         name="eye"
                         color={Color.icon3}
@@ -26,15 +51,26 @@ const JobPreviewSearchPreview = ({ jobPoste }) => {
             <View style={styles.contentContainer}>
                 <Text style={styles.jobTitle}>{jobPoste.position || "Product Designer"}</Text>
                 <Text style={styles.description}>
-                    Google inc . California, USA
+                    {jobPoste.description}
                 </Text>
             </View>
+
             <View style={styles.requirementsContainer}>
-                {(jobPoste?.requirements || ["Java", "Design", "Full Time"]).map((requirement, index) => (
-                    <View key={index} style={styles.requirementBox}>
-                        <Text style={styles.requirementText}>{requirement}</Text>
+                {requirements}
+            </View>
+
+            <View style={styles.detailsContainer}>
+                <View style={styles.contractTypeBox}>
+                    <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
+                </View>
+                <View style={styles.dateContainer}>
+                    <View style={styles.publicationDateBox}>
+                        <Text style={styles.dateText}>{formattedPublicationDate}</Text>
                     </View>
-                ))}
+                    <View style={styles.deadlineDateBox}>
+                        <Text style={styles.dateText}>{formattedDeadlineDate}</Text>
+                    </View>
+                </View>
             </View>
             <View style={styles.bottomContainer}>
                 <Text style={styles.timeAgo}>{jobPoste.timeAgo|| "24 minute ago"}</Text>
@@ -49,7 +85,13 @@ const JobPreviewSearchPreview = ({ jobPoste }) => {
             </View>
         </View>
     );
-};
+}, (prevProps, nextProps) => {
+    return prevProps.jobPoste.id === nextProps.jobPoste.id &&
+           prevProps.jobPoste.position === nextProps.jobPoste.position &&
+           prevProps.jobPoste.description === nextProps.jobPoste.description &&
+           prevProps.jobPoste.publicationDate === nextProps.jobPoste.publicationDate &&
+           prevProps.jobPoste.deadlineDate === nextProps.jobPoste.deadlineDate;
+});
 
 export default JobPreviewSearchPreview;
 
@@ -130,6 +172,45 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         alignSelf: "flex-start",
     },
+    detailsContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginVertical: 10,
+    },
+    dateContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 2,
+    },
+    publicationDateBox: {
+        backgroundColor: Color.green,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
+    deadlineDateBox: {
+        backgroundColor: Color.red,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
+    contractTypeBox: {
+        minWidth: 50,
+        height: 25,
+        backgroundColor: Color.secondary,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
     requirementText: {
         fontSize: 10,
         fontWeight : "600",
@@ -153,5 +234,15 @@ const styles = StyleSheet.create({
         color: "grey",
         fontWeight: "bold",
         paddingTop: 2
+    },
+    dateText:{
+        fontSize: 10,
+        fontWeight: "600",
+        color : Color.background
+    },
+    contractTypeText:{
+        fontSize: 10,
+        fontWeight: "bold",
+        color : Color.background
     }
 });

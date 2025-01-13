@@ -11,7 +11,7 @@ export const getOffresNearby = createAsyncThunk(
             });
             console.log({ lat, lng, radius })
             console.log("I GOT:::::::::::::::::::::: from "+API_BASE_URL+'/api/offre/nearby');
-            console.log(response.data)
+            console.log(response.data.pageNo)
             return response.data;
 
         }catch (error) {

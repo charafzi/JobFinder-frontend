@@ -12,13 +12,14 @@ import {getOffresNearby} from "../redux/slices/offres/mapOffresThunk";
 import {addOffreToMap, clearMapOffres} from "../redux/slices/offres/offreSlice";
 import {WEBSOCKETIO_URL} from "../config/axiosConfig";
 import io from 'socket.io-client';
+import TopNavBar from "../components/TopNavBar";
 
 
 const MapScreen = () => {
     const insets = useSafeAreaInsets();
     const mapRef = useRef(null);
     const dispatch = useDispatch();
-    const { mapOffres, isLoading, error } = useSelector((state) => state.offres);
+    const { mapOffresList, isLoading, error } = useSelector((state) => state.offres);
     const [selectedOffre, setSelectedOffre] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
@@ -162,7 +163,11 @@ const MapScreen = () => {
     }, []);
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.container}>
+            <TopNavBar
+            showProfile={false}
+            showNotification={false}
+            ></TopNavBar>
             {!isLoading ? (
                 <MapView
                     ref={mapRef}
@@ -172,7 +177,7 @@ const MapScreen = () => {
                     showsUserLocation={true}
                     showsMyLocationButton={true}
                 >
-                    {mapOffres?.map((offre, index) => (
+                    {mapOffresList?.map((offre, index) => (
                         <Marker
                             key={index}
                             coordinate={{
