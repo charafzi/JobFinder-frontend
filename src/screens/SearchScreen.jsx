@@ -1,8 +1,8 @@
-import {FlatList, Image, ScrollView, Text, TouchableHighlight, TouchableOpacity, View} from "react-native";
+import {FlatList, Text, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
 import JobCardSearchPreview from "../components/JobCardSearchPreview";
 import {LoadingIndicator, Search} from "../components";
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {StyleSheet} from "react-native";
 import {useDispatch, useSelector} from "react-redux";
 import {Color} from "../constants/Color";
@@ -40,6 +40,7 @@ const SearchScreen = ()=>{
     const handleScroll = (event) => {
         currentScrollPosition.current = event.nativeEvent.contentOffset.y;
     };
+
 
     useEffect(() => {
         if(params.page === 0){

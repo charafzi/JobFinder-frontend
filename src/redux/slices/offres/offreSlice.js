@@ -60,6 +60,15 @@ const OffreSlice = createSlice({
             .addCase(getOffresNearby.fulfilled, (state,action)=>{
                 state.isLoading= false;
                 state.mapOffresList=action.payload
+                /*if(state.mapOffresList.length===0){
+                    state.mapOffresList = action.payload;
+                }else{
+                    action.payload.forEach(newItem => {
+                        if (!state.mapOffresList.some(item => item.id === newItem.id)) {
+                            state.mapOffresList.push(newItem);
+                        }
+                    });
+                }*/
             })
             .addCase(getOffresNearby.rejected, (state,action)=>{
                 state.isLoading= false;

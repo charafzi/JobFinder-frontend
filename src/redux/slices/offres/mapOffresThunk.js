@@ -7,7 +7,7 @@ export const getOffresNearby = createAsyncThunk(
     async ({ lat, lng, radius }, { rejectWithValue })=>{
         try {
             const response = await axios.get(API_BASE_URL+'/api/offre/nearby', {
-                params: { latitude: lat, longitude: lng, radius : 500000}
+                params: { latitude: lat, longitude: lng, radius}
             });
             console.log({ lat, lng, radius })
             console.log("I GOT:::::::::::::::::::::: from "+API_BASE_URL+'/api/offre/nearby');

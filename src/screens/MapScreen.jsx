@@ -19,7 +19,7 @@ const MapScreen = () => {
     const insets = useSafeAreaInsets();
     const mapRef = useRef(null);
     const dispatch = useDispatch();
-    const { mapOffresList, isLoading, error } = useSelector((state) => state.offres);
+    const { mapOffresList, error } = useSelector((state) => state.offres);
     const [selectedOffre, setSelectedOffre] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
@@ -31,6 +31,8 @@ const MapScreen = () => {
         longitudeDelta: 0.0421,
     })
 
+    const [firstLoading,setFirstLoading] = useState(true);
+
     useEffect(() => {
         //clear map offers initially
         dispatch(clearMapOffres());
@@ -41,21 +43,15 @@ const MapScreen = () => {
         console.log("CONNECTING TO:", WEBSOCKETIO_URL);
 
         const socketConnection = io(WEBSOCKETIO_URL,  {
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            forceNew: true
+            transports: ['websocket'],
         });
-        
+
         setSocket(socketConnection);
 
 
         socketConnection.on('connect', () => {
             console.log('WebSocket connected successfully');
             console.log('Socket ID:', socketConnection.id);
-            console.log('Transport:', socketConnection.io?.engine?.transport?.name);
-            console.log('Protocol:', socketConnection.io?.engine?.protocol);
         });
 
         socketConnection.on('connect_error', (error) => {
@@ -113,6 +109,31 @@ const MapScreen = () => {
         showModal();
     };
 
+    const handleRegionChangeComplete = (newRegion) => {
+        if (
+            Math.abs(newRegion.latitude - region.latitude) > 0.0001 ||
+            Math.abs(newRegion.longitude - region.longitude) > 0.0001 ||
+            Math.abs(newRegion.latitudeDelta - region.latitudeDelta) > 0.0001 ||
+            Math.abs(newRegion.longitudeDelta - region.longitudeDelta) > 0.0001
+        ) {
+            setRegion(newRegion);
+            console.log("Region updated:", newRegion);
+            dispatch(getOffresNearby({
+            lat: newRegion.latitude,
+            lng: newRegion.longitude,
+            radius: calculateRadius(region)
+        }));
+        }
+    };
+
+    const calculateRadius = (region) => {
+        // Estimate the radius based on latitudeDelta
+        const earthRadius = 6371000; // in meters
+        const latDelta = region.latitudeDelta / 2;
+        const latDistance = earthRadius * (latDelta * (Math.PI / 180));
+        return latDistance;
+    };
+
     useEffect(() => {
         if (error) {
             showToast("error", "Error", error);
@@ -120,6 +141,7 @@ const MapScreen = () => {
     }, [error]);
 
     const requestPermission = async () => {
+        setFirstLoading(true)
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === 'granted') {
@@ -149,6 +171,7 @@ const MapScreen = () => {
                     text2: 'You need to allow location access.'
                 });
             }
+            setFirstLoading(false);
         } catch (error) {
             Toast.show({
                 type: 'error',
@@ -168,12 +191,12 @@ const MapScreen = () => {
             showProfile={false}
             showNotification={false}
             ></TopNavBar>
-            {!isLoading ? (
+            {!firstLoading ? (
                 <MapView
                     ref={mapRef}
                     style={styles.map}
                     region={region}
-                    onRegionChangeComplete={setRegion}
+                    onRegionChangeComplete={handleRegionChangeComplete}
                     showsUserLocation={true}
                     showsMyLocationButton={true}
                 >
