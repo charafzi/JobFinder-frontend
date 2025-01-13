@@ -24,8 +24,8 @@ const JobPreviewSearchPreview = ({ jobPoste }) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.contentContainer}>
-                <Text style={styles.jobTitle}>{jobPoste || "Product Designer"}</Text>
-                <Text style={styles.subtitle}>
+                <Text style={styles.jobTitle}>{jobPoste.position || "Product Designer"}</Text>
+                <Text style={styles.description}>
                     Google inc . California, USA
                 </Text>
             </View>
@@ -37,10 +37,10 @@ const JobPreviewSearchPreview = ({ jobPoste }) => {
                 ))}
             </View>
             <View style={styles.bottomContainer}>
-                <Text style={styles.timeAgo}>{jobPoste|| "24 minute ago"}</Text>
+                <Text style={styles.timeAgo}>{jobPoste.timeAgo|| "24 minute ago"}</Text>
                 <View style={styles.salarySection}>
                     <Text style={styles.salary}>
-                        20000 Dh
+                        {jobPoste.salary} Dh
                     </Text>
                     <Text style={styles.month}>
                         /Mo
@@ -126,12 +126,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 5,
-        marginRight: 10,
+        marginRight: 5,
         marginBottom: 10,
         alignSelf: "flex-start",
     },
     requirementText: {
-        fontSize: 12,
+        fontSize: 10,
+        fontWeight : "600",
         color: Color.text,
     },
     timeAgo:{

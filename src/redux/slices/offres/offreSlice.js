@@ -20,7 +20,7 @@ const initialState = {
     },
     page: 0,
     size: 10,
-    last: false
+    last: true
 }
 
 const OffreSlice = createSlice({
@@ -40,6 +40,9 @@ const OffreSlice = createSlice({
         },
         addOffreToMap : (state,action)=>{
             state.mapOffres.push(action.payload);
+        },
+        setKeyword : (state,action)=>{
+            state.params.keyword = action.payload;
         }
     },
     extraReducers: (builder)=>{
@@ -73,5 +76,5 @@ const OffreSlice = createSlice({
 
 })
 
-export const { clearMapOffres,clearSearchOffres,addOffreToMap } = OffreSlice.actions;
+export const { clearMapOffres,clearSearchOffres,addOffreToMap,setKeyword } = OffreSlice.actions;
 export default OffreSlice.reducer;

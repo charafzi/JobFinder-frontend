@@ -1,4 +1,4 @@
-import {Text, TouchableOpacity, View} from "react-native";
+import {ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
 import {MultipleSelectList, SelectList} from "react-native-dropdown-select-list";
 import React, {useCallback, useState} from "react";
@@ -6,8 +6,24 @@ import {StyleSheet} from "react-native";
 import {Color} from "../constants/Color";
 import Slider from "rn-range-slider";
 import LoadingIndicator from "../components/LoadingIndicator";
+import {useDispatch, useSelector} from "react-redux";
+import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
+import {useNavigation} from "@react-navigation/native";
 
 const FilterScreen = () =>{
+    const dispatch = useDispatch();
+    const navigation = useNavigation();
+    const {
+        keyword,
+        typeContrat,
+        salaryMin,
+        salaryMax,
+        page,
+        size,
+        sortBy,
+        sortDirection,
+    }
+    = useSelector((state)=>state.offres.params)
     const [selectedContractType, setSelectedContractType] = useState([]);
     const [sort,setSort] = useState("");
     const [SortDirection,setSortDirection] = useState("");
@@ -38,8 +54,35 @@ const FilterScreen = () =>{
     const RailSelected = () => <View style={styles.railSelected} />;
     const Notch = () => <View style={styles.notch} />;
 
+    const handleApplyFilter = () =>{
+        let sortByConverted = '';
+
+        switch (sort){
+            case 'Publication Date':
+                sortByConverted = 'PUB_DATE';
+                break;
+            case 'Salary':
+                sortByConverted= 'SALARY';
+                break;
+            default:
+                sortByConverted = 'PUB_DATE';
+        }
+         dispatch(searchOffres({
+             keyword,
+             typeContrat: selectedContractType.length ? selectedContractType : null,
+             salaryMin: low,
+             salaryMax: high,
+             page: 0,
+             size,
+             sortBy: sortByConverted,
+             sortDirection: SortDirection || "ASC",
+         }))
+        navigation.goBack();
+
+    }
+
     return(
-        <View>
+        <ScrollView>
             <TopNavBar
                 title={"Filter"}
                 showProfile={false}
@@ -98,12 +141,13 @@ const FilterScreen = () =>{
             </View>
             <TouchableOpacity
                 style={styles.applyButton}
+                onPress={handleApplyFilter}
             >
                 <View style={styles.applyButtonContent}>
                     <Text style={styles.applyButtonText}>APPLY NOW</Text>
                 </View>
             </TouchableOpacity>
-        </View>
+        </ScrollView>
     );
 
 }

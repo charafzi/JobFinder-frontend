@@ -39,29 +39,16 @@ const MapScreen = () => {
         // Connexion au serveur WebSocket
         console.log("CONNECTING TO:", WEBSOCKETIO_URL);
 
-        const socketConnection = io(WEBSOCKETIO_URL, {
-            transports: ['polling', 'websocket'],
-            upgrade: true,
-            rememberUpgrade: true,
-            forceNew: true,
+        const socketConnection = io(WEBSOCKETIO_URL,  {
+            transports: ['websocket', 'polling'],
             reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
             reconnectionAttempts: 5,
-            timeout: 20000,
-            autoConnect: true
+            reconnectionDelay: 1000,
+            forceNew: true
         });
         
         setSocket(socketConnection);
 
-        // Événements de débogage supplémentaires
-        socketConnection.io.on("upgrade", () => {
-            console.log("Transport upgraded to WebSocket");
-        });
-
-        socketConnection.io.on("upgrade_error", (err) => {
-            console.log("Upgrade failed:", err);
-        });
 
         socketConnection.on('connect', () => {
             console.log('WebSocket connected successfully');
@@ -78,22 +65,10 @@ const MapScreen = () => {
                 description: error.description,
                 transport: socketConnection.io?.engine?.transport?.name
             });
-            
-            // Tentative de reconnexion avec polling uniquement si websocket échoue
-            if (socketConnection.io?.engine?.transport?.name === 'websocket') {
-                console.log('Switching to polling...');
-                socketConnection.io.opts.transports = ['polling'];
-                socketConnection.connect();
-            }
         });
 
         socketConnection.on('disconnect', (reason) => {
             console.log('WebSocket disconnected:', reason);
-            if (reason === 'transport close' || reason === 'transport error') {
-                console.log('Attempting to reconnect with polling...');
-                socketConnection.io.opts.transports = ['polling'];
-                socketConnection.connect();
-            }
         });
 
         socketConnection.on('offre_created', (data) => {

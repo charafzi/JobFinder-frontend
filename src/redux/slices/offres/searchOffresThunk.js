@@ -6,7 +6,9 @@ export const searchOffres = createAsyncThunk(
     'offres/searchOffres',
     async (searchParams, { rejectWithValue })=>{
         try {
-            const response = await axios.get(API_BASE_URL+'/api/offre/search', searchParams);
+            console.log(searchParams)
+            const response = await axios.post(API_BASE_URL+'/api/offre/search', searchParams);
+            console.log(response.data)
             return response.data;
         }catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Error while retrieving search result.');

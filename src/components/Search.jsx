@@ -1,17 +1,33 @@
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
 import {useNavigation} from "@react-navigation/native";
+import {useDispatch, useSelector} from "react-redux";
+import {setKeyword} from "../redux/slices/offres/offreSlice";
 
 const Search = () => {
+  const dispatch = useDispatch();
+  const { params: { keyword } = {} } = useSelector((state) => state.offres);
   const [searchQuery, setSearchQuery] = useState("");
   const navigation = useNavigation();
 
+  useEffect(() => {
+    if (keyword?.trim() && keyword !== searchQuery) {
+      setSearchQuery(keyword);
+    }
+  }, [keyword]);
+
   const handleSearch = (query) => {
     setSearchQuery(query);
+    dispatch(searchOffres({keyword: query}));
   };
+
+  const handleFilterPress = ()=>{
+    dispatch(setKeyword(searchQuery));
+    navigation.navigate("Filter")
+  }
   return (
     <View style={styles.container}>
       <View style={[styles.searchInputContainer]}>
@@ -25,13 +41,12 @@ const Search = () => {
           placeholder="Search"
           placeholderTextColor={Color.placeholderText}
           autoCorrect={false}
-          onChangeText={(query) => handleSearch}
           style={{ flex: 1 }}
           clearButtonMode="always"
-          value={searchQuery}
+          onChangeText={handleSearch}
         />
       </View>
-      <TouchableOpacity style={styles.filterContainer} onPress={()=> {navigation.navigate("Filter")}}>
+      <TouchableOpacity style={styles.filterContainer} onPress={handleFilterPress}>
         <Ionicons name="filter-sharp" size={28} color="white" />
       </TouchableOpacity>
     </View>
