@@ -33,8 +33,7 @@ const TopNavBar = ({
                     onProfilePress = () => {},
                     showNotification = true,
                     onNotificationPress = () => {},
-                    showSearchBar = false,
-                   theme = "default"
+                    theme = "default"
                    }) => {
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
@@ -57,7 +56,7 @@ const TopNavBar = ({
            end={colorConfig.end}
            style={[styles.container,{paddingTop: insets.top}]}
        >
-           <View style={[styles.navBar,{height: showSearchBar ? 80 : 60}] }>
+           <View style={[styles.navBar] }>
                {showBackButton && (
                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
                        <AntDesign
@@ -94,9 +93,6 @@ const TopNavBar = ({
                    )}
                </View>
            </View>
-           <View style={styles.searchBar}>
-               {showSearchBar && <Search></Search>}
-           </View>
        </LinearGradient>
     );
 };
@@ -118,6 +114,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         backgroundColor: "transparent",
         width: '100%',
+        height: 80
     },
     backButton: {
     },
@@ -141,11 +138,6 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         marginLeft: 8,
-    },
-    searchBar: {
-        paddingHorizontal: 5,
-        marginTop: 10,
-        marginBottom: 20
     }
 })
 

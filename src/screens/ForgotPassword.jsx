@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Color } from "../constants/Color";
 import { Controller, useForm } from "react-hook-form";
 import { forgotpassword } from "../../assets";
-import { showToast } from "../utils/showToast";
+import showToast from "../utils/showToast";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { forgotPassword } from "../redux/actions/forgotPasswordAction";

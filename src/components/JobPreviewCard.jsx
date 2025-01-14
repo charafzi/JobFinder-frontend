@@ -30,7 +30,7 @@ const JobPreviewCard = ({ jobPoste }) => {
   );
 };
 
-export default JobPreviewCard;
+export default React.memo(JobPreviewCard);
 
 const styles = StyleSheet.create({
   jobCardContainer: {

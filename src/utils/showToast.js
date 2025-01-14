@@ -1,6 +1,7 @@
+import React from "react";
 import Toast from "react-native-toast-message";
 
-export const showToast = (type, text1, text2 = "") => {
+const showToast = (type, text1, text2 = "") => {
   Toast.show({
     type: type.toLowerCase(),
     text1,
@@ -11,3 +12,4 @@ export const showToast = (type, text1, text2 = "") => {
     topOffset: 40,
   });
 };
+export default showToast;
