@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Keyboard,
   SafeAreaView,
@@ -22,9 +22,12 @@ import {
   ExigencesModal,
   FormField,
 } from "../components";
+import { useScrollToTop } from "@react-navigation/native";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
+  const ref = useRef(null);
+  useScrollToTop(ref);
   const {
     control,
     handleSubmit,
@@ -170,7 +173,7 @@ const AddJob = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentStyle={{ paddingBottom: tabBarHeight }}>
+        <ScrollView ref={ref} contentStyle={{ paddingBottom: tabBarHeight }}>
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >

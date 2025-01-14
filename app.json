@@ -20,13 +20,23 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/splash-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "ma.jobfinder"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "a2de96b9-a244-42ee-81ab-e15bef86e0a9"
+      }
+    },
+    "owner": "ayouboss02"
   }
 }

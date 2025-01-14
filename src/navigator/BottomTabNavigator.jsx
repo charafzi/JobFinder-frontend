@@ -20,6 +20,8 @@ const BottomTabNavigation = () => {
         tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
         headerShown: false,
         tabBarShowLabel: false,
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: { position: 'absolute' },
       }}
     >
       <Tab.Screen

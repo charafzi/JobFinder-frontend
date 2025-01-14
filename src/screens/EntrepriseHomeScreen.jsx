@@ -8,24 +8,19 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useRef } from "react";
 import { Color } from "../constants/Color";
 import { profile, remotejobs } from "../../assets";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { JobCard } from "../components";
+import { EntrepriseHeader, JobCard } from "../components";
 import DATA from "../data/data";
+import { useScrollToTop } from "@react-navigation/native";
 
 const ListHeaderComponent = () => {
   return (
     <>
       {/* Header */}
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.name}>Welcome Back </Text>
-          <Text style={styles.name}>Google</Text>
-        </View>
-        <Image source={profile} style={{ marginLeft: 10 }} />
-      </View>
+      <EntrepriseHeader entrepriseLogo={profile} entrepriseName={"IBM"} />
       {/* Dashboard */}
       <View style={{ marginTop: 10 }}>
         <Text style={[styles.text, { paddingBottom: 10 }]}>Dashboard</Text>
@@ -82,6 +77,9 @@ const ListHeaderComponent = () => {
 
 const EntrepriseHomeScreen = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
+  const ref = useRef(null);
+
+  useScrollToTop(ref);
 
   const recentJobs = DATA.slice(0, 3);
   return (
@@ -90,6 +88,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
       {/* JobList */}
       <View style={{ marginTop: 10 }}>
         <FlatList
+          ref={ref}
           data={recentJobs}
           renderItem={({ item }) => <JobCard item={item} />}
           keyExtractor={(item) => item.id}
