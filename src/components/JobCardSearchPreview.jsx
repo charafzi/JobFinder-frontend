@@ -37,7 +37,9 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
     return (
         <View style={styles.jobCardContainer}>
             <View style={styles.topContainer}>
+{/*
                 <Text>ID = {jobPoste.id}</Text>
+*/}
                 <Image source={logo} style={styles.companyLogo} resizeMode="center" />
                 <TouchableOpacity onPress={handleViewPress}>
                     <AntDesign
