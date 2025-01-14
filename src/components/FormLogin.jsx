@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
-import { useNavigation } from "@react-navigation/native";
+import {CommonActions, useNavigation} from "@react-navigation/native";
 import { Color } from "../constants/Color";
 import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
@@ -19,7 +19,7 @@ const FormLogin = () => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error ,isCandidat} = useSelector((state) => state.auth);
 
   const {
     control,
@@ -29,7 +29,7 @@ const FormLogin = () => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      showToast("success", "Login Successful", "Welcome back !");
+      navigation.navigate('tabNavigator');
     }
   }, [isLoggedIn]);
 

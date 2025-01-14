@@ -12,4 +12,4 @@ const showToast = (type, text1, text2 = "") => {
     topOffset: 40,
   });
 };
-export default React.memo(showToast);
+export default showToast;
