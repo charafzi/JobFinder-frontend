@@ -10,4 +10,11 @@ export const Color = {
   success: "#5cb85c",
   error: "#eb6060",
   spinner: "#FF9228",
+  highLightText: "#FF9228",
+  boxBackground : "#E6E1FF",
+  icon : "#F9F9F9",
+  icon2 : "#FF9228",
+  icon3: "#38354c",
+  primary: "#130160",
+  secondary: "#FF9228"
 };
