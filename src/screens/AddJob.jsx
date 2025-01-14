@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Keyboard,
   SafeAreaView,
@@ -44,34 +44,76 @@ const AddJob = ({ navigation }) => {
     resolver: (data) => {
       const errors = {};
 
+      // Validation du titre
       if (!data.titre) {
         errors.titre = { message: "Le titre est requis" };
+      } else if (data.titre.trim().length < 5) {
+        errors.titre = {
+          message: "Le titre doit contenir au moins 5 caractères",
+        };
       }
 
+      // Validation de la description
       if (!data.description) {
         errors.description = { message: "La description est requise" };
+      } else if (data.description.trim().length < 10) {
+        errors.description = {
+          message: "La description doit contenir au moins 10 caractères",
+        };
       }
 
+      // Validation du poste
       if (!data.poste) {
         errors.poste = { message: "Le poste est requis" };
+      } else if (data.poste.trim().length < 3) {
+        errors.poste = {
+          message: "Le poste doit contenir au moins 3 caractères",
+        };
       }
 
+      // Validation du type de contrat
       if (!data.typeContrat) {
         errors.typeContrat = { message: "Le type de contrat est requis" };
+      } else if (
+        !["CDD", "CDI", "Stage", "Freelance"].includes(data.typeContrat)
+      ) {
+        errors.typeContrat = {
+          message:
+            "Le type de contrat doit être valide (CDD, CDI, Stage, Freelance)",
+        };
       }
 
+      // Validation du salaire
       if (!data.salaire) {
         errors.salaire = { message: "Le salaire est requis" };
       } else if (isNaN(data.salaire)) {
         errors.salaire = { message: "Le salaire doit être un nombre" };
+      } else if (parseFloat(data.salaire) <= 0) {
+        errors.salaire = {
+          message: "Le salaire doit être un montant positif supérieur à zéro",
+        };
       }
 
+      // Validation de la date limite
       if (!data.dateLimite) {
         errors.dateLimite = { message: "La date limite est requise" };
+      } else if (isNaN(Date.parse(data.dateLimite))) {
+        errors.dateLimite = {
+          message: "La date limite doit être une date valide",
+        };
+      } else if (new Date(data.dateLimite) <= new Date()) {
+        errors.dateLimite = {
+          message: "La date limite doit être une date future",
+        };
       }
 
+      // Validation des exigences
       if (!data.exigences || data.exigences.length === 0) {
         errors.exigences = { message: "Au moins une exigence est requise" };
+      } else if (data.exigences.some((exigence) => exigence.trim() === "")) {
+        errors.exigences = {
+          message: "Chaque exigence doit contenir du texte valide",
+        };
       }
 
       return {
@@ -96,29 +138,32 @@ const AddJob = ({ navigation }) => {
     console.log("Form Errors:", errors);
   };
 
-  const renderFormField = (name, placeholder, props = {}) => (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field: { onChange, onBlur, value } }) => (
-        <FormField
-          label={name.charAt(0).toUpperCase() + name.slice(1)}
-          value={value}
-          isEditing={editingField === name}
-          onEdit={() => setEditingField(editingField === name ? null : name)}
-          error={errors[name]}
-        >
-          <TextInput
-            style={styles.input}
-            placeholder={placeholder}
-            onBlur={onBlur}
-            onChangeText={onChange}
+  const renderFormField = useCallback(
+    (name, placeholder, props = {}) => (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <FormField
+            label={name.charAt(0).toUpperCase() + name.slice(1)}
             value={value}
-            {...props}
-          />
-        </FormField>
-      )}
-    />
+            isEditing={editingField === name}
+            onEdit={() => setEditingField(editingField === name ? null : name)}
+            error={errors[name]}
+          >
+            <TextInput
+              style={styles.input}
+              placeholder={placeholder}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              {...props}
+            />
+          </FormField>
+        )}
+      />
+    ),
+    [control, editingField, errors],
   );
 
   return (
@@ -249,24 +294,47 @@ const AddJob = ({ navigation }) => {
 
       <ExigencesModal
         showModal={showExigencesModal}
-        handleCloseModal={() => setShowExigencesModal(false)}
-        currentExigences={getValues("exigences")}
-        handleSetExigences={(newExigences) =>
-          setValue("exigences", newExigences)
-        }
+        handleCloseModal={useCallback(() => {
+          setShowExigencesModal(false);
+        }, [])}
+        currentExigences={useCallback(() => {
+          getValues("exigences");
+        }, [getValues])}
+        handleSetExigences={useCallback(
+          (newExigences) => {
+            setValue("exigences", newExigences);
+          },
+          [setValue],
+        )}
+        control={control}
       />
 
       <ContractTypeModal
-        handleCloseModal={() => setShowContractModal(false)}
+        handleCloseModal={useCallback(() => {
+          setShowContractModal(false);
+        }, [setShowContractModal])}
         showModal={showContractModal}
-        handleSetValue={(option) => setValue("typeContrat", option)}
+        handleSetValue={useCallback(
+          (option) => {
+            setValue("typeContrat", option);
+          },
+          [setValue],
+        )}
+        control={control}
       />
 
       <DateModal
-        handleCloseModal={() => setShowDatePicker(false)}
+        handleCloseModal={useCallback(() => {
+          setShowDatePicker(false);
+        }, [setShowDatePicker])}
         showDatePicker={showDatePicker}
         date={date}
-        handleSetDate={(date) => setDate(date)}
+        handleSetDate={useCallback(
+          (date) => {
+            setDate(date);
+          },
+          [setDate],
+        )}
         control={control}
       />
     </SafeAreaView>

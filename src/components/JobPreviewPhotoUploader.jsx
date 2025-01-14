@@ -2,6 +2,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Color } from "../constants/Color";
+import React from "react";
 
 const JobPreviewPhotoUploader = ({ visible, onClose }) => {
   if (!visible) return null;
@@ -22,7 +23,7 @@ const JobPreviewPhotoUploader = ({ visible, onClose }) => {
   );
 };
 
-export default JobPreviewPhotoUploader;
+export default React.memo(JobPreviewPhotoUploader);
 
 const styles = StyleSheet.create({
   addPhotoContainer: {

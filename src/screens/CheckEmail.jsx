@@ -14,10 +14,10 @@ import { Color } from "../constants/Color";
 import { OtpInput } from "react-native-otp-entry";
 import { Controller, useForm } from "react-hook-form";
 import { checkyouremail } from "../../assets";
-import { showToast } from "../utils/showToast";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { checkEmail } from "../redux/actions/checkMailAction";
+import showToast from "../utils/showToast";
 
 const CheckEmail = ({ navigation, route }) => {
   const { isLoading, otpIsValid, error } = useSelector(

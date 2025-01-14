@@ -6,7 +6,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Color } from "../constants/Color";
 import {
   JobPreviewCard,
@@ -38,11 +38,17 @@ const JobPreview = ({ route, navigation }) => {
           <JobPreviewCard jobPoste={jobPoste} />
           <JobPreviewPhotoUploader
             visible={showAddPhotos}
-            onClose={() => setShowAddPhotos(false)}
+            onClose={useCallback(() => {
+              setShowAddPhotos(false);
+            }, [setShowAddPhotos])}
           />
         </View>
       </TouchableWithoutFeedback>
-      <JobPreviewFooter onPhotoPress={() => setShowAddPhotos(true)} />
+      <JobPreviewFooter
+        onPhotoPress={useCallback(() => {
+          setShowAddPhotos(true);
+        }, [setShowAddPhotos])}
+      />
     </SafeAreaView>
   );
 };

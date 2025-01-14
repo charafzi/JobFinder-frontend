@@ -10,7 +10,7 @@ import { useForm, Controller } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
 import axiosInstance from "../config/axiosConfig";
-import { showToast } from "../utils/showToast";
+import showToast from "../utils/showToast";
 
 const RegisterCandidat = () => {
   const [securePassword, setSecurePassword] = useState(true);

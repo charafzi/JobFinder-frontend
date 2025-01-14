@@ -14,3 +14,5 @@ export { default as JobPreviewDescription } from "./JobPreviewDescription";
 export { default as JobPreviewFooter } from "./JobPreviewFooter";
 export { default as JobPreviewHeader } from "./JobPreviewHeader";
 export { default as JobPreviewPhotoUploader } from "./JobPreviewHeader";
+export { default as JobCard } from "./JobCard";
+export { default as EntrepriseHeader } from "./EntrepriseHeader";

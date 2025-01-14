@@ -11,31 +11,31 @@ import {
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
+import { Controller } from "react-hook-form";
 
 const ExigencesModal = ({
   showModal,
   handleCloseModal,
-  currentExigences,
+  control,
   handleSetExigences,
 }) => {
   const [newExigence, setNewExigence] = useState("");
-  const [exigences, setExigences] = useState(currentExigences);
 
-  const addExigence = () => {
+  const addExigence = (field) => {
     const trimmedExigence = newExigence.trim();
     if (trimmedExigence) {
-      setExigences([...exigences, trimmedExigence]);
+      field.onChange([...field.value, trimmedExigence]);
       setNewExigence("");
     }
   };
 
-  const removeExigence = (index) => {
-    const newExigences = exigences.filter((_, i) => i !== index);
-    setExigences(newExigences);
+  const removeExigence = (index, field) => {
+    const newExigences = field.value.filter((_, i) => i !== index);
+    field.onChange(newExigences);
   };
 
-  const handleSubmit = () => {
-    handleSetExigences(exigences);
+  const handleSubmit = (field) => {
+    handleSetExigences(field.value);
     handleCloseModal();
   };
 
@@ -51,34 +51,53 @@ const ExigencesModal = ({
             <Feather name="x" size={24} color={Color.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Add Exigences</Text>
-          <TouchableOpacity onPress={handleSubmit}>
-            <Text style={styles.submitText}>Done</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={newExigence}
-            placeholder="Enter exigence"
-            onChangeText={setNewExigence}
-            onSubmitEditing={addExigence}
-          />
-          <TouchableOpacity onPress={addExigence} style={styles.addButton}>
-            <Feather name="plus" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={exigences}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
-            <View style={styles.exigenceItem}>
-              <Text style={styles.exigenceText}>{item}</Text>
-              <TouchableOpacity onPress={() => removeExigence(index)}>
-                <Feather name="trash-2" size={20} color={Color.link} />
+          <Controller
+            control={control}
+            name="exigences"
+            render={({ field }) => (
+              <TouchableOpacity onPress={() => handleSubmit(field)}>
+                <Text style={styles.submitText}>Done</Text>
               </TouchableOpacity>
-            </View>
+            )}
+          />
+        </View>
+
+        <Controller
+          control={control}
+          name="exigences"
+          render={({ field }) => (
+            <>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={newExigence}
+                  placeholder="Enter exigence"
+                  onChangeText={setNewExigence}
+                  onSubmitEditing={() => addExigence(field)}
+                />
+                <TouchableOpacity
+                  onPress={() => addExigence(field)}
+                  style={styles.addButton}
+                >
+                  <Feather name="plus" size={24} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={field.value || []}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                  <View style={styles.exigenceItem}>
+                    <Text style={styles.exigenceText}>{item}</Text>
+                    <TouchableOpacity
+                      onPress={() => removeExigence(index, field)}
+                    >
+                      <Feather name="trash-2" size={20} color={Color.link} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            </>
           )}
         />
       </SafeAreaView>
@@ -86,7 +105,7 @@ const ExigencesModal = ({
   );
 };
 
-export default ExigencesModal;
+export default React.memo(ExigencesModal);
 
 const styles = StyleSheet.create({
   container: {
