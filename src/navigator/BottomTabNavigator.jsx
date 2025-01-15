@@ -27,7 +27,7 @@ const EntrepriseTabNavigation = () =>{
         >
             <Tab.Screen
                 name="home"
-                component={SearchScreen}
+                component={EntrepriseHomeScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="home-outline" size={size} color={color} />
@@ -88,7 +88,7 @@ const CandidatTabNavigation = () =>{
         >
             <Tab.Screen
                 name="home"
-                component={EntrepriseHomeScreen}
+                component={SearchScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="home-outline" size={size} color={color} />

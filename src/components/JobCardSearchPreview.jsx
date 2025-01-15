@@ -3,6 +3,8 @@ import { logo } from "../../assets";
 import { Color } from "../constants/Color";
 import React, {useRef, useCallback, useMemo} from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import {ConfigFile} from "@babel/core/src/config/files/index-browser";
+import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
 
 const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -17,8 +19,8 @@ const formatDate = (dateString) => {
 };
 
 const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
-    const handleViewPress = useCallback(() => {
-        console.log("Icon press", jobPoste.id);
+    const handleJobOfferPress = useCallback(() => {
+        console.log("press", jobPoste.id);
     }, [jobPoste.id]);
 
     const requirements = useMemo(() => {
@@ -35,32 +37,26 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
     console.log("RENDRED ID="+jobPoste.id);
 
     return (
-        <View style={styles.jobCardContainer}>
+        <TouchableOpacity style={styles.cardContainer}
+        onPress={handleJobOfferPress}
+        >
             <View style={styles.topContainer}>
-{/*
-                <Text>ID = {jobPoste.id}</Text>
-*/}
-                <Image source={logo} style={styles.companyLogo} resizeMode="center" />
-                <TouchableOpacity onPress={handleViewPress}>
-                    <AntDesign
-                        name="eye"
-                        color={Color.icon3}
-                        size={24}
-                        style={styles.icon}
-                    />
-                </TouchableOpacity>
+                <View style={styles.row}>
+                    <Image source={{ uri: ENTREPRISE_IMAGE_URL+jobPoste.company.id }} style={styles.entrepriseLogo} />
+                    <View style={{ marginLeft: 20 }}>
+                        <Text style={styles.title}>{jobPoste.position}</Text>
+                        <Text style={styles.subtitle}>
+                            <Text style={styles.companyName}>{jobPoste.company.name}</Text> . {jobPoste.company.adress.adress} . {jobPoste.company.adress.city}
+                        </Text>
+                    </View>
+                </View>
             </View>
-            <View style={styles.contentContainer}>
-                <Text style={styles.jobTitle}>{jobPoste.position || "Product Designer"}</Text>
-                <Text style={styles.description}>
-                    {jobPoste.description}
-                </Text>
+            <View>
+                <Text style={styles.requirementTitle}>Requirements :</Text>
+                <View style={styles.requirementsContainer}>
+                    {requirements}
+                </View>
             </View>
-
-            <View style={styles.requirementsContainer}>
-                {requirements}
-            </View>
-
             <View style={styles.detailsContainer}>
                 <View style={styles.contractTypeBox}>
                     <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
@@ -85,7 +81,7 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
                     </Text>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }, (prevProps, nextProps) => {
     return prevProps.jobPoste.id === nextProps.jobPoste.id
@@ -94,6 +90,167 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
 export default JobPreviewSearchPreview;
 
 const styles = StyleSheet.create({
+    cardContainer: {
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 20,
+        marginVertical: 15,
+        marginHorizontal: 15,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    row: { flexDirection: "row", alignItems: "center", marginVertical: 10 },
+    entrepriseLogo: {
+        backgroundColor: "#D6CDFE",
+        borderRadius: 30,
+        width: 50,
+        height: 50,
+    },
+    title: {
+        color: Color.text,
+        fontWeight: "bold",
+        fontSize: 16,
+    },
+    subtitle: { color: Color.subtitle, fontSize: 12 },
+    jobRequires: {
+        backgroundColor: "#f0f0f0",
+        borderRadius: 10,
+        padding: 10,
+        marginRight: 5,
+        fontSize: 12,
+    },
+    viewMore: {
+        color: Color.subtitle,
+        fontSize: 12,
+        fontWeight: "bold",
+        marginLeft: 5,
+    },
+    postedTime: {
+        fontSize: 12,
+        color: "#888",
+        marginLeft: "auto",
+    },
+    detailsContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginVertical: 10,
+    },
+    dateContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 2,
+    },
+    publicationDateBox: {
+        backgroundColor: Color.green,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
+    deadlineDateBox: {
+        backgroundColor: Color.red,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
+    contractTypeBox: {
+        minWidth: 50,
+        height: 25,
+        backgroundColor: Color.secondary,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+    },
+    requirementText: {
+        fontSize: 10,
+        fontWeight : "600",
+        color: Color.text,
+    },
+    requirementTitle:{
+        marginTop: 10,
+        fontSize: 10,
+        fontWeight : "bold",
+        color: Color.text,
+    },
+    timeAgo:{
+        fontSize: 12,
+        color: "grey",
+        paddingTop: 2
+    },
+    requirementsContainer: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginTop: 15,
+        marginBottom: 10
+    },
+    requirementBox: {
+        backgroundColor: Color.boxBackground,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        marginBottom: 10,
+        alignSelf: "flex-start",
+    },
+    salarySection: {
+        flexDirection: "row",
+        justifyContent: "space-evenly"
+    },
+    salary:{
+        fontSize: 14,
+        fontWeight: "bold",
+        color: Color.text,
+    },
+    month :{
+        fontSize: 12,
+        color: "grey",
+        fontWeight: "bold",
+        paddingTop: 2
+    },
+    dateText:{
+        fontSize: 10,
+        fontWeight: "600",
+        color : Color.background
+    },
+    contractTypeText:{
+        fontSize: 10,
+        fontWeight: "bold",
+        color : Color.background
+    },
+    bottomContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        width: '100%',
+        marginTop: 10,
+        marginBottom: 5
+    },
+    topContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        width: '100%'
+    },
+    companyName:{
+        fontSize: 13,
+        fontWeight : "bold",
+        color: Color.text
+    }
+});
+
+
+/*const styles = StyleSheet.create({
     jobCardContainer: {
         backgroundColor: "white",
         borderRadius: 20,
@@ -242,5 +399,5 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "bold",
         color : Color.background
-    }
-});
+    },
+});*/

@@ -8,6 +8,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {Color} from "../constants/Color";
 import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Entypo from "@expo/vector-icons/Entypo";
 
 const SearchScreen = ()=>{
     const dispatch = useDispatch();
@@ -42,10 +43,6 @@ const SearchScreen = ()=>{
     };
 
     useEffect(() => {
-        console.warn("Is loading")
-    }, [isLoading]);
-
-    useEffect(() => {
         if(params.page === 0){
             currentScrollPosition.current=0;
         }
@@ -76,9 +73,9 @@ const SearchScreen = ()=>{
                     size={"large"}
                     ></LoadingIndicator>
                 ) : (
-                    <View style={styles.noMoreResultContainer}>
-                        <AntDesign
-                            name="inbox"
+                    <View style={styles.footerContainer}>
+                        <Entypo
+                            name="box"
                             size={25}
                             color={Color.placeholderText}
                         />
@@ -203,6 +200,12 @@ const styles = StyleSheet.create({
     loadingContainer:{
         flex : 1,
         justifyContent : "center"
+    },
+    footerContainer : {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
     }
 })
 
