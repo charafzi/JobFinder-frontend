@@ -1,9 +1,9 @@
 import {
   Keyboard,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import React, { useCallback, useState } from "react";
@@ -15,16 +15,64 @@ import {
   JobPreviewHeader,
   JobPreviewPhotoUploader,
 } from "../components";
+import axios from "axios";
+import { API_BASE_URL } from "../config/axiosConfig"; 
+import showToast from "../utils/showToast"; 
+import dayjs from "dayjs";
+import { useSelector, useDispatch } from "react-redux";
+import { createEntrepriseOffre } from "../redux/slices/entrepriseOffres/createEntrepriseOffreThunk";
 
 const JobPreview = ({ route, navigation }) => {
-  const [showAddPhotos, setShowAddPhotos] = useState(true);
-  const { entrepriseName, entrepriseVille, titre, jobDescription, jobPoste } =
-    route?.params || {};
+  const dispatch = useDispatch();
+  const { id: companyId, name: entrepriseName } = useSelector((state) => state.auth);
+  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
+  const [showAddPhotos, setShowAddPhotos] = useState(false);
+  const {
+    titre,
+    description,
+    poste,
+    exigences,
+    typeContrat,
+    salaire,
+    dateLimite,
+    city,
+    address,
+    longitude,
+    latitude,
+  } = route.params || {};
+
+  const onSubmit = async () => {
+      const payload = {
+        title: titre, 
+        description: description,
+        position: poste, 
+        requirements: exigences || [], 
+        contractType: typeContrat, 
+        salary: parseFloat(salaire), 
+        deadlineDate: dayjs(dateLimite).format("YYYY-MM-DDTHH:mm:ss"), 
+        companyId: companyId, 
+        adress: {
+          city: city, 
+          adress: address,
+          longitude: parseFloat(longitude),
+          latitude: parseFloat(latitude),
+        },
+      };
+
+      dispatch(createEntrepriseOffre(payload))
+      .unwrap()
+      .then(() => {
+        navigation.navigate("tabNavigator", { screen: "home" });
+      })
+      .catch((error) => {
+        console.error("Error creating job:", error);
+      });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ScrollView onPress={Keyboard.dismiss}>
         <View style={{ padding: 15 }}>
           <JobPreviewHeader
             navigation={navigation}
@@ -33,9 +81,9 @@ const JobPreview = ({ route, navigation }) => {
           />
           <JobPreviewDescription
             titre={titre}
-            jobDescription={jobDescription}
+            jobDescription={description}
           />
-          <JobPreviewCard jobPoste={jobPoste} />
+          <JobPreviewCard jobPoste={poste} />
           <JobPreviewPhotoUploader
             visible={showAddPhotos}
             onClose={useCallback(() => {
@@ -43,11 +91,12 @@ const JobPreview = ({ route, navigation }) => {
             }, [setShowAddPhotos])}
           />
         </View>
-      </TouchableWithoutFeedback>
+      </ScrollView>
       <JobPreviewFooter
         onPhotoPress={useCallback(() => {
           setShowAddPhotos(true);
         }, [setShowAddPhotos])}
+        onSubmit={onSubmit}
       />
     </SafeAreaView>
   );

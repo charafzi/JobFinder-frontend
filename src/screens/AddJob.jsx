@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Keyboard,
   SafeAreaView,
@@ -22,9 +22,12 @@ import {
   ExigencesModal,
   FormField,
 } from "../components";
+import { useScrollToTop } from "@react-navigation/native";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
+  const ref = useRef(null);
+  useScrollToTop(ref);
   const {
     control,
     handleSubmit,
@@ -40,6 +43,10 @@ const AddJob = ({ navigation }) => {
       typeContrat: "",
       salaire: "",
       dateLimite: "",
+      address: "", // Adresse complète
+      city: "", // Ville
+      longitude: "", // Longitude
+      latitude: "", // Latitude
     },
     resolver: (data) => {
       const errors = {};
@@ -116,6 +123,25 @@ const AddJob = ({ navigation }) => {
         };
       }
 
+      // Validation de l'adresse
+      if (!data.address) {
+        errors.address = { message: "L'adresse est requise" };
+      } else if (data.address.trim().length < 5) {
+        errors.address = {
+          message: "L'adresse doit contenir au moins 5 caractères",
+        };
+      }
+
+      if (!data.city) {
+        errors.city = { message: "La ville est requise" };
+      }
+      if (!data.longitude) {
+        errors.longitude = { message: "La longitude est requise" };
+      }
+      if (!data.latitude) {
+        errors.latitude = { message: "La latitude est requise" };
+      }
+
       return {
         values: data,
         errors: Object.keys(errors).length > 0 ? errors : {},
@@ -170,7 +196,7 @@ const AddJob = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentStyle={{ paddingBottom: tabBarHeight }}>
+        <ScrollView ref={ref} contentStyle={{ paddingBottom: tabBarHeight }}>
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
@@ -193,6 +219,10 @@ const AddJob = ({ navigation }) => {
             {renderFormField("titre", "Enter titre")}
             {renderFormField("description", "Enter description")}
             {renderFormField("poste", "Enter poste")}
+            {renderFormField("city", "Enter city")}
+            {renderFormField("address", "Enter address")}
+            {renderFormField("longitude", "Enter longitude", { keyboardType: "numeric" })}
+            {renderFormField("latitude", "Enter latitude", { keyboardType: "numeric" })}
 
             <Controller
               control={control}
