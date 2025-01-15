@@ -1,4 +1,4 @@
-import {FlatList, Text, View} from "react-native";
+import {FlatList, Image, Text, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
 import JobCardSearchPreview from "../components/JobCardSearchPreview";
 import {LoadingIndicator, Search} from "../components";
@@ -41,6 +41,9 @@ const SearchScreen = ()=>{
         currentScrollPosition.current = event.nativeEvent.contentOffset.y;
     };
 
+    useEffect(() => {
+        console.warn("Is loading")
+    }, [isLoading]);
 
     useEffect(() => {
         if(params.page === 0){
@@ -65,6 +68,7 @@ const SearchScreen = ()=>{
     ), []);
 
     const renderFooter = () => {
+        if (searchOffresList.length === 0) return null;
         return (
             <View style={styles.footerContainer}>
                 {isLoading ? (
@@ -85,6 +89,20 @@ const SearchScreen = ()=>{
         );
     };
 
+    const renderEmpty = () =>{
+        return(
+            <View style={styles.noMoreResultContainer}>
+                <Image
+                    style={styles.noResultImage}
+                    source={require('../../assets/no_result.png')}
+                >
+                </Image>
+                <Text style={styles.noResult}>No results found</Text>
+                <Text style={styles.noResultDesc}>The search could not be found, please check spelling or write another word.</Text>
+            </View>
+        )
+    }
+
     return (
         <View style={styles.mainContainer}>
             <TopNavBar
@@ -95,7 +113,10 @@ const SearchScreen = ()=>{
                 <Search></Search>
             </View>
 
-            {isLoading && <LoadingIndicator></LoadingIndicator>}
+            {isLoading &&
+                <View style={styles.loadingContainer}>
+                <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
+            </View>}
 
             {!isLoading && <FlatList
                 data={searchOffresList}
@@ -112,6 +133,7 @@ const SearchScreen = ()=>{
                 removeClippedSubviews={true}
                 updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
+                ListEmptyComponent={renderEmpty}
             />}
         </View>
     )
@@ -130,12 +152,13 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     noResultContainer : {
-        marginVertical: 160,
+        marginVertical: '50%',
         flex: 1,
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        marginHorizontal: '50%'
     },
     noResult :{
         fontSize: 16,
@@ -164,8 +187,9 @@ const styles = StyleSheet.create({
     noMoreResultContainer:{
       display: "flex",
       alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "center"
+      flexDirection: "column",
+      justifyContent: "center",
+        marginVertical : '50%'
     },
     noMoreResult:{
         fontSize: 12,
@@ -175,6 +199,10 @@ const styles = StyleSheet.create({
     },
     footerList: {
         paddingBottom: 20
+    },
+    loadingContainer:{
+        flex : 1,
+        justifyContent : "center"
     }
 })
 
