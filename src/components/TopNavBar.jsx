@@ -29,6 +29,7 @@ const NAVBAR_THEMES = {
 const TopNavBar = ({
                     title = "",
                     showBackButton = true,
+                    showWelcome = false,
                     onBackPress,
                     showProfile = true,
                     profilePicUri = "",
@@ -37,7 +38,7 @@ const TopNavBar = ({
                     onNotificationPress = () => {},
                     theme = "default"
                    }) => {
-    const {isCandidat, id, email} = useSelector((state)=> state.auth);
+    const {isCandidat, id, email,entreprise} = useSelector((state)=> state.auth);
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
@@ -70,6 +71,13 @@ const TopNavBar = ({
                        />
                    </TouchableOpacity>
                )}
+               {showWelcome &&
+                   <View style={styles.headerContainer}>
+                       <Text style={styles.name}>Welcome Back</Text>
+                       <Text style={[styles.name, {color: '#BEAFFE'}]}>{entreprise.name}</Text>
+                       <Text style={styles.name}>!</Text>
+                   </View>
+               }
                <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
 
                <View style={styles.rightIcons}>
@@ -141,7 +149,19 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         marginLeft: 8,
-    }
+    },
+    headerContainer: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 5
+    },
+    name: {
+        fontSize: 18,
+        fontWeight: "bold",
+        textAlign: "left",
+        color: Color.background,
+    },
 })
 
 export default TopNavBar;

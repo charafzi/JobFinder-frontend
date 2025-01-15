@@ -14,18 +14,11 @@ import { profile, remotejobs } from "../../assets";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { JobCard } from "../components";
 import DATA from "../data/data";
+import TopNavBar from "../components/TopNavBar";
 
 const ListHeaderComponent = () => {
   return (
     <>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.name}>Welcome Back </Text>
-          <Text style={styles.name}>Google</Text>
-        </View>
-        <Image source={profile} style={{ marginLeft: 10 }} />
-      </View>
       {/* Dashboard */}
       <View style={{ marginTop: 10 }}>
         <Text style={[styles.text, { paddingBottom: 10 }]}>Dashboard</Text>
@@ -85,10 +78,16 @@ const EntrepriseHomeScreen = ({ navigation }) => {
 
   const recentJobs = DATA.slice(0, 3);
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.mainContainer}>
+        <TopNavBar
+        theme={"purple"}
+        showBackButton={false}
+        showNotification={false}
+        showWelcome={true}
+        ></TopNavBar>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       {/* JobList */}
-      <View style={{ marginTop: 10 }}>
+      <View style={styles.container}>
         <FlatList
           data={recentJobs}
           renderItem={({ item }) => <JobCard item={item} />}
@@ -116,22 +115,13 @@ const EntrepriseHomeScreen = ({ navigation }) => {
 export default EntrepriseHomeScreen;
 
 const styles = StyleSheet.create({
+    mainContainer: {
+        flex : 1
+    },
   container: {
     flex: 1,
     backgroundColor: Color.background,
     padding: 20,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 20,
-    marginBottom: 20,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "left",
-    color: Color.text,
   },
   text: {
     color: Color.text,
