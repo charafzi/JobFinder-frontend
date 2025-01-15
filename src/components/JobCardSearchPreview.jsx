@@ -1,22 +1,8 @@
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
-import { logo } from "../../assets";
 import { Color } from "../constants/Color";
-import React, {useRef, useCallback, useMemo} from "react";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import {ConfigFile} from "@babel/core/src/config/files/index-browser";
+import React, {useCallback, useMemo} from "react";
 import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
-
-const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-};
+import formatDate from "../utils/formatDate";
 
 const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
     const handleJobOfferPress = useCallback(() => {

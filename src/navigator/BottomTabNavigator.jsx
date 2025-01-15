@@ -11,6 +11,7 @@ import {useSelector} from "react-redux";
 import SearchScreen from "../screens/SearchScreen";
 import FilterScreen from "../screens/FilterScreen";
 import MapScreen from "../screens/MapScreen";
+import {Applications} from "../screens";
 
 const Tab = createBottomTabNavigator();
 
@@ -106,8 +107,8 @@ const CandidatTabNavigation = () =>{
                 }}
             />
             <Tab.Screen
-                name="entrepriseProjects"
-                component={EntrepriseProjects}
+                name="applications"
+                component={Applications}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="briefcase-outline" size={size} color={color} />

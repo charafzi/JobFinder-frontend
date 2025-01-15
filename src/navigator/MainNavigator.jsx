@@ -9,7 +9,8 @@ import {
   NewPassword,
   Register,
   ResetSuccessfully,
-  Welcome, Map, Search, Filter
+  Welcome, Map, Search, Filter,
+    Applications
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 
@@ -31,6 +32,7 @@ const StackNavigator = () => {
         <Stack.Screen name={"Search"} component={Search}></Stack.Screen>
         <Stack.Screen name={"Filter"} component={Filter}></Stack.Screen>
       <Stack.Screen name="jobPreview" component={JobPreview} />
+        <Stack.Screen name="applications" component={Applications}></Stack.Screen>
     </Stack.Navigator>
   );
 };
