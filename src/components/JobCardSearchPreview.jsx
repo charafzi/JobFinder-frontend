@@ -58,15 +58,24 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
                 </View>
             </View>
             <View style={styles.detailsContainer}>
-                <View style={styles.contractTypeBox}>
-                    <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
+                <View>
+                    <Text style={styles.label}>Contrat Type</Text>
+                    <View style={styles.contractTypeBox}>
+                        <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
+                    </View>
                 </View>
                 <View style={styles.dateContainer}>
-                    <View style={styles.publicationDateBox}>
-                        <Text style={styles.dateText}>{formattedPublicationDate}</Text>
+                    <View>
+                        <Text style={styles.label}>Publication Date</Text>
+                        <View style={styles.publicationDateBox}>
+                            <Text style={styles.dateText}>{formattedPublicationDate}</Text>
+                        </View>
                     </View>
-                    <View style={styles.deadlineDateBox}>
-                        <Text style={styles.dateText}>{formattedDeadlineDate}</Text>
+                    <View>
+                        <Text style={styles.label}>Deadline Date</Text>
+                        <View style={styles.deadlineDateBox}>
+                            <Text style={styles.dateText}>{formattedDeadlineDate}</Text>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -161,7 +170,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     contractTypeBox: {
-        minWidth: 50,
+        minWidth: 80,
         height: 25,
         backgroundColor: Color.secondary,
         justifyContent: "center",
@@ -246,158 +255,13 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight : "bold",
         color: Color.text
+    },
+    label: {
+        fontSize: 10,
+        color: Color.text,
+        marginLeft: -5,
+        fontWeight: "500",
+        marginBottom: 5,
+        textAlign: "center"
     }
 });
-
-
-/*const styles = StyleSheet.create({
-    jobCardContainer: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        paddingVertical: 15,
-        paddingHorizontal: 25,
-        marginVertical: 15,
-        margin: 20,
-    },
-    topContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        width: '100%',
-        marginTop: 10,
-    },
-    bottomContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        width: '100%',
-        marginTop: 10,
-        marginBottom: 5
-    },
-    contentContainer: {
-        marginTop: 10,
-        marginBottom: 10
-    },
-    jobTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: Color.text,
-        marginBottom: 5,
-    },
-    subtitle: {
-        color: Color.subtitle,
-        fontSize: 14,
-    },
-    companyLogo: {
-        backgroundColor: "#C4C4C4",
-        borderRadius: 100,
-        width: 70,
-        height: 70,
-    },
-    icon: {
-        padding: 5,
-        backgroundColor: Color.background,
-        borderRadius: 100
-    },
-    button: {
-        borderRadius: 15,
-        paddingHorizontal: 40,
-        paddingVertical: 15,
-        marginTop: 20,
-        alignSelf: "center",
-        backgroundColor: Color.lightGrey,
-    },
-    buttonText: {
-        color: Color.subtitle,
-        textAlign: "center",
-        fontSize: 14,
-    },
-    requirementsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        marginTop: 15,
-        marginBottom: 10
-    },
-    requirementBox: {
-        backgroundColor: Color.boxBackground,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-        marginBottom: 10,
-        alignSelf: "flex-start",
-    },
-    detailsContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginVertical: 10,
-    },
-    dateContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 2,
-    },
-    publicationDateBox: {
-        backgroundColor: Color.green,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-        marginBottom: 10,
-    },
-    deadlineDateBox: {
-        backgroundColor: Color.red,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-        marginBottom: 10,
-    },
-    contractTypeBox: {
-        minWidth: 50,
-        height: 25,
-        backgroundColor: Color.secondary,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-        marginBottom: 10,
-    },
-    requirementText: {
-        fontSize: 10,
-        fontWeight : "600",
-        color: Color.text,
-    },
-    timeAgo:{
-        fontSize: 12,
-        color: "grey",
-        paddingTop: 2
-    },
-    salarySection: {
-      flexDirection: "row",
-      justifyContent: "space-evenly"
-    },
-    salary:{
-        fontSize: 16,
-        fontWeight: "bold"
-    },
-    month :{
-        fontSize: 14,
-        color: "grey",
-        fontWeight: "bold",
-        paddingTop: 2
-    },
-    dateText:{
-        fontSize: 10,
-        fontWeight: "600",
-        color : Color.background
-    },
-    contractTypeText:{
-        fontSize: 10,
-        fontWeight: "bold",
-        color : Color.background
-    },
-});*/

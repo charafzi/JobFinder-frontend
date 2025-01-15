@@ -1,14 +1,12 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import {View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput} from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {Search} from "./index";
 import { LinearGradient } from "expo-linear-gradient";
 import {useNavigation} from "@react-navigation/native";
 import {CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
 import {useSelector} from "react-redux";
-import Entypo from "@expo/vector-icons/Entypo";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 const NAVBAR_THEMES = {
