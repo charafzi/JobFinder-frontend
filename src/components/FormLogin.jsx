@@ -63,6 +63,7 @@ const FormLogin = () => {
             onChangeText={onChange}
             keyboardType="email-address"
             autoComplete="email"
+            autoCapitalize="none"
           />
         )}
         rules={{
@@ -90,6 +91,7 @@ const FormLogin = () => {
               placeholder="Enter Password"
               placeholderTextColor={Color.placeholderText}
               autoComplete="new-password"
+              autoCapitalize="none"
               secureTextEntry={securePassword}
               value={value}
               onBlur={onBlur}
