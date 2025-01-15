@@ -4,13 +4,15 @@ import forgotPasswordReducer from "./reducers/forgotPasswordReducer";
 import checkEmailReducer from "./reducers/checkEmailReducer";
 import resetPasswordReducer from "./reducers/resetPasswordReducer";
 import offresReducer from './slices/offres/offreSlice';
+import candidaturesReducer from './slices/candidatures/candidaturesSlice'
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
   forgotPassword: forgotPasswordReducer,
   checkEmail: checkEmailReducer,
   resetPassword: resetPasswordReducer,
-  offres : offresReducer
+  offres : offresReducer,
+  candidatures : candidaturesReducer
 });
 
 export default rootReducer;
