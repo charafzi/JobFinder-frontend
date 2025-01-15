@@ -1,36 +1,88 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Color } from "../constants/Color";
-import React from "react";
+import React, { useRef, useCallback, useMemo } from "react";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { logo } from "../../assets";
 
-const MAX_TAGS = 3;
+const MAX_REQUIREMENTS = 4;
 
-const JobCard = ({ item }) => {
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+};
+
+const calculateTimeAgo = (dateString) => {
+  if (!dateString) return "";
+
+  const publicationDate = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - publicationDate) / 1000);
+
+  // Calculer la différence en minutes, heures et jours
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInDays > 0) {
+    return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+  } else if (diffInHours > 0) {
+    return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  } else {
+    return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+  }
+};
+
+const JobCard = ({ jobPoste }) => {
+
+
+  const handleViewPress = useCallback(() => {
+    console.log("Icon press", jobPoste.id);
+  }, [jobPoste.id]);
+
+
+  const requirements = useMemo(() => {
+    return (<View style={styles.requirementsContainer}>
+      {jobPoste.requirements.slice(0, MAX_REQUIREMENTS).map((requirement, index) => (
+        <Text key={index} style={styles.jobRequires}>
+          {requirement}
+        </Text>
+      ))}
+      {jobPoste?.requirements.length > MAX_REQUIREMENTS && (
+        <Text style={styles.viewMore}>
+          +{jobPoste?.requirements.length - MAX_REQUIREMENTS} more
+        </Text>
+      )}
+    </View>
+    );
+  }, [jobPoste.requirements]);
+
+  const formattedPublicationDate = useMemo(() => formatDate(jobPoste.publicationDate), [jobPoste.publicationDate]);
+  const formattedDeadlineDate = useMemo(() => formatDate(jobPoste.deadlineDate), [jobPoste.deadlineDate]);
+  const timeAgo = useMemo(() => calculateTimeAgo(jobPoste.publicationDate), [jobPoste.publicationDate]);
+
   return (
     <TouchableOpacity style={styles.cardContainer}>
       <View style={styles.row}>
-        <Image source={{ uri: item?.logo }} style={styles.entrepriseLogo} />
+        <Image source={logo} style={styles.entrepriseLogo} />
         <View style={{ marginLeft: 20 }}>
-          <Text style={styles.title}>{item?.title}</Text>
+          <Text style={styles.title}>{jobPoste.position}</Text>
           <Text style={styles.subtitle}>
-            {item?.company} . {item?.location}
+            {jobPoste.company.name} . {jobPoste.adress.city}
           </Text>
         </View>
       </View>
-      <View style={styles.row}>
-        {item?.tags.slice(0, MAX_TAGS).map((tag, index) => (
-          <Text key={index} style={styles.jobRequires}>
-            {tag}
-          </Text>
-        ))}
-        {item?.tags.length > MAX_TAGS && (
-          <Text style={styles.viewMore}>
-            +{item?.tags.length - MAX_TAGS} more
-          </Text>
-        )}
-      </View>
+      {requirements}
       <View style={[styles.row]}>
-        <Text style={styles.salary}>{item?.salary}</Text>
-        <Text style={styles.postedTime}>{item?.postedTime}</Text>
+        <Text style={styles.postedTime}>{timeAgo}</Text>
+        <Text style={styles.salary}>{jobPoste?.salary} DH</Text>
+        <Text style={[styles.postedTime, {fontWeight: "bold"}]}>/Mo</Text>
       </View>
     </TouchableOpacity>
   );
@@ -51,7 +103,13 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  row: { flexDirection: "row", alignItems: "center", marginVertical: 10 },
+  row: { flexDirection: "row", alignItems: "center", marginVertical: 10,},
+  requirementsContainer: {
+    flexWrap: "wrap",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   entrepriseLogo: {
     backgroundColor: "#D6CDFE",
     borderRadius: 30,
@@ -65,10 +123,11 @@ const styles = StyleSheet.create({
   },
   subtitle: { color: Color.subtitle, fontSize: 12 },
   jobRequires: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Color.boxBackground,
     borderRadius: 10,
     padding: 10,
-    marginRight: 5,
+    marginRight: 10,
+    marginBottom: 10,
     fontSize: 12,
   },
   viewMore: {
@@ -78,13 +137,13 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   postedTime: {
-    fontSize: 12,
-    color: "#888",
-    marginLeft: "auto",
+    fontSize: 10,
+    color: Color.time,
   },
   salary: {
     fontSize: 14,
     fontWeight: "bold",
     color: Color.text,
+    marginLeft: "auto",
   },
 });

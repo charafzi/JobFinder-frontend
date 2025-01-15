@@ -1,3 +1,4 @@
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   FlatList,
   Image,
@@ -8,24 +9,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
 import { Color } from "../constants/Color";
 import { profile, remotejobs } from "../../assets";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { JobCard } from "../components";
-import DATA from "../data/data";
+import { EntrepriseHeader, JobCard, LoadingIndicator } from "../components";
+import { useScrollToTop } from "@react-navigation/native";
+import { useDispatch, useSelector } from "react-redux";
+import { getEntrepriseOffres } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
+import showToast from "../utils/showToast";
 
 const ListHeaderComponent = () => {
+  const { entreprise} = useSelector((state) => state.auth);
   return (
     <>
       {/* Header */}
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.name}>Welcome Back </Text>
-          <Text style={styles.name}>Google</Text>
-        </View>
-        <Image source={profile} style={{ marginLeft: 10 }} />
-      </View>
+      <EntrepriseHeader entrepriseLogo={profile} entrepriseName={entreprise.name} />
       {/* Dashboard */}
       <View style={{ marginTop: 10 }}>
         <Text style={[styles.text, { paddingBottom: 10 }]}>Dashboard</Text>
@@ -82,33 +80,76 @@ const ListHeaderComponent = () => {
 
 const EntrepriseHomeScreen = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
+  const ref = useRef(null);
+  const dispatch = useDispatch();
+  const { entrepriseOffresList, error, isLoading, totalPages } = useSelector((state) => state.entrepriseOffres);
+  const { id: entrepriseId } = useSelector((state) => state.auth);
 
-  const recentJobs = DATA.slice(0, 3);
+  useScrollToTop(ref);
+
+  useEffect(() => {
+    if (error) {
+      showToast("error", "Error", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (entrepriseId) {
+      dispatch(getEntrepriseOffres({
+        entrepriseId,
+        page: 0,
+        size: 3, // Récupérer seulement 3 offres
+        sortBy: 'PUB_DATE', // Trier par date de publication
+        sortDirection: 'DESC', // Les plus récentes en premier
+      }));
+    }
+  }, [entrepriseId, dispatch]);
+
+  const recentJobs = entrepriseOffresList?.slice(0, 3) || [];
+
+  const renderItem = useCallback(({ item }) => (
+    <JobCard key={item.id} jobPoste={item} />
+  ), []);
+
+  const renderEmpty = () => {
+    if (isLoading) return <LoadingIndicator />;
+    if (error) {
+      return (
+        <Text style={styles.emptyMessage}>
+          Une erreur s'est produite : {error}
+        </Text>
+      );
+    }
+    return (
+      <Text style={styles.emptyMessage}>
+        Aucune offre disponible pour cette entreprise.
+      </Text>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
-      {/* JobList */}
-      <View style={{ marginTop: 10 }}>
-        <FlatList
-          data={recentJobs}
-          renderItem={({ item }) => <JobCard item={item} />}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={ListHeaderComponent}
-          ListFooterComponent={
-            <View style={{ paddingBottom: tabBarHeight }}>
-              {/* Bouton Show More */}
-              {DATA.length > 3 && (
-                <TouchableOpacity
-                  style={styles.showMoreButton}
-                  onPress={() => navigation.navigate("entrepriseProjects")}
-                >
-                  <Text style={styles.showMoreText}>Voir Tout</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          }
-        />
-      </View>
+      <FlatList
+        ref={ref}
+        data={recentJobs}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={
+          <View style={{ paddingBottom: tabBarHeight }}>
+            {totalPages > 1 && (
+              <TouchableOpacity
+                style={styles.showMoreButton}
+                onPress={() => navigation.navigate("entrepriseProjects")}
+              >
+                <Text style={styles.showMoreText}>Voir Tout</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        }
+        ListEmptyComponent={renderEmpty}
+      />
     </SafeAreaView>
   );
 };
@@ -120,18 +161,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.background,
     padding: 20,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 20,
-    marginBottom: 20,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "left",
-    color: Color.text,
   },
   text: {
     color: Color.text,
@@ -148,5 +177,10 @@ const styles = StyleSheet.create({
   showMoreText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  emptyMessage: {
+    textAlign: "center",
+    marginTop: 20,
+    color: Color.text,
   },
 });
