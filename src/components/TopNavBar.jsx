@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput} from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -6,6 +6,10 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {Search} from "./index";
 import { LinearGradient } from "expo-linear-gradient";
 import {useNavigation} from "@react-navigation/native";
+import {CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
+import {useSelector} from "react-redux";
+import Entypo from "@expo/vector-icons/Entypo";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const NAVBAR_THEMES = {
     purple: {
@@ -35,6 +39,7 @@ const TopNavBar = ({
                     onNotificationPress = () => {},
                     theme = "default"
                    }) => {
+    const {isCandidat, id, email} = useSelector((state)=> state.auth);
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
@@ -72,8 +77,8 @@ const TopNavBar = ({
                <View style={styles.rightIcons}>
                    {showNotification && (
                        <TouchableOpacity onPress={onNotificationPress}>
-                           <AntDesign
-                               name="notification"
+                           <Ionicons
+                               name="notifications"
                                size={24}
                                color={colorConfig.iconColor}
                                style={styles.icon}
@@ -85,7 +90,7 @@ const TopNavBar = ({
                        <TouchableOpacity onPress={onProfilePress}>
                            <Image
                                source={{
-                                   uri: profilePicUri || "https://via.placeholder.com/40",
+                                   uri: isCandidat ? CANDIDAT_IMAGE_URL+id: ENTREPRISE_IMAGE_URL+id,
                                }}
                                style={styles.profilePic}
                            />

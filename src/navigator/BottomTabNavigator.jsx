@@ -10,6 +10,7 @@ import { Color } from "../constants/Color";
 import {useSelector} from "react-redux";
 import SearchScreen from "../screens/SearchScreen";
 import FilterScreen from "../screens/FilterScreen";
+import MapScreen from "../screens/MapScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -96,8 +97,8 @@ const CandidatTabNavigation = () =>{
                 }}
             />
             <Tab.Screen
-                name="addJob"
-                component={AddJob}
+                name="map"
+                component={MapScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="map" size={size} color={Color.text} />

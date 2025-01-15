@@ -7,7 +7,7 @@ const localhost = isAndroid ? "192.168.1.2" : "localhost";
 export const API_BASE_URL = `http://${localhost}:8091`;
 export const WEBSOCKETIO_URL = `http://${localhost}:8092`;
 export const ENTREPRISE_IMAGE_URL = `http://${localhost}:8091/api/entreprise/profile-picture/`;
-export const CANDIDAT_IMAGE_URL = `http://${localhost}/api/candidat/profile-picture/`;
+export const CANDIDAT_IMAGE_URL = `http://${localhost}:8091/api/candidat/profile-picture/`;
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   webSocketURL: WEBSOCKETIO_URL,
