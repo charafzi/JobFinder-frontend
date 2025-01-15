@@ -18,5 +18,6 @@ export const Color = {
   primary: "#130160",
   secondary: "#FF9228",
   red : "#fd8686",
-  green : "#7dc37d"
+  green : "#7dc37d",
+  time: "#AAA6B9"
 };
