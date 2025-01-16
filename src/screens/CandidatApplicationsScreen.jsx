@@ -3,7 +3,7 @@ import TopNavBar from "../components/TopNavBar";
 import React, {useEffect, useRef} from "react";
 import ApplicationCard from "../components/ApplicationCard";
 import {useDispatch, useSelector} from "react-redux";
-import {getCandidaturesByUserId} from "../redux/slices/candidatures/candidaturesThunk";
+import {getCandidaturesByUserId} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
 import {LoadingIndicator} from "../components";
 import Entypo from "@expo/vector-icons/Entypo";
 import {Color} from "../constants/Color";

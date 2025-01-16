@@ -22,6 +22,21 @@ const ApplicationCard = React.memo( ({application})=>{
     return (
         <TouchableOpacity style={styles.cardContainer}
         >
+            <View style={styles.topContainer}>
+                <View style={styles.companySection}>
+                    <Image source={{ uri: ENTREPRISE_IMAGE_URL+application.offre.company.id }} style={styles.companyLogo} />
+                    <View style={styles.companyDetails}>
+                        <Text style={styles.companyName}>{application.offre.company.name}</Text>
+                        <Text style={styles.companyEmail}>{application.offre.company.email}</Text>
+                        <Text style={styles.companyPhone}>{application.offre.company.phoneNumber}</Text>
+                    </View>
+                </View>
+                <View style={styles.statusDetails}>
+                    <View style={styles.status}>
+                        <Status status={application.status}></Status>
+                    </View>
+                </View>
+            </View>
             <View style={styles.applicationOfferContainer}>
                 <View style={styles.titleBox}>
                     <Text style={styles.title}>{application.offre.position}</Text>
@@ -64,24 +79,15 @@ const ApplicationCard = React.memo( ({application})=>{
                         </View>
                     </View>
             </View>
-            <View style={styles.companySection}>
-                <Image source={{ uri: ENTREPRISE_IMAGE_URL+application.offre.company.id }} style={styles.companyLogo} />
-                <View style={styles.companyDetails}>
-                    <Text style={styles.companyName}>{application.offre.company.name}</Text>
-                    <Text style={styles.companyEmail}>{application.offre.company.email}</Text>
-                    <Text style={styles.companyPhone}>{application.offre.company.phoneNumber}</Text>
-                </View>
-            </View>
-            <View style={styles.statusDetails}>
-                <View style={styles.status}>
-                    <Status status={application.status}></Status>
-                </View>
-            </View>
         </TouchableOpacity>
     );
 });
 
 const styles = StyleSheet.create({
+    topContainer:{
+        display : "flex",
+        flexDirection : "row"
+    },
     applicationOfferContainer:{
         flexDirection: "row",
         justifyContent: "space-between",
@@ -256,9 +262,10 @@ const styles = StyleSheet.create({
         textAlign: "center"
     },
     statusDetails: {
-        width: '100%',
+        width: '50%',
         flexDirection: 'row',
         justifyContent: 'flex-end',
+        padding : 20
     },
     status: {
         flexDirection: 'row',
