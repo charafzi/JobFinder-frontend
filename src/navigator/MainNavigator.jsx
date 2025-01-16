@@ -17,15 +17,16 @@ import CompanyProfile from "../screens/CompanyProfile";
 import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';
 import UploadCVSuccess from '../screens/UploadCVSuccess';
+import EditProfileCandidat from '../screens/EditProfileCandidat';
 
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="UploadCV">
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="candidat">
       <Stack.Screen name="UploadCV" component={UploadCV} />
       <Stack.Screen name="UploadCVSuccess" component={UploadCVSuccess} />
-      <Stack.Screen name="CandidatProfile" component={CandidatProfile} />
+      <Stack.Screen name="EditProfileCandidat" component={EditProfileCandidat} />
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
       <Stack.Screen name="login" component={Login} />
