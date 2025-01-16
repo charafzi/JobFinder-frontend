@@ -7,11 +7,8 @@ import {StyleSheet} from "react-native";
 import {useDispatch, useSelector} from "react-redux";
 import {Color} from "../constants/Color";
 import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import {useScrollToTop} from "@react-navigation/native";
-import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
-import {getCandidaturesByUserId} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
 import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
 import showToast from "../utils/showToast";
 
@@ -27,10 +24,10 @@ const SearchScreen = ()=>{
 
     useEffect(() => {
         // load initial search
-        /*dispatch(searchOffres({
+        dispatch(searchOffres({
             keyword : "",
             page: 0
-        }));*/
+        }));
     }, []);
 
     useEffect(() => {

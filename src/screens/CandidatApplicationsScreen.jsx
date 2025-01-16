@@ -10,10 +10,11 @@ import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import {useScrollToTop} from "@react-navigation/native";
 import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
+import showToast from "../utils/showToast";
 
 const CandidatApplicationsScreen = ()=>{
     const dispatch = useDispatch();
-    const { candidatures, isLoading, last, totalPages,currentPage } = useSelector((state) => state.candidatures);
+    const { candidatures, isLoading, last, totalPages,currentPage,error } = useSelector((state) => state.candidatures);
     const { id } = useSelector((state) => state.auth);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
@@ -25,6 +26,12 @@ const CandidatApplicationsScreen = ()=>{
         page: 0,
         size: 3
     };
+
+    useEffect(() => {
+        if (error) {
+            showToast("error", "Login failed", error);
+        }
+    }, [error]);
 
     const handleLoadMore = async () => {
         if (!totalPages) return;

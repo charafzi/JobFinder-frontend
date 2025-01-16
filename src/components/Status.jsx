@@ -50,13 +50,14 @@ const Status = React.memo(({ status }) => {
 
 const styles = StyleSheet.create({
     statusBox: {
-        minWidth: 80,
+        minWidth: '100%',
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 16,
-        gap: 6
+        gap: 6,
     },
     statusText: {
         fontSize: 12,

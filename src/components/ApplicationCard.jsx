@@ -4,8 +4,10 @@ import React, {useMemo} from "react";
 import {Color} from "../constants/Color";
 import formatDate from "../utils/formatDate";
 import Status from "./Status";
+import {useNavigation} from "@react-navigation/native";
 
 const ApplicationCard = React.memo( ({application})=>{
+    const navigation = useNavigation();
     const requirements = useMemo(() => {
         return (application.offre?.requirements || ["Java", "Design", "Full Time"]).map((requirement, index) => (
             <View key={index} style={styles.requirementBox}>
@@ -14,6 +16,10 @@ const ApplicationCard = React.memo( ({application})=>{
         ));
     }, [application?.requirements]);
 
+    const handleCardPress = ()=>{
+        navigation.navigate("applicationDetails",{application});
+    };
+
 
     const publicationDate = useMemo(() => formatDate(application.offre.publicationDate), [application.publicationDate]);
     const deadlineDate = useMemo(() => formatDate(application.offre.deadlineDate), [application.deadlineDate]);
@@ -21,6 +27,7 @@ const ApplicationCard = React.memo( ({application})=>{
 
     return (
         <TouchableOpacity style={styles.cardContainer}
+                          onPress={handleCardPress}
         >
             <View style={styles.topContainer}>
                 <View style={styles.companySection}>
@@ -95,14 +102,14 @@ const styles = StyleSheet.create({
         width: '100%'
     },
     title: {
-        color: Color.text,
+        color: Color.background,
         fontWeight: "bold",
         fontSize: 12,
     },
     titleBox: {
         minWidth: 50,
         height: 30,
-        backgroundColor: Color.boxBackground,
+        backgroundColor: Color.primary,
         justifyContent: "center",
         alignItems: "center",
         paddingHorizontal: 10,
@@ -188,7 +195,7 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
     applyDateBox: {
-        backgroundColor: Color.boxBackground,
+        backgroundColor: Color.primary,
         paddingVertical: 5,
         borderRadius: 5,
     },
@@ -222,7 +229,7 @@ const styles = StyleSheet.create({
         textAlign : "center",
         fontSize: 9,
         fontWeight: "600",
-        color : Color.text
+        color : Color.background
     },
     companySection:{
         marginVertical: 20,
@@ -255,11 +262,11 @@ const styles = StyleSheet.create({
         color : Color.subtitle
     },
     label: {
-        fontSize: 10,
-        color: Color.text,
-        fontWeight: "500",
         marginBottom: 5,
-        textAlign: "center"
+        textAlign: "center",
+        fontSize: 10,
+        fontWeight : "600",
+        color: Color.text,
     },
     statusDetails: {
         width: '50%',

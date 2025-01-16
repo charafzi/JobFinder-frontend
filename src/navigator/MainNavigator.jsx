@@ -1,16 +1,16 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import {
-  CheckEmail,
-  ForgotPassword,
-  JobPreview,
-  Login,
-  LogoScreen,
-  NewPassword,
-  Register,
-  ResetSuccessfully,
-  Welcome, Map, Search, Filter,
-    Applications
+    CheckEmail,
+    ForgotPassword,
+    JobPreview,
+    Login,
+    LogoScreen,
+    NewPassword,
+    Register,
+    ResetSuccessfully,
+    Welcome, Map, Search, Filter,
+    Applications, ApplicationDetails
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 
@@ -33,6 +33,8 @@ const StackNavigator = () => {
         <Stack.Screen name={"Filter"} component={Filter}></Stack.Screen>
         <Stack.Screen name="jobPreview" component={JobPreview} />
         <Stack.Screen name="applications" component={Applications}></Stack.Screen>
+        <Stack.Screen name="applicationDetails" component={ApplicationDetails}></Stack.Screen>
+        <Stack.Screen name="applicationApply" component={ApplicationDetails}></Stack.Screen>
     </Stack.Navigator>
   );
 };

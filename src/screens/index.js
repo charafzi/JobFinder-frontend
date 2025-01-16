@@ -14,3 +14,5 @@ export {default as Map} from "./MapScreen"
 export {default as Search} from "./SearchScreen";
 export {default as Filter} from './FilterScreen';
 export {default as Applications} from './CandidatApplicationsScreen';
+export {default as ApplicationDetails} from './ApplicationDetailsScreen'
+export {default as ApplicationApply} from './ApplicationApplyScreen'

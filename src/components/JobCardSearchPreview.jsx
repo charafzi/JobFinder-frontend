@@ -27,7 +27,6 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
         onPress={handleJobOfferPress}
         >
             <View style={styles.topContainer}>
-                <Text>ID = {jobPoste.id}</Text>
                 <View style={styles.row}>
                     <Image source={{ uri: ENTREPRISE_IMAGE_URL+jobPoste.company.id }} style={styles.entrepriseLogo} />
                     <View style={{ marginLeft: 20 }}>
