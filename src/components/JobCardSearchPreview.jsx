@@ -3,11 +3,15 @@ import { Color } from "../constants/Color";
 import React, {useCallback, useMemo} from "react";
 import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
 import formatDate from "../utils/formatDate";
+import {useNavigation} from "@react-navigation/native";
 
 const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
-    const handleJobOfferPress = useCallback(() => {
-        console.log("press", jobPoste.id);
-    }, [jobPoste.id]);
+    const navigation = useNavigation();
+
+    const handleJobOfferPress =() => {
+        console.log(jobPoste.id);
+        navigation.navigate('applicationApply',{offre : jobPoste});
+    };
 
     const requirements = useMemo(() => {
         return (jobPoste?.requirements || ["Java", "Design", "Full Time"]).map((requirement, index) => (

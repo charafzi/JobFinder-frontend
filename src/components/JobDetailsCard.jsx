@@ -1,5 +1,5 @@
-import React, {useEffect, useMemo} from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
 import {Color} from "../constants/Color";
@@ -7,10 +7,17 @@ import formatDate from "../utils/formatDate";
 import {useSelector} from "react-redux";
 
 
-const JobDetailsCard = ({
+const JobDetailsCard =  React.memo( ({
                             offre
 }) => {
     const { isCandidat} = useSelector((state) => state.auth);
+    const [showFullResponse, setShowFullResponse] = useState(false);
+
+
+    const toggleResponseView = () => {
+        setShowFullResponse(!showFullResponse);
+    };
+
     return (
     <ScrollView
         style={styles.container}
@@ -29,13 +36,24 @@ const JobDetailsCard = ({
 
       {/* Job Description */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Job Description</Text>
-        <Text style={styles.description}>
-          {offre.description || 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem...'}
-        </Text>
-        <TouchableOpacity>
-          <Text style={styles.readMore}>Read more</Text>
-        </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Job Description</Text>
+
+          <Text
+              style={styles.description}
+              numberOfLines={showFullResponse ? undefined : 2}
+          >
+              {offre.description || 'Sed ut perspiciakjnjjkjhhgv'}
+          </Text>
+          {offre.description?.length > 80 && (
+              <TouchableOpacity
+                  style={styles.readMoreButton}
+                  onPress={toggleResponseView}
+              >
+                  <Text style={styles.readMoreText}>
+                      {showFullResponse ? 'Read less' : 'Read more'}
+                  </Text>
+              </TouchableOpacity>
+          )}
       </View>
 
         {/* Informations */}
@@ -109,6 +127,11 @@ const JobDetailsCard = ({
         </View>
       </View>
 
+    <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Company Question</Text>
+        <Text style={styles.infoItem}>{offre.question}</Text>
+    </View>
+
         {/* Dates */}
         <View style={styles.detailsContainer}>
             <View style={styles.dateContainer}>
@@ -126,7 +149,7 @@ const JobDetailsCard = ({
         </View>
     </ScrollView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -194,10 +217,18 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 22,
   },
-  readMore: {
-    color: '#5C6BC0',
-    marginTop: 10,
-  },
+    readMoreButton: {
+        alignSelf: 'flex-start',
+        marginTop: 8,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 4,
+    },
+    readMoreText: {
+        color: Color.primary,
+        fontSize: 12,
+        fontWeight: '600',
+    },
   requirementsList: {
     marginTop: 10,
   },

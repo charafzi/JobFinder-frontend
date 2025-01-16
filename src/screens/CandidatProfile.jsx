@@ -16,7 +16,6 @@ import {
   TextInput
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';

@@ -8,7 +8,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as DocumentPicker from 'expo-document-picker';
 
-const CVUploadInput = ({ onFileSelect, cvFile }) => {
+const CVUploadInput = ({ onFileSelect, cvFile, fileName="Resume", opt=false }) => {
   const pickDocument = async () => {
     try {
       console.log('Starting document picker...');
@@ -46,8 +46,8 @@ const CVUploadInput = ({ onFileSelect, cvFile }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Upload CV</Text>
-      <Text style={styles.sectionSubtitle}>Add your CV/Resume to apply for a job</Text>
+      <Text style={styles.sectionTitle}>Upload {fileName}</Text>
+      <Text style={styles.sectionSubtitle}>Add your {fileName} to apply for a job {opt ? '(opt.)' : ''}</Text>
       
       {!cvFile ? (
         <TouchableOpacity 
@@ -55,7 +55,7 @@ const CVUploadInput = ({ onFileSelect, cvFile }) => {
           onPress={pickDocument}
         >
           <Icon name="upload-file" size={24} color="#FF4757" />
-          <Text style={styles.uploadText}>Upload CV/Resume</Text>
+          <Text style={styles.uploadText}>Upload {fileName}</Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.filePreview}>

@@ -1,5 +1,5 @@
 import {createSlice} from "@reduxjs/toolkit";
-import {getCandidaturesByUserId} from "./candidaturesThunk";
+import {applyToOffer, getCandidaturesByUserId} from "./candidaturesThunk";
 
 const initialState = {
     candidatures : [],
@@ -44,9 +44,19 @@ const CandidaturesSlice = createSlice({
             })
             .addCase(getCandidaturesByUserId.rejected, (state,action)=>{
                 state.isLoading = false;
-                state.error = action.payload || 'Une erreur est survenue';
+                state.error = action.payload || 'Error occurred when trying to retrieving your applications. Please try again.';
                 state.searchOffresList = [];
                 state.last = true;
+            })
+            .addCase(applyToOffer.pending,(state)=>{
+                state.isLoading = true
+            })
+            .addCase(applyToOffer.fulfilled, (state,action)=>{
+                state.isLoading = false;
+            })
+            .addCase(applyToOffer.rejected, (state,action)=>{
+                state.isLoading = false;
+                state.error = action.payload || 'Error occurred when applying to this application. Please try again.';
             })
     }
 })

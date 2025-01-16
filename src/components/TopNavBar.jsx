@@ -33,7 +33,6 @@ const TopNavBar = ({
                     onBackPress,
                     showProfile = true,
                     profilePicUri = "",
-                    onProfilePress = () => {},
                     showNotification = true,
                     onNotificationPress = () => {},
                     theme = "default"
@@ -51,6 +50,14 @@ const TopNavBar = ({
             navigation.goBack();
         }
 
+    }
+
+    const onProfilePress = () =>{
+        if(isCandidat){
+            navigation.navigate('candidat');
+        }else{
+            navigation.navigate('company');
+        }
     }
 
     return (
