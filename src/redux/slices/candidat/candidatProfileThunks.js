@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../../config/axiosConfig';
 
 export const fetchFormations = createAsyncThunk(
   'candidatProfile/fetchFormations',

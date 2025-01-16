@@ -20,7 +20,7 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { fetchFormations, fetchExperiences, fetchCandidat, deleteExperience, updateExperience, createExperience } from '../redux/slices/candidatProfileThunks';
+import { fetchFormations, fetchExperiences, fetchCandidat, deleteExperience, updateExperience, createExperience } from '../redux/slices/candidat/candidatProfileThunks';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;

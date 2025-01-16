@@ -2,7 +2,7 @@ import { createStore, applyMiddleware } from "redux";
 import rootReducer from "./rootReducer";
 import { thunk } from "redux-thunk";
 import { configureStore } from "@reduxjs/toolkit";
-import candidatProfileReducer from './slices/candidatProfileSlice';
+import candidatProfileReducer from './slices/candidat/candidatProfileSlice';
 
 /*const store = createStore(rootReducer, applyMiddleware(thunk));*/
 
