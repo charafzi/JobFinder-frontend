@@ -1,6 +1,6 @@
-import {FlatList,SafeAreaView, StyleSheet, Text, View} from "react-native";
+import {FlatList, RefreshControl, SafeAreaView, StyleSheet, Text, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
-import React, {useEffect, useRef} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import ApplicationCard from "../components/ApplicationCard";
 import {useDispatch, useSelector} from "react-redux";
 import {getCandidaturesByUserId} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
@@ -8,6 +8,8 @@ import {LoadingIndicator} from "../components";
 import Entypo from "@expo/vector-icons/Entypo";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import {useScrollToTop} from "@react-navigation/native";
+import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 
 const CandidatApplicationsScreen = ()=>{
     const dispatch = useDispatch();
@@ -16,6 +18,8 @@ const CandidatApplicationsScreen = ()=>{
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
+    useScrollToTop(flatListRef);
+
     const params = {
         id: id,
         page: 0,
@@ -24,12 +28,10 @@ const CandidatApplicationsScreen = ()=>{
 
     const handleLoadMore = async () => {
         if (!totalPages) return;
-        console.warn("last :",last)
         if (!isLoading && !last && currentPage < totalPages - 1 && !isLoadingMore.current) {
             try {
-                console.warn("handle more")
                 isLoadingMore.current = true;
-                await dispatch(getCandidaturesByUserId({
+                dispatch(getCandidaturesByUserId({
                     ...params,
                     page: currentPage + 1,
                 }));
@@ -46,14 +48,12 @@ const CandidatApplicationsScreen = ()=>{
 
     useEffect(() => {
         // load initial condidatures
-        console.log("AYWA")
-        console.log(params)
         dispatch(getCandidaturesByUserId({
             id : params.id,
             size : params.size,
             page : params.page
         }))
-    }, []);
+    }, [id]);
 
     useEffect(() => {
         if(params.page === 0){

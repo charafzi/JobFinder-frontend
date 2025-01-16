@@ -9,6 +9,7 @@ export const getCandidaturesByUserId = createAsyncThunk(
             const response = await axios.get(API_BASE_URL+'/api/candidature/', {
                 params: { id,page,size}
             });
+            console.log(response.data)
             return response.data;
         }catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Error while retrieving candidaturesCandidat bu user id.');
