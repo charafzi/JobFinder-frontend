@@ -6,11 +6,11 @@ const initialState = {
   experiences: [],
   loading: {
     formations: false,
-    experiences: false,
+    experiences: false
   },
   error: {
     formations: null,
-    experiences: null,
+    experiences: null
   },
 };
 
@@ -31,11 +31,9 @@ const candidatProfileSlice = createSlice({
       })
       .addCase(fetchFormations.rejected, (state, action) => {
         state.loading.formations = false;
-        state.error.formations = action.payload;
-      });
-
-    // Experiences
-    builder
+        state.error.formations = action.error.message;
+      })
+      // Experiences
       .addCase(fetchExperiences.pending, (state) => {
         state.loading.experiences = true;
         state.error.experiences = null;
@@ -46,7 +44,7 @@ const candidatProfileSlice = createSlice({
       })
       .addCase(fetchExperiences.rejected, (state, action) => {
         state.loading.experiences = false;
-        state.error.experiences = action.payload;
+        state.error.experiences = action.error.message;
       });
   },
 });

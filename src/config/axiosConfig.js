@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 
 const isAndroid = Platform.OS === "android";
 // If you're using Android Emulator, use 10.0.2.2 instead of localhost
-const localhost ="192.168.0.161" ;
+const localhost ="192.168.1.111" ;
 
 export const API_BASE_URL = `http://${localhost}:8091`;
 const axiosInstance = axios.create({

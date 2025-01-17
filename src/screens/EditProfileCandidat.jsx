@@ -18,6 +18,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import BottomTabNavigation from '../navigator/BottomTabNavigator';
 import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
@@ -120,7 +121,6 @@ const EditProfileCandidat = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back-ios" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.navBarTitle}>Modifier Profil</Text>
         <TouchableOpacity onPress={isEditing ? onSave : onEdit}>
           <Icon name={isEditing ? "check" : "edit"} size={24} color="#fff" />
         </TouchableOpacity>
@@ -274,47 +274,44 @@ const EditProfileCandidat = () => {
     </View>
   );
 
-  const renderExperienceCard = (experience) => (
-    <View style={styles.card} key={experience.id}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleWrapper}>
-          <View style={styles.cardIconContainer}>
-            <MaterialCommunityIcons name="briefcase" size={24} color="#3A317B" />
+  const renderExperienceCard = (experience) => {
+    return (
+      <View style={styles.itemContainer}>
+        <View style={styles.itemContent}>
+          <View style={styles.itemHeader}>
+            <View style={styles.itemTitleContainer}>
+              <Text style={styles.itemTitle}>{experience.poste}</Text>
+              <Text style={styles.itemSubtitle}>{experience.entreprise}</Text>
+            </View>
+            <View style={styles.itemActions}>
+              <TouchableOpacity 
+                onPress={() => {
+                  setEditingItem(experience);
+                  setNewExperience(experience);
+                  setShowExperienceModal(true);
+                }}
+              >
+                <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => removeExperience(experience.id)}>
+                <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.cardTitle}>{experience.poste}</Text>
-        </View>
-        <View style={styles.cardActions}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => editExperience(experience)}
-          >
-            <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => removeExperience(experience.id)}
-          >
-            <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
-          </TouchableOpacity>
+          <View style={styles.itemDivider} />
+          <View style={styles.itemDetails}>
+            <View style={styles.dateContainer}>
+              <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
+              <Text style={styles.dateText}>{experience.periode}</Text>
+            </View>
+            {experience.description && (
+              <Text style={styles.itemDescription}>{experience.description}</Text>
+            )}
+          </View>
         </View>
       </View>
-      <View style={styles.cardBody}>
-        <View style={styles.cardInfoRow}>
-          <View style={styles.infoIconContainer}>
-            <MaterialCommunityIcons name="office-building" size={18} color="#666" />
-          </View>
-          <Text style={styles.cardInfoText}>{experience.entreprise}</Text>
-        </View>
-        <View style={styles.cardInfoRow}>
-          <View style={styles.infoIconContainer}>
-            <MaterialCommunityIcons name="calendar" size={18} color="#666" />
-          </View>
-          <Text style={styles.cardInfoText}>{experience.periode}</Text>
-        </View>
-        <Text style={styles.cardDescription}>{experience.description}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const FormationModal = () => (
     <Modal
@@ -394,6 +391,84 @@ const EditProfileCandidat = () => {
     </Modal>
   );
 
+  const ExperienceModal = () => (
+    <Modal
+      visible={showExperienceModal}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {editingItem ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
+            </Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => {
+                setShowExperienceModal(false);
+                setEditingItem(null);
+              }}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Poste</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.poste}
+              onChangeText={(text) => setNewExperience({...newExperience, poste: text})}
+              placeholder="Ex: Développeur Full Stack"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Entreprise</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.entreprise}
+              onChangeText={(text) => setNewExperience({...newExperience, entreprise: text})}
+              placeholder="Ex: Tech Solutions"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Période</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.periode}
+              onChangeText={(text) => setNewExperience({...newExperience, periode: text})}
+              placeholder="Ex: 2022-Présent"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={newExperience.description}
+              onChangeText={(text) => setNewExperience({...newExperience, description: text})}
+              placeholder="Description de l'expérience"
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.submitButton}
+            onPress={addExperience}
+          >
+            <Text style={styles.submitButtonText}>
+              {editingItem ? 'Modifier' : 'Ajouter'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38354c" barStyle="light-content" />
@@ -421,42 +496,55 @@ const EditProfileCandidat = () => {
           <Animated.View 
             style={[
               styles.headerContent,
-              { 
-                opacity: scrollY.interpolate({
-                  inputRange: [0, HEADER_SCROLL_DISTANCE],
-                  outputRange: [1, 0],
-                  extrapolate: 'clamp',
-                })
-              }
+              {
+                transform: [{ translateY: headerTranslate }],
+                opacity: headerOpacity,
+              },
             ]}
           >
-            <View style={styles.avatarContainer}>
-              {image ? (
-                <Image 
-                  source={{ uri: image }} 
-                  style={styles.avatar}
-                  onError={() => {
-                    console.error('Erreur de chargement de l\'image');
-                    setImage(null);
-                  }}
-                />
-              ) : (
-                <MaterialCommunityIcons name="account-circle" size={60} color="#3A317B" />
-              )}
-              <TouchableOpacity 
-                style={styles.cameraIcon}
-                onPress={() => {
-                  console.log('Bouton caméra pressé');
-                  pickImage();
-                }}
-                activeOpacity={0.7}
+            <View style={styles.profileImageContainer}>
+              <Image
+                source={{ uri: image || 'https://via.placeholder.com/120' }}
+                style={styles.profileImage}
+              />
+              <TouchableOpacity
+                style={styles.editImageButton}
+                onPress={pickImage}
               >
-                <MaterialCommunityIcons name="camera" size={20} color="#fff" />
+                <MaterialCommunityIcons name="camera" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.nameText}>John Doe</Text>
-            <Text style={styles.addressText}>Paris, France</Text>
+            {isEditing ? (
+              <View style={styles.editProfileForm}>
+                <TextInput
+                  style={styles.editInput}
+                  defaultValue="John"
+                  placeholder="Prénom"
+                  placeholderTextColor="#999"
+                  onChangeText={(text) => setEditFormData({...editFormData, firstName: text})}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  defaultValue="Doe"
+                  placeholder="Nom"
+                  placeholderTextColor="#999"
+                  onChangeText={(text) => setEditFormData({...editFormData, lastName: text})}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  defaultValue="Paris, France"
+                  placeholder="Adresse"
+                  placeholderTextColor="#999"
+                  onChangeText={(text) => setEditFormData({...editFormData, address: text})}
+                />
+              </View>
+            ) : (
+              <>
+                <Text style={styles.nameText}>John Doe</Text>
+                <Text style={styles.addressText}>Paris, France</Text>
+              </>
+            )}
           </Animated.View>
         </View>
       </Animated.View>
@@ -502,7 +590,7 @@ const EditProfileCandidat = () => {
             <View style={styles.cardDivider} />
             <View style={styles.skillsContainer}>
               {skills.map((skill, index) => (
-                <View key={index} style={styles.skillBadge}>
+                <View key={`skill-${index}`} style={styles.skillBadge}>
                   <Text style={styles.skillText}>{skill}</Text>
                   <TouchableOpacity onPress={() => removeSkill(index)}>
                     <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
@@ -559,8 +647,10 @@ const EditProfileCandidat = () => {
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.experiencesContainer}>
-              {experiences.map((experience, index) => (
-                renderExperienceCard(experience)
+              {experiences.map((experience) => (
+                <View key={experience.id || Math.random().toString()}>
+                  {renderExperienceCard(experience)}
+                </View>
               ))}
             </View>
             <View style={styles.addExperienceContainer}>
@@ -583,12 +673,12 @@ const EditProfileCandidat = () => {
             <View style={styles.cardDivider} />
             <View style={styles.languagesContainer}>
               {languages.map((language, index) => (
-                <View key={index} style={styles.languageItem}>
+                <View key={`language-${index}`} style={styles.languageItem}>
                   <Text style={styles.languageName}>{language.lang}</Text>
                   <View style={styles.levelBadge}>
                     <Text style={styles.levelText}>{language.level}</Text>
                     <TouchableOpacity onPress={() => removeLanguage(index)}>
-                      <MaterialCommunityIcons name="close-circle" size={16} color="#666" style={styles.removeIcon} />
+                      <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -618,6 +708,10 @@ const EditProfileCandidat = () => {
       </Animated.ScrollView>
 
       <FormationModal />
+      <ExperienceModal />
+      <View style={styles.bottomTabContainer}>
+        <BottomTabNavigation />
+      </View>
     </SafeAreaView>
   );
 };
@@ -717,6 +811,13 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 20,
+  },
+  bottomTabContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
   },
   cardContainer: {
     flexDirection: 'row',
@@ -1073,6 +1174,125 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
     marginLeft: 44,
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  itemContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+  },
+  itemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  itemTitleContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F7',
+    marginVertical: 12,
+  },
+  itemDetails: {
+    marginLeft: 4,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  profileImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    position: 'relative',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#3A317B',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 10,
+  },
+  editProfileForm: {
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 15,
+  },
+  editInput: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    fontSize: 16,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
 });
 

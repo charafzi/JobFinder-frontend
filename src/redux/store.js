@@ -7,10 +7,6 @@ import candidatProfileReducer from './slices/candidatProfileSlice';
 /*const store = createStore(rootReducer, applyMiddleware(thunk));*/
 
 const store = configureStore({
-  reducer: {
-    ...rootReducer,
-    candidatProfile: candidatProfileReducer,
-  }
+  reducer: rootReducer
 })
-
 export default store;

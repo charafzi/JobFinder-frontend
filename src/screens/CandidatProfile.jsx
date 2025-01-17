@@ -20,7 +20,7 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { fetchFormations, fetchExperiences, fetchCandidat, deleteExperience, updateExperience, createExperience } from '../redux/slices/candidatProfileThunks';
+import { fetchFormations, fetchExperiences, deleteExperience, updateExperience, createExperience } from '../redux/slices/candidatProfileThunks';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
@@ -71,209 +71,45 @@ const ExperienceSection = ({ experiences }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const [isEditExperienceModalVisible, setIsEditExperienceModalVisible] = useState(false);
-  const [isAddExperienceModalVisible, setIsAddExperienceModalVisible] = useState(false);
-  const [selectedExperience, setSelectedExperience] = useState(null);
-  const [newExperience, setNewExperience] = useState({
-    poste: '',
-    entreprise: '',
-    dateDebut: '',
-    dateFin: '',
-    description: ''
-  });
-
-  const handleAdd = () => {
-    navigation.navigate('AddExperience');
-  };
-
-  const handleEdit = (experience) => {
-    setSelectedExperience(experience);
-    setIsEditExperienceModalVisible(true);
-  };
-
-  const handleDelete = (experienceId) => {
-    dispatch(deleteExperience(experienceId));
-  };
-
-  const handleSaveExperience = async () => {
-    try {
-      if (selectedExperience) {
-        await dispatch(updateExperience({ ...selectedExperience }));
-      }
-      setIsEditExperienceModalVisible(false);
-      setSelectedExperience(null);
-      dispatch(fetchExperiences());
-    } catch (error) {
-      console.error('Error saving experience:', error);
-    }
-  };
-
-  const handleCreateExperience = async () => {
-    try {
-      await dispatch(createExperience(newExperience));
-      setIsAddExperienceModalVisible(false);
-      setNewExperience({
-        poste: '',
-        entreprise: '',
-        dateDebut: '',
-        dateFin: '',
-        description: ''
-      });
-      dispatch(fetchExperiences());
-    } catch (error) {
-      console.error('Error creating experience:', error);
-    }
+  const renderExperienceCard = () => {
+    return (
+      <View style={styles.cardContainer}>
+        <View style={[styles.cardIconContainer, styles.experienceIcon]}>
+          <MaterialCommunityIcons name="briefcase" size={24} color="#fff" />
+        </View>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Expériences</Text>
+          </View>
+          <View style={styles.cardDivider} />
+          {experiences.map((experience, index) => (
+            <View key={index}>
+              <View style={styles.experienceItem}>
+                <Text style={styles.experienceTitle}>{experience.poste}</Text>
+                <View style={styles.experienceDetails}>
+                  <View style={styles.dateContainer}>
+                    <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
+                    <Text style={styles.dateText}>
+                      {new Date(experience.dateDebut).toLocaleDateString()} - {new Date(experience.dateFin).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <View style={styles.companyContainer}>
+                    <MaterialCommunityIcons name="office-building" size={16} color="#666" />
+                    <Text style={styles.companyText}>{experience.entreprise || 'Entreprise'}</Text>
+                  </View>
+                </View>
+              </View>
+              {index < experiences.length - 1 && <View style={styles.itemDivider} />}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
   };
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <MaterialCommunityIcons name="briefcase" size={24} color="#3A317B" />
-          <Text style={styles.sectionTitle}>Expérience</Text>
-        </View>
-        <TouchableOpacity style={styles.iconButton} onPress={() => setIsAddExperienceModalVisible(true)}>
-          <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-        </TouchableOpacity>
-      </View>
-      {experiences?.map((experience, index) => (
-        <View key={index} style={styles.experienceItem}>
-          <View style={styles.experienceContent}>
-            <Text style={styles.experienceTitle}>{experience.titre}</Text>
-            <Text style={styles.experienceCompany}>{experience.entreprise}</Text>
-            <Text style={styles.experienceDate}>
-              {new Date(experience.dateDebut).toLocaleDateString()} - {new Date(experience.dateFin).toLocaleDateString()}
-            </Text>
-            <Text style={styles.experienceDescription}>{experience.description}</Text>
-          </View>
-          <View style={styles.experienceActions}>
-            <TouchableOpacity onPress={() => handleEdit(experience)} style={styles.actionButton}>
-              <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDelete(experience.id)} style={styles.actionButton}>
-              <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ))}
-
-      {/* Modal pour modifier une expérience */}
-      <Modal
-        visible={isEditExperienceModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsEditExperienceModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Modifier l'expérience</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Poste"
-              value={selectedExperience?.poste}
-              onChangeText={(text) => setSelectedExperience({...selectedExperience, poste: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Entreprise"
-              value={selectedExperience?.entreprise}
-              onChangeText={(text) => setSelectedExperience({...selectedExperience, entreprise: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Date de début (YYYY-MM-DD)"
-              value={selectedExperience?.dateDebut}
-              onChangeText={(text) => setSelectedExperience({...selectedExperience, dateDebut: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Date de fin (YYYY-MM-DD)"
-              value={selectedExperience?.dateFin}
-              onChangeText={(text) => setSelectedExperience({...selectedExperience, dateFin: text})}
-            />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description"
-              value={selectedExperience?.description}
-              onChangeText={(text) => setSelectedExperience({...selectedExperience, description: text})}
-              multiline
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsEditExperienceModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleSaveExperience}
-              >
-                <Text style={styles.buttonText}>Enregistrer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal pour ajouter une expérience */}
-      <Modal
-        visible={isAddExperienceModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsAddExperienceModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Ajouter une expérience</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Poste"
-              value={newExperience.poste}
-              onChangeText={(text) => setNewExperience({...newExperience, poste: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Entreprise"
-              value={newExperience.entreprise}
-              onChangeText={(text) => setNewExperience({...newExperience, entreprise: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Date de début (YYYY-MM-DD)"
-              value={newExperience.dateDebut}
-              onChangeText={(text) => setNewExperience({...newExperience, dateDebut: text})}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Date de fin (YYYY-MM-DD)"
-              value={newExperience.dateFin}
-              onChangeText={(text) => setNewExperience({...newExperience, dateFin: text})}
-            />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description"
-              value={newExperience.description}
-              onChangeText={(text) => setNewExperience({...newExperience, description: text})}
-              multiline
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsAddExperienceModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleCreateExperience}
-              >
-                <Text style={styles.buttonText}>Créer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {renderExperienceCard()}
     </View>
   );
 };
@@ -283,10 +119,10 @@ const CandidatProfile = () => {
   const dispatch = useDispatch();
   const scrollY = useRef(new Animated.Value(0)).current;
   
-  const { formations, experiences, candidat } = useSelector((state) => state.candidatProfile);
-  const { formations: formationsLoading, experiences: experiencesLoading, candidat: candidatLoading } = 
+  const { formations, experiences } = useSelector((state) => state.candidatProfile);
+  const { formations: formationsLoading, experiences: experiencesLoading } = 
     useSelector((state) => state.candidatProfile.loading);
-  const { formations: formationsError, experiences: experiencesError, candidat: candidatError } = 
+  const { formations: formationsError, experiences: experiencesError } = 
     useSelector((state) => state.candidatProfile.error);
 
   const [expandedSections, setExpandedSections] = useState({
@@ -303,7 +139,7 @@ const CandidatProfile = () => {
       try {
         await Promise.all([
           dispatch(fetchFormations()),
-          dispatch(fetchExperiences()),
+          dispatch(fetchExperiences())
         ]);
       } catch (error) {
         console.error('Error loading profile data:', error);
@@ -318,8 +154,8 @@ const CandidatProfile = () => {
     { useNativeDriver: true }
   );
 
-  const isLoading = formationsLoading || experiencesLoading || candidatLoading;
-  const hasError = formationsError || experiencesError || candidatError;
+  const isLoading = formationsLoading || experiencesLoading;
+  const hasError = formationsError || experiencesError;
 
   const renderFormations = () => (
     <View style={styles.contentSection}>
@@ -439,7 +275,7 @@ const CandidatProfile = () => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>
-          {formationsError || experiencesError || candidatError}
+          {formationsError || experiencesError}
         </Text>
       </View>
     );
@@ -482,9 +318,9 @@ const CandidatProfile = () => {
                 color="#3A317B" 
               />
             </View>
-            <Text style={styles.userName}>{candidat ? `${candidat.nom} ${candidat.prenom}` : 'Loading...'}</Text>
-            <Text style={styles.userTitle}>{candidat?.titre || 'Professionnel'}</Text>
-            <Text style={styles.location}>{candidat?.adresse || 'Location not specified'}</Text>
+            <Text style={styles.userName}>Nom et Prénom</Text>
+            <Text style={styles.userTitle}>Professionnel</Text>
+            <Text style={styles.location}>Location not specified</Text>
             <TouchableOpacity 
               style={styles.editButton}
               onPress={() => navigation.navigate("EditProfileCandidat")}
@@ -862,115 +698,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  experienceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 12,
+  sectionCard: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: 12,
+    marginBottom: 16,
+    padding: 16,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  experienceContent: {
-    flex: 1,
+  experienceItem: {
+    paddingVertical: 12,
   },
   experienceTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 8,
   },
-  experienceCompany: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  experienceDate: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  experienceDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  experienceActions: {
-    flexDirection: 'row',
+  experienceDetails: {
     gap: 8,
   },
-  actionButton: {
-    padding: 4,
-  },
-  addButton: {
-    padding: 4,
-  },
-  iconButton: {
-    padding: 4,
-  },
-  cardActions: {
+  companyContainer: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    gap: 8,
   },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    width: '100%',
-    maxHeight: '80%',
+  companyText: {
+    fontSize: 14,
+    color: '#666',
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#3A317B',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 5,
-  },
-  saveButton: {
-    backgroundColor: '#3A317B',
-  },
-  cancelButton: {
-    backgroundColor: '#ff4444',
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
+  itemDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F7',
+    marginVertical: 8,
   },
 });
 

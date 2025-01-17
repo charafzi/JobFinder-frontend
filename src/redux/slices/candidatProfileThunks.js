@@ -13,11 +13,13 @@ export const fetchFormations = createAsyncThunk(
     }
   }
 );
+
 export const fetchExperiences = createAsyncThunk(
   'candidatProfile/fetchExperiences',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/api/experience');
+      console.log(response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching experiences:', error);
@@ -25,6 +27,7 @@ export const fetchExperiences = createAsyncThunk(
     }
   }
 );
+
 
 export const deleteExperience = createAsyncThunk(
   'candidatProfile/deleteExperience',
@@ -52,9 +55,9 @@ export const createExperience = createAsyncThunk(
 
 export const updateExperience = createAsyncThunk(
   'candidatProfile/updateExperience',
-  async (experienceData) => {
+  async ({ experienceId, experienceData }) => {
     try {
-      const response = await axiosInstance.put(`/api/experience/${experienceData.id}`, experienceData);
+      const response = await axiosInstance.put(`/api/experience/${experienceId}`, experienceData);
       return response.data;
     } catch (error) {
       throw error;
