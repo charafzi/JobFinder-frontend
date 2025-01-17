@@ -11,6 +11,7 @@ import {
   ResetSuccessfully,
   Welcome, Map, Search, Filter,
 EntrepriseHomeScreen,
+CandidateProfile,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
@@ -42,6 +43,7 @@ const StackNavigator = () => {
       <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
       <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
       <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
+      <Stack.Screen name="CandidateProfile" component={CandidateProfile} />
     </Stack.Navigator>
   );
 };

@@ -9,14 +9,15 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import EntrepriseHomeScreen from "../screens/EntrepriseHomeScreen";
 import EntrepriseProjects from "../screens/EntrepriseProjects";
 import { Color } from "../constants/Color";
-import {useSelector} from "react-redux";
+import { useSelector } from "react-redux";
 import SearchScreen from "../screens/SearchScreen";
 import FilterScreen from "../screens/FilterScreen";
+import { EntrepriseCandidates } from "../screens";
 
 const Tab = createBottomTabNavigator();
 
 
-const EntrepriseTabNavigation = () =>{
+const CandidatTabNavigation = () => {
     return (
         <Tab.Navigator
             initialRouteName="home"
@@ -26,6 +27,8 @@ const EntrepriseTabNavigation = () =>{
                 tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
                 headerShown: false,
                 tabBarShowLabel: false,
+                tabBarHideOnKeyboard: true,
+                tabBarStyle: { position: 'absolute' },
             }}
         >
             <Tab.Screen
@@ -51,7 +54,7 @@ const EntrepriseTabNavigation = () =>{
                 component={AddJob}
                 options={{
                     tabBarIcon: ({ color, size }) => (
-                        <AntDesign name="pluscircle" size={size} color={Color.text} />
+                        <Ionicons name="map" size={size} color={Color.text} />
                     ),
                 }}
             />
@@ -77,7 +80,7 @@ const EntrepriseTabNavigation = () =>{
     );
 }
 
-const CandidatTabNavigation = () =>{
+const EntrepriseTabNavigation = () => {
     return (
         <Tab.Navigator
             initialRouteName="home"
@@ -98,12 +101,22 @@ const CandidatTabNavigation = () =>{
                     ),
                 }}
             />
+
+            <Tab.Screen
+                name="entrepriseCandidates"
+                component={EntrepriseCandidates}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="people-outline" size={size} color={color} />
+                    ),
+                }}
+            />
             <Tab.Screen
                 name="addJob"
                 component={AddJob}
                 options={{
                     tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="map" size={size} color={Color.text} />
+                        <AntDesign name="pluscircle" size={size} color={Color.text} />
                     ),
                 }}
             />
@@ -121,45 +134,45 @@ const CandidatTabNavigation = () =>{
 }
 
 const BottomTabNavigation = () => {
-    const { isCandidat} = useSelector((state) => state.auth);
-    if(isCandidat){
+    const { isCandidat } = useSelector((state) => state.auth);
+    if (isCandidat) {
         return <CandidatTabNavigation></CandidatTabNavigation>;
-    }else{
+    } else {
         return <EntrepriseTabNavigation></EntrepriseTabNavigation>;
     }
 };
 
 const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    elevation: 4,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    height: 60,
-    paddingBottom: 5,
-  },
-  customButton: {
-    top: -20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FF6B6B',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
+    tabBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        elevation: 4,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        height: 60,
+        paddingBottom: 5,
+    },
+    customButton: {
+        top: -20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#FF6B6B',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
 });
 
 export default BottomTabNavigation;
