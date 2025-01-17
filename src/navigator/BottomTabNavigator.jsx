@@ -2,66 +2,131 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, StyleSheet } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Entypo from "@expo/vector-icons/Entypo";
+import AddJob from "../screens/AddJob";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import EntrepriseHomeScreen from "../screens/EntrepriseHomeScreen";
 import EntrepriseProjects from "../screens/EntrepriseProjects";
 import { Color } from "../constants/Color";
+import {useSelector} from "react-redux";
+import SearchScreen from "../screens/SearchScreen";
+import FilterScreen from "../screens/FilterScreen";
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBarButton = ({ children }) => {
-  return (
-    <View style={styles.customButton}>
-      {children}
-    </View>
-  );
-};
+
+const EntrepriseTabNavigation = () =>{
+    return (
+        <Tab.Navigator
+            initialRouteName="home"
+            backBehavior="history"
+            screenOptions={{
+                tabBarActiveTintColor: Color.text,
+                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
+                headerShown: false,
+                tabBarShowLabel: false,
+            }}
+        >
+            <Tab.Screen
+                name="home"
+                component={SearchScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="page2"
+                component={EntrepriseHomeScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="people-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="addJob"
+                component={AddJob}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <AntDesign name="pluscircle" size={size} color={Color.text} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="page4"
+                component={FilterScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="briefcase-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="page5"
+                component={EntrepriseProjects}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="notifications-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tab.Navigator>
+    );
+}
+
+const CandidatTabNavigation = () =>{
+    return (
+        <Tab.Navigator
+            initialRouteName="home"
+            backBehavior="history"
+            screenOptions={{
+                tabBarActiveTintColor: Color.text,
+                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
+                headerShown: false,
+                tabBarShowLabel: false,
+            }}
+        >
+            <Tab.Screen
+                name="home"
+                component={EntrepriseHomeScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="addJob"
+                component={AddJob}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="map" size={size} color={Color.text} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="entrepriseProjects"
+                component={EntrepriseProjects}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="briefcase-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tab.Navigator>
+    );
+}
 
 const BottomTabNavigation = () => {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: Color.text,
-        tabBarInactiveTintColor: "#999",
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar,
-      }}
-    >
-      <Tab.Screen
-        name="home"
-        component={EntrepriseHomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="add"
-        component={EntrepriseProjects}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.addButton}>
-              <MaterialIcons name="add" size={32} color="#fff" />
-            </View>
-          ),
-          tabBarButton: (props) => (
-            <CustomTabBarButton {...props} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="profile"
-        component={EntrepriseProjects}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person-outline" size={24} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
+    const { isCandidat} = useSelector((state) => state.auth);
+    if(isCandidat){
+        return <CandidatTabNavigation></CandidatTabNavigation>;
+    }else{
+        return <EntrepriseTabNavigation></EntrepriseTabNavigation>;
+    }
 };
 
 const styles = StyleSheet.create({

@@ -2,17 +2,15 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 const isAndroid = Platform.OS === "android";
-// If you're using Android Emulator, use 10.0.2.2 instead of localhost
-const localhost ="192.168.1.111" ;
+const localhost = isAndroid ? "192.168.1.2" : "localhost";
+
 
 export const API_BASE_URL = `http://${localhost}:8091`;
+export const WEBSOCKETIO_URL = `http://${localhost}:8092`;
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000, // increased timeout to 15 seconds
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+  webSocketURL: WEBSOCKETIO_URL,
+  timeout: 8000, // 8 seconds
 });
 
 // Add response interceptor for debugging

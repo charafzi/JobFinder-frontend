@@ -9,17 +9,21 @@ import { useDispatch, useSelector } from "react-redux";
 import { showToast } from "../utils/showToast";
 import {Color} from "../constants/Color";
 import {getOffresNearby} from "../redux/slices/offres/mapOffresThunk";
-import {clearMapOffres} from "../redux/slices/offres/offreSlice";
+import {addOffreToMap, clearMapOffres} from "../redux/slices/offres/offreSlice";
+import {WEBSOCKETIO_URL} from "../config/axiosConfig";
+import io from 'socket.io-client';
+import TopNavBar from "../components/TopNavBar";
 
 
 const MapScreen = () => {
     const insets = useSafeAreaInsets();
     const mapRef = useRef(null);
     const dispatch = useDispatch();
-    const { mapOffres, isLoading, error } = useSelector((state) => state.offres);
+    const { mapOffresList, error } = useSelector((state) => state.offres);
     const [selectedOffre, setSelectedOffre] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+    const [socket, setSocket] = useState(null);
     const [region, setRegion] = useState({
         latitude: 33.697904,
         longitude: -7.4019606,
@@ -27,11 +31,55 @@ const MapScreen = () => {
         longitudeDelta: 0.0421,
     })
 
+    const [firstLoading,setFirstLoading] = useState(true);
+
     useEffect(() => {
         //clear map offers initially
         dispatch(clearMapOffres());
     }, [dispatch]);
 
+    useEffect(() => {
+        // Connexion au serveur WebSocket
+        console.log("CONNECTING TO:", WEBSOCKETIO_URL);
+
+        const socketConnection = io(WEBSOCKETIO_URL,  {
+            transports: ['websocket'],
+        });
+
+        setSocket(socketConnection);
+
+
+        socketConnection.on('connect', () => {
+            console.log('WebSocket connected successfully');
+            console.log('Socket ID:', socketConnection.id);
+        });
+
+        socketConnection.on('connect_error', (error) => {
+            console.log('Connection Error Full Details:', error);
+            console.log('Connection Error Details:', {
+                error: error.message,
+                type: error.type,
+                description: error.description,
+                transport: socketConnection.io?.engine?.transport?.name
+            });
+        });
+
+        socketConnection.on('disconnect', (reason) => {
+            console.log('WebSocket disconnected:', reason);
+        });
+
+        socketConnection.on('offre_created', (data) => {
+            console.log("Nouvelle offre reçue:", data);
+            dispatch(addOffreToMap(data));
+        });
+
+        return () => {
+            if (socketConnection) {
+                socketConnection.disconnect();
+                console.log('Socket déconnecté proprement');
+            }
+        };
+    }, []);
     const showModal = () => {
         setModalVisible(true);
         Animated.spring(slideAnim, {
@@ -61,6 +109,31 @@ const MapScreen = () => {
         showModal();
     };
 
+    const handleRegionChangeComplete = (newRegion) => {
+        if (
+            Math.abs(newRegion.latitude - region.latitude) > 0.0001 ||
+            Math.abs(newRegion.longitude - region.longitude) > 0.0001 ||
+            Math.abs(newRegion.latitudeDelta - region.latitudeDelta) > 0.0001 ||
+            Math.abs(newRegion.longitudeDelta - region.longitudeDelta) > 0.0001
+        ) {
+            setRegion(newRegion);
+            console.log("Region updated:", newRegion);
+            dispatch(getOffresNearby({
+            lat: newRegion.latitude,
+            lng: newRegion.longitude,
+            radius: calculateRadius(region)
+        }));
+        }
+    };
+
+    const calculateRadius = (region) => {
+        // Estimate the radius based on latitudeDelta
+        const earthRadius = 6371000; // in meters
+        const latDelta = region.latitudeDelta / 2;
+        const latDistance = earthRadius * (latDelta * (Math.PI / 180));
+        return latDistance;
+    };
+
     useEffect(() => {
         if (error) {
             showToast("error", "Error", error);
@@ -68,6 +141,7 @@ const MapScreen = () => {
     }, [error]);
 
     const requestPermission = async () => {
+        setFirstLoading(true)
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === 'granted') {
@@ -97,6 +171,7 @@ const MapScreen = () => {
                     text2: 'You need to allow location access.'
                 });
             }
+            setFirstLoading(false);
         } catch (error) {
             Toast.show({
                 type: 'error',
@@ -111,17 +186,21 @@ const MapScreen = () => {
     }, []);
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            {!isLoading ? (
+        <View style={styles.container}>
+            <TopNavBar
+            showProfile={false}
+            showNotification={false}
+            ></TopNavBar>
+            {!firstLoading ? (
                 <MapView
                     ref={mapRef}
                     style={styles.map}
                     region={region}
-                    onRegionChangeComplete={setRegion}
+                    onRegionChangeComplete={handleRegionChangeComplete}
                     showsUserLocation={true}
                     showsMyLocationButton={true}
                 >
-                    {mapOffres?.map((offre, index) => (
+                    {mapOffresList?.map((offre, index) => (
                         <Marker
                             key={index}
                             coordinate={{
@@ -207,7 +286,8 @@ const styles = StyleSheet.create({
     loader: {
         position: 'absolute',
         top: '50%',
-        alignSelf: 'center'
+        alignSelf: 'center',
+        color: Color.secondary
     },
     modalOverlay: {
         flex: 1,

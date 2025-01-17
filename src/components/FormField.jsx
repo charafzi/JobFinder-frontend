@@ -29,7 +29,7 @@ const FormField = ({ label, value, isEditing, onEdit, children, error }) => (
   </View>
 );
 
-export default FormField;
+export default React.memo(FormField);
 
 const styles = StyleSheet.create({
   container: {

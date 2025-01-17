@@ -16,5 +16,7 @@ export const Color = {
   icon2 : "#FF9228",
   icon3: "#38354c",
   primary: "#130160",
-  secondary: "#FF9228"
+  secondary: "#FF9228",
+  red : "#fd8686",
+  green : "#7dc37d"
 };

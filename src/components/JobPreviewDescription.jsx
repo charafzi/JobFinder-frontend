@@ -19,7 +19,7 @@ const JobPreviewDescription = ({ titre, jobDescription }) => {
   );
 };
 
-export default JobPreviewDescription;
+export default React.memo(JobPreviewDescription);
 
 const styles = StyleSheet.create({
   subtitle: {

@@ -10,7 +10,7 @@ import { useForm, Controller } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
 import { useNavigation } from "@react-navigation/native";
-import { showToast } from "../utils/showToast";
+import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { resetPassword } from "../redux/actions/resetPasswordAction";

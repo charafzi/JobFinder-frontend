@@ -24,4 +24,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoadingIndicator;
+export default React.memo(LoadingIndicator);
