@@ -1,6 +1,7 @@
 export { default as AddJob } from "./AddJob";
 export { default as CheckEmail } from "./CheckEmail";
 export { default as EntrepriseHomeScreen } from "./EntrepriseHomeScreen";
+export { default as EntrepriseCandidates } from "./EntrepriseCandidates";
 export { default as EntrepriseProjects } from "./EntrepriseProjects";
 export { default as ForgotPassword } from "./ForgotPassword";
 export { default as JobPreview } from "./JobPreview";
@@ -13,3 +14,4 @@ export { default as Welcome } from "./Welcome";
 export {default as Map} from "./MapScreen"
 export {default as Search} from "./SearchScreen";
 export {default as Filter} from './FilterScreen'
+export {default as CandidateProfile} from './CandidateProfile'
