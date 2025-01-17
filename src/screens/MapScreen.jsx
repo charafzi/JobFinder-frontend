@@ -188,8 +188,6 @@ const MapScreen = () => {
     return (
         <View style={styles.container}>
             <TopNavBar
-            showProfile={false}
-            showNotification={false}
             ></TopNavBar>
             {!firstLoading ? (
                 <MapView

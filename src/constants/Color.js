@@ -22,4 +22,5 @@ export const Color = {
   time: "#AAA6B9",
   accept: "#4CAF50",
   decline: "#F44336",
+  disabled : '#857fa1',
 };

@@ -1,11 +1,13 @@
-import React, {useState} from "react";
+import React from "react";
 import {View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput} from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {Search} from "./index";
 import { LinearGradient } from "expo-linear-gradient";
 import {useNavigation} from "@react-navigation/native";
+import {CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
+import {useSelector} from "react-redux";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const NAVBAR_THEMES = {
     purple: {
@@ -27,14 +29,15 @@ const NAVBAR_THEMES = {
 const TopNavBar = ({
                     title = "",
                     showBackButton = true,
+                    showWelcome = false,
                     onBackPress,
                     showProfile = true,
                     profilePicUri = "",
-                    onProfilePress = () => {},
                     showNotification = true,
                     onNotificationPress = () => {},
                     theme = "default"
                    }) => {
+    const {isCandidat, id, email,entreprise} = useSelector((state)=> state.auth);
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
@@ -47,6 +50,14 @@ const TopNavBar = ({
             navigation.goBack();
         }
 
+    }
+
+    const onProfilePress = () =>{
+        if(isCandidat){
+            navigation.navigate('candidat');
+        }else{
+            navigation.navigate('company');
+        }
     }
 
     return (
@@ -67,13 +78,20 @@ const TopNavBar = ({
                        />
                    </TouchableOpacity>
                )}
+               {showWelcome &&
+                   <View style={styles.headerContainer}>
+                       <Text style={styles.name}>Welcome Back</Text>
+                       <Text style={[styles.name, {color: '#BEAFFE'}]}>{entreprise.name}</Text>
+                       <Text style={styles.name}>!</Text>
+                   </View>
+               }
                <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
 
                <View style={styles.rightIcons}>
                    {showNotification && (
                        <TouchableOpacity onPress={onNotificationPress}>
-                           <AntDesign
-                               name="notification"
+                           <Ionicons
+                               name="notifications"
                                size={24}
                                color={colorConfig.iconColor}
                                style={styles.icon}
@@ -85,7 +103,7 @@ const TopNavBar = ({
                        <TouchableOpacity onPress={onProfilePress}>
                            <Image
                                source={{
-                                   uri: profilePicUri || "https://via.placeholder.com/40",
+                                   uri: isCandidat ? CANDIDAT_IMAGE_URL+id: ENTREPRISE_IMAGE_URL+id,
                                }}
                                style={styles.profilePic}
                            />
@@ -138,7 +156,19 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         marginLeft: 8,
-    }
+    },
+    headerContainer: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 5
+    },
+    name: {
+        fontSize: 18,
+        fontWeight: "bold",
+        textAlign: "left",
+        color: Color.background,
+    },
 })
 
 export default TopNavBar;

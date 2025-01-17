@@ -1,84 +1,18 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, StyleSheet } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import Entypo from "@expo/vector-icons/Entypo";
 import AddJob from "../screens/AddJob";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import EntrepriseHomeScreen from "../screens/EntrepriseHomeScreen";
 import EntrepriseProjects from "../screens/EntrepriseProjects";
 import { Color } from "../constants/Color";
 import { useSelector } from "react-redux";
 import SearchScreen from "../screens/SearchScreen";
-import FilterScreen from "../screens/FilterScreen";
 import { EntrepriseCandidates } from "../screens";
+import MapScreen from "../screens/MapScreen";
+import {Applications} from "../screens";
 
 const Tab = createBottomTabNavigator();
-
-
-const CandidatTabNavigation = () => {
-    return (
-        <Tab.Navigator
-            initialRouteName="home"
-            backBehavior="history"
-            screenOptions={{
-                tabBarActiveTintColor: Color.text,
-                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarHideOnKeyboard: true,
-                tabBarStyle: { position: 'absolute' },
-            }}
-        >
-            <Tab.Screen
-                name="home"
-                component={SearchScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="home-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="page2"
-                component={EntrepriseHomeScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="people-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="addJob"
-                component={AddJob}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="map" size={size} color={Color.text} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="page4"
-                component={FilterScreen}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="briefcase-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="page5"
-                component={EntrepriseProjects}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="notifications-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-        </Tab.Navigator>
-    );
-}
 
 const EntrepriseTabNavigation = () => {
     return (
@@ -133,16 +67,61 @@ const EntrepriseTabNavigation = () => {
     );
 }
 
+const CandidatTabNavigation = () =>{
+    return (
+        <Tab.Navigator
+            initialRouteName="home"
+            backBehavior="history"
+            screenOptions={{
+                tabBarActiveTintColor: Color.text,
+                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
+                headerShown: false,
+                tabBarShowLabel: false,
+            }}
+        >
+            <Tab.Screen
+                name="home"
+                component={SearchScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="map"
+                component={MapScreen}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="map" size={size} color={Color.text} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="applications"
+                component={Applications}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="briefcase-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tab.Navigator>
+    );
+}
+
+
 const BottomTabNavigation = () => {
-    const { isCandidat } = useSelector((state) => state.auth);
-    if (isCandidat) {
+    const { isCandidat} = useSelector((state) => state.auth);
+    if(isCandidat){
         return <CandidatTabNavigation></CandidatTabNavigation>;
-    } else {
+    }else{
         return <EntrepriseTabNavigation></EntrepriseTabNavigation>;
     }
 };
 
-const styles = StyleSheet.create({
+
+/*const styles = StyleSheet.create({
     tabBar: {
         position: 'absolute',
         bottom: 0,
@@ -173,6 +152,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
-});
+});*/
 
 export default BottomTabNavigation;

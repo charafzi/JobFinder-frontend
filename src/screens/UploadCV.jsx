@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
+import CVUploadInput from '../components/CVUploadInput';
 
 const TopNavBar = () => {
   const navigation = useNavigation();
@@ -86,45 +87,10 @@ const UploadCV = () => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upload CV</Text>
-          <Text style={styles.sectionSubtitle}>Add your CV/Resume to apply for a job</Text>
-          
-          {!cvFile ? (
-            <TouchableOpacity 
-              style={styles.uploadBox}
-              onPress={pickDocument}
-            >
-              <Icon name="upload-file" size={24} color="#666" />
-              <Text style={styles.uploadText}>Upload CV/Resume</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.uploadedFile}>
-              <View style={styles.fileInfo}>
-                <View style={styles.pdfIconContainer}>
-                  <Icon 
-                    name={cvFile?.type?.includes('pdf') ? 'picture-as-pdf' : 'insert-drive-file'} 
-                    size={24} 
-                    color="#FF4757"
-                  />
-                </View>
-                <Text style={styles.fileName} numberOfLines={1}>
-                  {cvFile?.name || 'Selected file'}
-                </Text>
-              </View>
-              <TouchableOpacity 
-                onPress={() => setCvFile(null)}
-                style={styles.deleteButton}
-              >
-                <Icon 
-                  name="delete-outline" 
-                  size={24} 
-                  color="#FF4757"
-                />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        <CVUploadInput 
+          cvFile={cvFile}
+          onFileSelect={setCvFile}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Information</Text>
@@ -232,59 +198,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 16,
-  },
-  uploadBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  uploadText: {
-    color: '#666',
-    marginLeft: 8,
-    fontSize: 14,
-  },
-  uploadedFile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  fileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  pdfIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#FFE2E6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  fileName: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  deleteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#FFE2E6',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   textArea: {
     borderWidth: 1,

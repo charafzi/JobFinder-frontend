@@ -1,34 +1,31 @@
-import {FlatList, Image, RefreshControl, Text, View} from "react-native";
+import {FlatList, RefreshControl, SafeAreaView, StyleSheet, Text, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
-import JobCardSearchPreview from "../components/JobCardSearchPreview";
-import {LoadingIndicator, Search} from "../components";
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {StyleSheet} from "react-native";
+import ApplicationCard from "../components/ApplicationCard";
 import {useDispatch, useSelector} from "react-redux";
-import {Color} from "../constants/Color";
-import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
+import {getCandidaturesByUserId} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
+import {LoadingIndicator} from "../components";
 import Entypo from "@expo/vector-icons/Entypo";
+import {Color} from "../constants/Color";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import {useScrollToTop} from "@react-navigation/native";
-import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
+import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 import showToast from "../utils/showToast";
 
-const SearchScreen = ()=>{
+const CandidatApplicationsScreen = ()=>{
     const dispatch = useDispatch();
-    const { searchOffresList, isLoading, params, last, totalPages,error } = useSelector((state) => state.offres);
+    const { candidatures, isLoading, last, totalPages,currentPage,error } = useSelector((state) => state.candidatures);
+    const { id } = useSelector((state) => state.auth);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
-    const [refreshing, setRefreshing] = useState(false);
-
     useScrollToTop(flatListRef);
 
-    useEffect(() => {
-        // load initial search
-        dispatch(searchOffres({
-            keyword : "",
-            page: 0
-        }));
-    }, []);
+    const params = {
+        id: id,
+        page: 0,
+        size: 3
+    };
 
     useEffect(() => {
         if (error) {
@@ -36,32 +33,14 @@ const SearchScreen = ()=>{
         }
     }, [error]);
 
-    const handleRefresh = useCallback(async () => {
-        if (isLoading) return;
-
-        setRefreshing(true);
-        try {
-            dispatch(clearSearchOffres());
-            await dispatch(searchOffres({
-                keyword : "",
-                page: 0
-            }));
-
-        } finally {
-            setRefreshing(false);
-        }
-    }, [isLoading]);
-
     const handleLoadMore = async () => {
         if (!totalPages) return;
-
-        if (!isLoading && !last && params.page < totalPages - 1 && !isLoadingMore.current) {
+        if (!isLoading && !last && currentPage < totalPages - 1 && !isLoadingMore.current) {
             try {
                 isLoadingMore.current = true;
-                const nextPage = params.page + 1;
-                await dispatch(searchOffres({
+                dispatch(getCandidaturesByUserId({
                     ...params,
-                    page: nextPage
+                    page: currentPage + 1,
                 }));
             } finally {
                 isLoadingMore.current = false;
@@ -73,6 +52,15 @@ const SearchScreen = ()=>{
     const handleScroll = (event) => {
         currentScrollPosition.current = event.nativeEvent.contentOffset.y;
     };
+
+    useEffect(() => {
+        // load initial condidatures
+        dispatch(getCandidaturesByUserId({
+            id : params.id,
+            size : params.size,
+            page : params.page
+        }))
+    }, [id]);
 
     useEffect(() => {
         if(params.page === 0){
@@ -90,19 +78,19 @@ const SearchScreen = ()=>{
         }
     }, [params.page]);
 
-    const keyExtractor = React.useCallback((item) => item.id.toString(), []);
+    const keyExtractor = React.useCallback((item, index) => `${item.offre.id}-${item.cvDocId}-${index}`, []);
 
     const renderItem = React.useCallback(({ item }) => (
-        <JobCardSearchPreview key={item.id} jobPoste={item} />
+        <ApplicationCard key={item.id} application={item} />
     ), []);
 
     const renderFooter = () => {
-        if (searchOffresList.length === 0) return null;
+        if (candidatures.length === 0) return null;
         return (
             <View style={styles.footerContainer}>
                 {isLoading ? (
                     <LoadingIndicator
-                    size={"large"}
+                        size={"large"}
                     ></LoadingIndicator>
                 ) : (
                     <View style={styles.footerContainer}>
@@ -111,7 +99,7 @@ const SearchScreen = ()=>{
                             size={25}
                             color={Color.placeholderText}
                         />
-                        <Text style={styles.noMoreResult}>No More Job Offers</Text>
+                        <Text style={styles.noMoreResult}>No more applications</Text>
                     </View>
                 )}
             </View>
@@ -121,34 +109,28 @@ const SearchScreen = ()=>{
     const renderEmpty = () =>{
         return(
             <View style={styles.noMoreResultContainer}>
-                <Image
-                    style={styles.noResultImage}
-                    source={require('../../assets/no_result.png')}
-                >
-                </Image>
-                <Text style={styles.noResult}>No results found</Text>
-                <Text style={styles.noResultDesc}>The search could not be found, please check spelling or write another word.</Text>
+                <AntDesign
+                    name="file1"
+                    size={25}
+                    color={Color.icon3}>
+                </AntDesign>
+                <Text style={styles.noResult}>No Applications Yet</Text>
+                <Text style={styles.noResultDesc}>Start applying to job offers to see your applications here</Text>
             </View>
         )
     }
 
-    return (
-        <View style={styles.mainContainer}>
-            <TopNavBar
-                showBackButton={false}
-                theme={"purple"}
-            ></TopNavBar>
-            <View style={styles.searchBar}>
-                <Search></Search>
-            </View>
+    return(
+        <SafeAreaView style={styles.mainContainer}>
+            <TopNavBar></TopNavBar>
 
             {isLoading &&
                 <View style={styles.loadingContainer}>
-                <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
-            </View>}
+                    <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
+                </View>}
 
             {!isLoading && <FlatList
-                data={searchOffresList}
+                data={candidatures}
                 contentContainerStyle={styles.flatListContent}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
@@ -163,30 +145,18 @@ const SearchScreen = ()=>{
                 updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
                 ListEmptyComponent={renderEmpty}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        colors={[Color.spinner]}
-                        tintColor={Color.spinner}
-                    />
-                }
             />}
-        </View>
+        </SafeAreaView>
     )
 }
 
+
 const styles = StyleSheet.create({
     mainContainer:{
-      flex : 1
+        flex : 1
     },
     flatListContent: {
         flexGrow: 1,
-    },
-    searchBar: {
-        paddingHorizontal: 5,
-        marginTop: 10,
-        marginBottom: 20
     },
     noResultContainer : {
         marginVertical: '50%',
@@ -208,24 +178,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 50,
         textAlign: "center"
     },
-    loadMoreButton: {
-        backgroundColor: Color.primary,
-        paddingVertical: 15,
-        marginVertical: 10,
-        marginHorizontal: 20,
-        borderRadius: 10,
-        alignItems: "center",
-    },
-    loadMoreText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
     noMoreResultContainer:{
-      display: "flex",
-      alignItems: "center",
-      flexDirection: "column",
-      justifyContent: "center",
+        display: "flex",
+        alignItems: "center",
+        flexDirection: "column",
+        justifyContent: "center",
         marginVertical : '50%'
     },
     noMoreResult:{
@@ -248,5 +205,4 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     }
 })
-
-export default SearchScreen;
+export default CandidatApplicationsScreen;

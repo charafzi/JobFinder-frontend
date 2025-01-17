@@ -7,6 +7,7 @@ const initialState = {
   candidat : {
     firstName: null,
     lastName: null,
+    cvDocumentsId : [] // representing list of CV ids at backend
   },
   entreprise:{
     name: null,
@@ -39,6 +40,7 @@ const authReducer = (state = initialState, action) => {
           candidat: {
             firstName: action.payload.firstName,
             lastName: action.payload.lastName,
+            cvDocumentsId : action.payload.cvDocumentsId
           },
           isLoading: false,
           isLoggedIn: true,
