@@ -20,6 +20,8 @@ export const checkIfAlreadyApplied = createAsyncThunk(
     async ({ userId, offreId }, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.get(API_BASE_URL+'/api/candidature/check/'+userId+'/'+offreId);
+            console.log("------------------------------------------>")
+            console.warn(response)
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Error checking application status.');

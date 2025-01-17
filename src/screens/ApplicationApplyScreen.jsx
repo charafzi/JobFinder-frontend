@@ -256,7 +256,7 @@ const ApplicationApplyScreen = ({route, navigation}) => {
     };
 
     const handleViewYourApplication = () => {
-        navigation.navigate('Applications');
+        navigation.navigate("applications");
     };
 
     useEffect(() => {
@@ -347,7 +347,7 @@ const ApplicationApplyScreen = ({route, navigation}) => {
                         <TouchableOpacity
                             style={styles.applyButton}
                             onPress={handleViewYourApplication}>
-                            <Text style={styles.applyButtonText}>VIEW YOUR APPLICATION</Text>
+                            <Text style={styles.applyButtonText}>VIEW YOUR APPLICATIONS</Text>
                         </TouchableOpacity>
                     )}
                 </View>

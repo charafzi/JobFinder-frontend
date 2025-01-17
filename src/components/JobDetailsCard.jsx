@@ -13,7 +13,6 @@ const JobDetailsCard =  React.memo( ({
     const { isCandidat} = useSelector((state) => state.auth);
     const [showFullResponse, setShowFullResponse] = useState(false);
 
-
     const toggleResponseView = () => {
         setShowFullResponse(!showFullResponse);
     };
