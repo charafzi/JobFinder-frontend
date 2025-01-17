@@ -60,4 +60,36 @@ const DATA = [
   },
 ];
 
-export default DATA;
+// Données locales de test
+const localCandidates = [
+  {
+    id: 1,
+    fullName: "John Doe",
+    position: "Software Engineer",
+    location: "Casablanca",
+    profilePicture: "https://via.placeholder.com/150",
+    applicationDate: "2023-10-01",
+    experience: 5,
+  },
+  {
+    id: 2,
+    fullName: "Jane Smith",
+    position: "Product Manager",
+    location: "Rabat",
+    profilePicture: "https://via.placeholder.com/150",
+    applicationDate: "2023-10-02",
+    experience: 7,
+  },
+  {
+    id: 3,
+    fullName: "Ahmed Ali",
+    position: "Data Scientist",
+    location: "Marrakech",
+    profilePicture: "https://via.placeholder.com/150",
+    applicationDate: "2023-10-03",
+    experience: 3,
+  },
+];
+
+// export default DATA;
+export default localCandidates;
