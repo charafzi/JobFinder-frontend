@@ -1,7 +1,6 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Color } from "../constants/Color";
-import React, { useRef, useCallback, useMemo } from "react";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import React, {  useCallback, useMemo } from "react";
 import { logo } from "../../assets";
 
 const MAX_REQUIREMENTS = 4;
