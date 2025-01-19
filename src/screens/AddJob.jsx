@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Keyboard,
   SafeAreaView,
@@ -21,10 +21,14 @@ import {
   DateModal,
   ExigencesModal,
   FormField,
+  LocationMapModal,
 } from "../components";
+import { useScrollToTop } from "@react-navigation/native";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
+  const ref = useRef(null);
+  useScrollToTop(ref);
   const {
     control,
     handleSubmit,
@@ -40,6 +44,11 @@ const AddJob = ({ navigation }) => {
       typeContrat: "",
       salaire: "",
       dateLimite: "",
+      address: "",
+      city: "",
+      longitude: "",
+      latitude: "",
+      question: "",
     },
     resolver: (data) => {
       const errors = {};
@@ -116,6 +125,28 @@ const AddJob = ({ navigation }) => {
         };
       }
 
+      // Validation de l'adresse
+      if (!data.address) {
+        errors.address = { message: "L'adresse est requise" };
+      } else if (data.address.trim().length < 5) {
+        errors.address = {
+          message: "L'adresse doit contenir au moins 5 caractères",
+        };
+      }
+
+      if (!data.city) {
+        errors.city = { message: "La ville est requise" };
+      }
+      if (!data.longitude || !data.latitude) {
+        errors.location = { message: "La localisation est requise" };
+      }
+
+      if (data.question.trim().length < 10) {
+        errors.question = {
+          message: "La question doit contenir au moins 10 caractères",
+        };
+      }
+
       return {
         values: data,
         errors: Object.keys(errors).length > 0 ? errors : {},
@@ -128,7 +159,12 @@ const AddJob = ({ navigation }) => {
   const [editingField, setEditingField] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [date, setDate] = useState(dayjs());
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
+  const handleSetLocation = (location) => {
+    setValue('longitude', location.longitude.toString());
+    setValue('latitude', location.latitude.toString());
+  }
   const onSubmit = (data) => {
     console.log("Form Data:", data);
     navigation.navigate("jobPreview", data);
@@ -170,7 +206,7 @@ const AddJob = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentStyle={{ paddingBottom: tabBarHeight }}>
+        <ScrollView ref={ref} contentStyle={{ paddingBottom: tabBarHeight }}>
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
@@ -193,6 +229,38 @@ const AddJob = ({ navigation }) => {
             {renderFormField("titre", "Enter titre")}
             {renderFormField("description", "Enter description")}
             {renderFormField("poste", "Enter poste")}
+            {renderFormField("city", "Enter city")}
+            {renderFormField("address", "Enter address")}
+            <Controller
+              control={control}
+              name="longitude"
+              render={({ field: { value: longitudeValue } }) => (
+                <Controller
+                  control={control}
+                  name="latitude"
+                  render={({ field: { value: latitudeValue } }) => (
+                    <View style={styles.card}>
+                      <View style={styles.fieldHeader}>
+                        <Text style={styles.text}>Localisation</Text>
+                        <TouchableOpacity onPress={() => setShowLocationModal(true)}>
+                          <Feather
+                            name={!longitudeValue ? "plus" : "edit-2"}
+                            size={!longitudeValue ? 24 : 20}
+                            color={Color.link}
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      {(!longitudeValue || !latitudeValue) && errors.location && (
+                        <Text style={styles.errorText}>
+                          {errors.location.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+              )}
+            />
 
             <Controller
               control={control}
@@ -288,6 +356,8 @@ const AddJob = ({ navigation }) => {
                 </View>
               )}
             />
+
+            {renderFormField("question", "Entrez une question pour les candidats")}
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -306,6 +376,13 @@ const AddJob = ({ navigation }) => {
           },
           [setValue],
         )}
+        control={control}
+      />
+
+      <LocationMapModal
+        showModal={showLocationModal}
+        handleCloseModal={() => setShowLocationModal(false)}
+        handleSetLocation={handleSetLocation}
         control={control}
       />
 

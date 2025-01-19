@@ -16,7 +16,6 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
 
 const { width } = Dimensions.get('window');
@@ -73,17 +72,14 @@ const CompanyProfile = () => {
       
       <Animated.View 
         style={[
-          styles.headerContainer, 
+          styles.header, 
           { 
             height: headerHeight,
             transform: [{ translateY: headerTranslateY }]
           }
         ]}
       >
-        <LinearGradient
-          colors={['#38354c', '#3A317B']}
-          style={styles.headerBackground}
-        >
+        <View style={styles.headerBackground}>
           <TopNavBar opacity={headerOpacity} />
           <Animated.View 
             style={[
@@ -110,7 +106,7 @@ const CompanyProfile = () => {
               120k Follower
             </Animated.Text>
           </Animated.View>
-        </LinearGradient>
+        </View>
       </Animated.View>
 
       <Animated.ScrollView 
@@ -208,7 +204,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
-  headerContainer: {
+  header: {
     width: '100%',
     position: 'absolute',
     top: 0,
@@ -218,8 +214,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   headerBackground: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
+    backgroundColor: '#3A317B',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },

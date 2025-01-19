@@ -8,18 +8,18 @@ import {
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
-import {CommonActions, useNavigation} from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { Color } from "../constants/Color";
 import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/actions/authAction";
 
-const FormLogin = () => {
+const FormLogin = ({ onLoggedIn }) => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error ,isCandidat} = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
 
   const {
     control,
@@ -29,7 +29,7 @@ const FormLogin = () => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigation.navigate('tabNavigator');
+      onLoggedIn();
     }
   }, [isLoggedIn]);
 
@@ -63,6 +63,7 @@ const FormLogin = () => {
             onChangeText={onChange}
             keyboardType="email-address"
             autoComplete="email"
+            autoCapitalize="none"
           />
         )}
         rules={{
@@ -90,6 +91,7 @@ const FormLogin = () => {
               placeholder="Enter Password"
               placeholderTextColor={Color.placeholderText}
               autoComplete="new-password"
+              autoCapitalize="none"
               secureTextEntry={securePassword}
               value={value}
               onBlur={onBlur}

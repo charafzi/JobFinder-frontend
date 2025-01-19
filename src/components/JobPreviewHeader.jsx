@@ -3,8 +3,12 @@ import React from "react";
 import { profile } from "../../assets";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
+import { useSelector } from "react-redux";
 
-const JobPreviewHeader = ({ navigation, entrepriseName, entrepriseVille }) => {
+
+const JobPreviewHeader = ({ navigation }) => {
+  const { name: entrepriseName } = useSelector((state) => state.auth);
+  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity

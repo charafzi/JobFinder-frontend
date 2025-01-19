@@ -95,7 +95,7 @@ const OffreSlice = createSlice({
             })
             .addCase(searchOffres.rejected, (state,action)=>{
                 state.isLoading = false;
-                state.error = action.payload || 'Une erreur est survenue';
+                state.error = action.payload || 'Problem has been occurred. Please try again.';
                 state.searchOffresList = [];
                 state.last = true;
             })
