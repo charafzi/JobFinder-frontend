@@ -10,9 +10,9 @@ import {
     View,
 } from "react-native";
 import { Color } from "../constants/Color";
-import { profile, remotejobs } from "../../assets";
+import { remotejobs } from "../../assets";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { EntrepriseHeader, JobCard, LoadingIndicator } from "../components";
+import { JobCard, LoadingIndicator } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import { getEntrepriseOffres } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
@@ -21,11 +21,8 @@ import TopNavBar from "../components/TopNavBar";
 
 
 const ListHeaderComponent = () => {
-    const { entreprise} = useSelector((state) => state.auth);
     return (
         <>
-            {/* Header */}
-            <EntrepriseHeader entrepriseLogo={profile} entrepriseName={entreprise.name} />
             {/* Dashboard */}
             <View style={{ marginTop: 10 }}>
                 <Text style={[styles.text, { paddingBottom: 10 }]}>Dashboard</Text>
@@ -82,12 +79,12 @@ const ListHeaderComponent = () => {
 
 const EntrepriseHomeScreen = ({ navigation }) => {
     const tabBarHeight = useBottomTabBarHeight();
-    const ref = useRef(null);
+    const flatListRef = useRef(null);
     const dispatch = useDispatch();
     const { entrepriseOffresList, error, isLoading, totalPages } = useSelector((state) => state.entrepriseOffres);
     const { id: entrepriseId } = useSelector((state) => state.auth);
 
-    useScrollToTop(ref);
+    useScrollToTop(flatListRef);
 
     useEffect(() => {
         if (error) {
@@ -130,17 +127,18 @@ const EntrepriseHomeScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.mainContainer}>
+        <SafeAreaView style={styles.mainContainer}>            
+            <StatusBar barStyle="dark-content" backgroundColor={Color.background} animated/>
             <TopNavBar
                 theme={"purple"}
                 showBackButton={false}
                 showNotification={false}
                 showWelcome={true}
+                showProfile={true}
             ></TopNavBar>
-            <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
             <View style={styles.container}>
                 <FlatList
-                    ref={ref}
+                    ref={flatListRef}
                     data={recentJobs}
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id.toString()}
@@ -173,7 +171,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Color.background,
-        padding: 20,
+        paddingHorizontal: 20,
     },
     text: {
         color: Color.text,
@@ -184,7 +182,7 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         paddingVertical: 10,
         paddingHorizontal: 20,
-        backgroundColor: Color.link,
+        backgroundColor: Color.selectedbutton,
         borderRadius: 10,
     },
     showMoreText: {

@@ -11,9 +11,9 @@ export { default as ResetSuccessfully } from "./ResetSuccessfully";
 export { default as Welcome } from "./Welcome";
 export {default as Map} from "./MapScreen"
 export {default as Search} from "./SearchScreen";
-export {default as Filter} from './FilterScreen'
-export {default as CandidateProfile} from './CandidateProfile'
 export {default as Filter} from './FilterScreen';
+export {default as CandidateProfile} from './CandidateProfile';
 export {default as Applications} from './CandidatApplicationsScreen';
 export {default as ApplicationDetails} from './ApplicationDetailsScreen'
 export {default as ApplicationApply} from './ApplicationApplyScreen'
+export {default as EntrepriseJobDetailsScreen} from './EntrepriseJobDetailsScreen'
