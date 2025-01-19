@@ -15,6 +15,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { JobCard } from "../components";
 import DATA from "../data/data";
 import TopNavBar from "../components/TopNavBar";
+import { useAuthCheck } from "../hooks/useAuthCheck";
 
 const ListHeaderComponent = () => {
   return (
@@ -74,6 +75,7 @@ const ListHeaderComponent = () => {
 };
 
 const EntrepriseHomeScreen = ({ navigation }) => {
+  const isLoggedIn = useAuthCheck();
   const tabBarHeight = useBottomTabBarHeight();
 
   const recentJobs = DATA.slice(0, 3);

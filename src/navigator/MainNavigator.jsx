@@ -19,12 +19,15 @@ import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';
 import UploadCVSuccess from '../screens/UploadCVSuccess';
 import EditProfileCandidat from '../screens/EditProfileCandidat';
+import {useSelector} from "react-redux";
 
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
+  const { isLoggedIn } = useSelector((state) => state.auth);
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"login"} >
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isLoggedIn ? "tabNavigator" : "login"} >
         <Stack.Screen name="tabNavigator" component={TabNavigator} />
         <Stack.Screen name="logoscreen" component={LogoScreen} />
         <Stack.Screen name="welcome" component={Welcome} />

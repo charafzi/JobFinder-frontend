@@ -1,16 +1,13 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
 import {Color} from "../constants/Color";
 import formatDate from "../utils/formatDate";
-import {useSelector} from "react-redux";
-
 
 const JobDetailsCard =  React.memo( ({
                             offre
 }) => {
-    const { isCandidat} = useSelector((state) => state.auth);
     const [showFullResponse, setShowFullResponse] = useState(false);
 
     const toggleResponseView = () => {
@@ -282,94 +279,94 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-    detailsContainer: {
-        width : '100%',
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-evenly",
-        gap: 15,
-        paddingHorizontal : 20,
-        marginVertical : 15,
-    },
-    dateContainer: {
-        flex : 1,
-    },
-    publicationDateBox: {
-        backgroundColor: Color.green,
-        paddingVertical: 5,
-        borderRadius: 5,
-        padding : 10,
-    },
-    deadlineDateBox: {
-        backgroundColor: Color.red,
-        paddingVertical: 5,
-        borderRadius: 5,
-        padding : 10,
-    },
-    dateText:{
-        textAlign : "center",
-        fontSize: 12,
-        fontWeight: "600",
-        color : Color.background
-    },
-    contractTypeBox: {
-        minHeight: 30,
-        backgroundColor: Color.secondary,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5
-    },
-    contractTypeText:{
-        fontSize: 11,
-        fontWeight: "bold",
-        color : Color.background
-    },
-    position: {
-        color: Color.background,
-        fontWeight: "bold",
-        fontSize: 12,
-        textAlign : "center"
-    },
-    positionBox: {
-        minHeight: 30,
-        maxWidth : 200,
-        backgroundColor: Color.primary,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-    },
-    salaryBox : {
-        flexDirection: "row",
-        alignContent : "center",
-        alignSelf: "center",
-        alignItems: "center",
-        justifyContent: "space-evenly",
-        minWidth: 50,
-        height: 30,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 5,
-        marginRight: 5,
-        backgroundColor : Color.boxBackground,
-        gap : 5
-    },
-    salary :{
-        fontSize: 11,
-        fontWeight: "bold",
-        color : Color.text,
-    },
-    month :{
-        fontSize: 10,
-        fontWeight: "bold",
-        paddingTop: -10,
-        color :  Color.text,
-    },
+  detailsContainer: {
+      width : '100%',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-evenly",
+      gap: 15,
+      paddingHorizontal : 20,
+      marginVertical : 15,
+  },
+  dateContainer: {
+      flex : 1,
+  },
+  publicationDateBox: {
+      backgroundColor: Color.green,
+      paddingVertical: 5,
+      borderRadius: 5,
+      padding : 10,
+  },
+  deadlineDateBox: {
+      backgroundColor: Color.red,
+      paddingVertical: 5,
+      borderRadius: 5,
+      padding : 10,
+  },
+  dateText:{
+      textAlign : "center",
+      fontSize: 12,
+      fontWeight: "600",
+      color : Color.background
+  },
+  contractTypeBox: {
+      minHeight: 30,
+      backgroundColor: Color.secondary,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 5,
+      marginRight: 5
+  },
+  contractTypeText:{
+      fontSize: 11,
+      fontWeight: "bold",
+      color : Color.background
+  },
+  position: {
+      color: Color.background,
+      fontWeight: "bold",
+      fontSize: 12,
+      textAlign : "center"
+  },
+  positionBox: {
+      minHeight: 30,
+      maxWidth : 200,
+      backgroundColor: Color.primary,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 5,
+      marginRight: 5,
+  },
+  salaryBox : {
+      flexDirection: "row",
+      alignContent : "center",
+      alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "space-evenly",
+      minWidth: 50,
+      height: 30,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 5,
+      marginRight: 5,
+      backgroundColor : Color.boxBackground,
+      gap : 5
+  },
+  salary :{
+      fontSize: 11,
+      fontWeight: "bold",
+      color : Color.text,
+  },
+  month :{
+      fontSize: 10,
+      fontWeight: "bold",
+      paddingTop: -10,
+      color :  Color.text,
+  },
 });
 
 export default JobDetailsCard;
