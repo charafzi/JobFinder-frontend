@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../config/axiosConfig';
+import { Buffer } from 'buffer';
 
 // Formations
 export const fetchFormations = createAsyncThunk(
@@ -89,6 +90,7 @@ export const createFormation = createAsyncThunk(
       console.error('Error in createFormation thunk:', error);
       if (error.response) {
         console.error('API Error Response:', error.response.data);
+        console.error('API Error Status:', error.response.status);
         throw new Error(error.response.data.message || 'Error creating formation');
       }
       throw error;
@@ -293,9 +295,14 @@ export const createLangue = createAsyncThunk(
     try {
       console.log('createLangue thunk - input:', langueData);
       
+      if (!langueData.candidatId || isNaN(langueData.candidatId)) {
+        console.error('Invalid candidatId:', langueData.candidatId);
+        throw new Error('ID du candidat invalide');
+      }
+
       const apiData = {
-        nomLangue: String(langueData.nomLangue || ''),
-        niveau: String(langueData.niveau || ''),
+        nomLangue: String(langueData.nomLangue || '').trim(),
+        niveau: String(langueData.niveau || '').trim(),
         candidatId: Number(langueData.candidatId)
       };
 
@@ -303,19 +310,14 @@ export const createLangue = createAsyncThunk(
       console.log('createLangue thunk - URL:', '/api/langues');
       
       const response = await axiosInstance.post('/api/langues', apiData);
+      
       console.log('createLangue thunk - Response status:', response.status);
       console.log('createLangue thunk - Response headers:', response.headers);
       console.log('createLangue thunk - API response:', response.data);
 
-      // Accepter 200, 201 et 204 comme codes de succès
       if ([200, 201, 204].includes(response.status)) {
         console.log('Langue creation successful');
-        // Générer un ID temporaire si nécessaire
-        const tempId = Date.now();
-        return {
-          id: tempId,
-          ...apiData
-        };
+        return response.data;
       } else {
         console.error('Unexpected response status:', response.status);
         throw new Error('Erreur lors de la création de la langue');
@@ -342,8 +344,8 @@ export const updateLangue = createAsyncThunk(
       console.log('updateLangue thunk - input:', { langueId, langueData });
       
       const apiData = {
-        nomLangue: String(langueData.nomLangue || ''),
-        niveau: String(langueData.niveau || ''),
+        nomLangue: String(langueData.nomLangue || '').trim(),
+        niveau: String(langueData.niveau || '').trim(),
         candidatId: Number(langueData.candidatId)
       };
 
@@ -480,11 +482,7 @@ export const createCompetence = createAsyncThunk(
     } catch (error) {
       console.error('Error creating competence - Full error:', error);
       console.error('Error response data:', error.response?.data);
-      console.error('Error request config:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.config?.data
-      });
+      console.error('Error request config:', error.config);
       throw error;
     }
   }
@@ -565,6 +563,80 @@ export const deleteAbout = createAsyncThunk(
       return aboutId;
     } catch (error) {
       console.error('Error deleting about:', error);
+      throw error;
+    }
+  }
+);
+
+// Upload Profile Picture
+export const uploadProfilePicture = createAsyncThunk(
+  'candidatProfile/uploadProfilePicture',
+  async ({ email, imageUri }) => {
+    try {
+      console.log('Uploading profile picture for candidat:', email);
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: 'profile_picture.jpg'
+      });
+
+      console.log('FormData created:', formData);
+
+      const response = await axiosInstance.post(
+        `/api/candidat/profile-picture/${email}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        }
+      );
+
+      console.log('Upload response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        method: error.config?.method,
+        url: error.config?.url
+      });
+      throw error;
+    }
+  }
+);
+
+// Get Profile Picture
+export const getProfilePicture = createAsyncThunk(
+  'candidatProfile/getProfilePicture',
+  async (email) => {
+    try {
+      console.log('Fetching profile picture for candidat:', email);
+      const response = await axiosInstance.get(
+        `/api/candidat/profile-picture/${email}`,
+        {
+          responseType: 'text'
+        }
+      );
+
+      // Construire l'URL complète de l'image
+      const baseUrl = axiosInstance.defaults.baseURL || '';
+      const imageUrl = `${baseUrl}/api/candidat/profile-picture/${email}`;
+      console.log('Profile picture URL:', imageUrl);
+      
+      return imageUrl;
+    } catch (error) {
+      console.error('Error fetching profile picture:', error);
+      // Si l'erreur est 404, on retourne null au lieu de throw
+      if (error.response && error.response.status === 404) {
+        return null;
+      }
       throw error;
     }
   }

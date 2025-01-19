@@ -14,7 +14,10 @@ import {
   Platform,
   Modal,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -40,9 +43,10 @@ import {
   createCompetence,
   updateCompetence,
   deleteCompetence,
-  updateAbout
+  updateAbout,
+  uploadProfilePicture,
+  getProfilePicture
 } from '../redux/slices/candidatProfileThunks';
-import { KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
@@ -66,16 +70,20 @@ const EditProfileCandidat = ({ route }) => {
     return state.candidatProfile;
   });
 
-  const { candidatId, firstName: authFirstName, lastName: authLastName } = useSelector((state) => {
-    console.log('Current Auth State:', state.auth);
+  const { candidatId, firstName: authFirstName, lastName: authLastName, email } = useSelector((state) => {
+    console.log('Full Auth State:', state.auth);
+    console.log('Auth ID:', state.auth.id);
+    console.log('Auth ID Type:', typeof state.auth.id);
+    console.log('Auth Candidat:', state.auth.candidat);
     return {
-      candidatId: state.auth.id, // Get ID directly from auth state
+      candidatId: state.auth.candidat?.id || state.auth.id,
       firstName: state.auth.candidat?.firstName || '',
-      lastName: state.auth.candidat?.lastName || ''
+      lastName: state.auth.candidat?.lastName || '',
+      email: state.auth.email || ''
     };
   });
 
-  console.log('CandidatId:', candidatId);
+  console.log('Email:', email);
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const [image, setImage] = useState(null);
@@ -115,7 +123,10 @@ const EditProfileCandidat = ({ route }) => {
 
   const [languages, setLanguages] = useState([]);
   const [editingLanguage, setEditingLanguage] = useState(null);
-  const [newLanguage, setNewLanguage] = useState({ nomLangue: '', niveau: 'DEBUTANT' });
+  const [newLanguage, setNewLanguage] = useState({ 
+    nomLangue: '', 
+    niveau: 'DEBUTANT'
+  });
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const languageLevels = ["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"];
 
@@ -123,9 +134,17 @@ const EditProfileCandidat = ({ route }) => {
   const [formationToDelete, setFormationToDelete] = useState(null);
 
   useEffect(() => {
+    console.log('EditProfileCandidat - CandidatId:', candidatId);
+    console.log('EditProfileCandidat - CandidatId Type:', typeof candidatId);
     if (candidatId) {
       console.log('Fetching initial data for candidat:', candidatId);
       dispatch(fetchFormations(candidatId));
+      dispatch(fetchAbout(candidatId));
+      dispatch(fetchExperiences(candidatId));
+      dispatch(fetchLangues(candidatId));
+      dispatch(fetchCompetences(candidatId));
+    } else {
+      console.log('CandidatId is not available yet');
     }
   }, [candidatId, dispatch]);
 
@@ -196,43 +215,59 @@ const EditProfileCandidat = ({ route }) => {
   }, [authFirstName, authLastName]);
 
   useEffect(() => {
-    if (candidatId) {
-      console.log('Fetching about for candidat:', candidatId);
-      dispatch(fetchAbout(candidatId));
-    }
-  }, [candidatId, dispatch]);
+    const loadProfilePicture = async () => {
+      if (email) {
+        try {
+          const imageUri = await dispatch(getProfilePicture(email)).unwrap();
+          console.log('Loaded profile picture URI:', imageUri);
+          if (imageUri) {
+            setImage(imageUri);
+          }
+        } catch (error) {
+          console.error('Error loading profile picture:', error);
+          setImage(null);
+        }
+      }
+    };
+
+    loadProfilePicture();
+  }, [email, dispatch]);
 
   const pickImage = async () => {
     try {
-      // Demander la permission
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission requise',
-          'Nous avons besoin de votre permission pour accéder à la galerie.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      console.log('Ouverture de la galerie...');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 1,
+        quality: 0.2, // Réduire encore plus la qualité
+        maxWidth: 300, // Réduire la taille maximale
+        maxHeight: 300,
       });
 
-      console.log('Résultat:', result);
-
-      if (!result.canceled && result.assets && result.assets[0]) {
-        console.log('Image sélectionnée:', result.assets[0].uri);
-        setImage(result.assets[0].uri);
+      if (!result.canceled) {
+        try {
+          await dispatch(uploadProfilePicture({
+            email,
+            imageUri: result.assets[0].uri
+          })).unwrap();
+          
+          // Recharger l'image après l'upload réussi
+          const newImageUri = await dispatch(getProfilePicture(email)).unwrap();
+          if (newImageUri) {
+            setImage(newImageUri);
+          }
+        } catch (error) {
+          console.error('Error uploading profile picture:', error);
+          if (error.response?.data === "Maximum upload size exceeded") {
+            Alert.alert('Erreur', 'L\'image est trop grande. Veuillez choisir une image plus petite.');
+          } else {
+            Alert.alert('Erreur', 'Impossible de mettre à jour la photo de profil');
+          }
+        }
       }
     } catch (error) {
-      console.error('Erreur lors de la sélection de l\'image:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+      console.error('Error picking image:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner une image');
     }
   };
 
@@ -286,9 +321,6 @@ const EditProfileCandidat = ({ route }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back-ios" size={24} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setIsEditingProfile(!isEditingProfile)}>
-          <Icon name={isEditingProfile ? "check" : "edit"} size={24} color="#fff" />
-        </TouchableOpacity>
       </View>
     );
   };
@@ -306,7 +338,7 @@ const EditProfileCandidat = ({ route }) => {
 
         const response = await dispatch(createCompetence({
           nomCompetence: newSkill.trim(),
-          candidatId: parseInt(candidatId, 10)
+          candidatId
         })).unwrap();
 
         // Mettre à jour immédiatement le state local
@@ -345,13 +377,20 @@ const EditProfileCandidat = ({ route }) => {
         return;
       }
 
-      console.log('Adding language:', newLanguage);
-      const result = await dispatch(createLangue({
+      if (!candidatId || isNaN(candidatId)) {
+        console.error('Invalid candidatId:', candidatId);
+        Alert.alert('Erreur', 'ID du candidat invalide ou manquant');
+        return;
+      }
+
+      const languageData = {
         nomLangue: newLanguage.nomLangue.trim(),
         niveau: newLanguage.niveau,
-        candidatId
-      })).unwrap();
+        candidatId: Number(candidatId)
+      };
       
+      console.log('Adding language with data:', languageData);
+      const result = await dispatch(createLangue(languageData)).unwrap();
       console.log('Language added successfully:', result);
       
       // Refresh the languages list
@@ -363,7 +402,7 @@ const EditProfileCandidat = ({ route }) => {
       setEditingLanguage(null);
     } catch (error) {
       console.error('Error adding language:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter la langue. Veuillez réessayer.');
+      Alert.alert('Erreur', error.message || 'Impossible d\'ajouter la langue. Veuillez réessayer.');
     }
   };
 
@@ -384,9 +423,18 @@ const EditProfileCandidat = ({ route }) => {
 
   const handleFormationSubmit = async () => {
     try {
+      if (!candidatId) {
+        console.error('CandidatId is missing');
+        Alert.alert('Erreur', 'ID du candidat manquant');
+        return;
+      }
+
       const formationData = {
-        ...newFormation,
-        candidatId
+        nomEcole: newFormation.nomEcole.trim(),
+        niveauEtude: newFormation.niveauEtude.trim(),
+        dateDebut: newFormation.dateDebut.trim(),
+        dateFin: newFormation.dateFin.trim(),
+        candidatId: Number(candidatId)
       };
 
       console.log('handleFormationSubmit - starting with:', {
@@ -407,12 +455,10 @@ const EditProfileCandidat = ({ route }) => {
         console.log('Formation created successfully');
       }
 
-      // Rafraîchir la liste des formations
-      if (candidatId) {
-        console.log('Refreshing formations list');
-        await dispatch(fetchFormations(candidatId));
-      }
+      // Refresh formations list
+      await dispatch(fetchFormations(candidatId));
 
+      // Reset form and close modal
       setNewFormation({
         nomEcole: '',
         niveauEtude: '',
@@ -422,22 +468,10 @@ const EditProfileCandidat = ({ route }) => {
       handleCloseModal();
     } catch (error) {
       console.error('Error submitting formation:', error);
-      // Ne pas afficher l'erreur si la formation a été créée avec succès
-      if (error.message !== 'No formation data received from API') {
-        Alert.alert(
-          'Erreur',
-          'Une erreur est survenue lors de la soumission de la formation'
-        );
-      } else {
-        // Si c'est l'erreur "No formation data", on ferme quand même le modal
-        setNewFormation({
-          nomEcole: '',
-          niveauEtude: '',
-          dateDebut: '',
-          dateFin: ''
-        });
-        handleCloseModal();
-      }
+      Alert.alert(
+        'Erreur',
+        error.message || 'Une erreur est survenue lors de la soumission de la formation'
+      );
     }
   };
 
@@ -600,9 +634,17 @@ const EditProfileCandidat = ({ route }) => {
 
   const handleExperienceSubmit = async () => {
     try {
+      if (!candidatId) {
+        console.error('CandidatId is missing');
+        Alert.alert('Erreur', 'ID du candidat manquant');
+        return;
+      }
+
       const experienceData = {
-        ...newExperience,
-        candidatId
+        poste: newExperience.poste.trim(),
+        dateDebut: newExperience.dateDebut.trim(),
+        dateFin: newExperience.dateFin.trim(),
+        candidatId: Number(candidatId)
       };
 
       console.log('handleExperienceSubmit - starting with:', {
@@ -614,10 +656,7 @@ const EditProfileCandidat = ({ route }) => {
         console.log('Updating experience with ID:', editingExperience.id);
         await dispatch(updateExperience({
           experienceId: editingExperience.id,
-          experienceData: {
-            ...experienceData,
-            id: editingExperience.id
-          }
+          experienceData: experienceData
         })).unwrap();
         console.log('Experience updated successfully');
       } else {
@@ -626,12 +665,10 @@ const EditProfileCandidat = ({ route }) => {
         console.log('Experience created successfully');
       }
 
-      // Rafraîchir la liste des expériences
-      if (candidatId) {
-        console.log('Refreshing experiences list');
-        await dispatch(fetchExperiences(candidatId));
-      }
+      // Refresh experiences list
+      await dispatch(fetchExperiences(candidatId));
 
+      // Reset form and close modal
       setNewExperience({
         poste: '',
         dateDebut: '',
@@ -643,7 +680,7 @@ const EditProfileCandidat = ({ route }) => {
       console.error('Error submitting experience:', error);
       Alert.alert(
         'Erreur',
-        'Une erreur est survenue lors de la soumission de l\'expérience'
+        error.message || 'Une erreur est survenue lors de la soumission de l\'expérience'
       );
     }
   };
@@ -661,16 +698,17 @@ const EditProfileCandidat = ({ route }) => {
 
   const handleDeleteExperience = async (experienceId) => {
     try {
-      await dispatch(deleteExperience(experienceId)).unwrap();
-      if (candidatId) {
-        await dispatch(fetchExperiences(candidatId));
+      if (!candidatId) {
+        console.error('CandidatId is missing');
+        Alert.alert('Erreur', 'ID du candidat manquant');
+        return;
       }
+
+      await dispatch(deleteExperience(experienceId)).unwrap();
+      await dispatch(fetchExperiences(candidatId));
     } catch (error) {
       console.error('Error deleting experience:', error);
-      Alert.alert(
-        'Erreur',
-        'Une erreur est survenue lors de la suppression de l\'expérience'
-      );
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression de l\'expérience');
     }
   };
 
@@ -959,92 +997,114 @@ const EditProfileCandidat = ({ route }) => {
         transparent={true}
         onRequestClose={() => setShowLanguageModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingLanguage ? 'Modifier la langue' : 'Ajouter une langue'}
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => {
-                  setShowLanguageModal(false);
-                  setEditingLanguage(null);
-                  setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
-                }}
-              >
-                <MaterialCommunityIcons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Nom de la langue *</Text>
-              <TextInput
-                style={[styles.input, errors.nomLangue && styles.inputError]}
-                placeholder="Ex: Français, Anglais, Espagnol..."
-                value={newLanguage.nomLangue}
-                onChangeText={(text) => {
-                  setNewLanguage({ ...newLanguage, nomLangue: text });
-                  if (errors.nomLangue) setErrors(prev => ({ ...prev, nomLangue: null }));
-                }}
-              />
-              {errors.nomLangue && <Text style={styles.errorText}>{errors.nomLangue}</Text>}
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Niveau *</Text>
-              <View style={styles.levelButtons}>
-                {["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"].map((niveau) => (
-                  <TouchableOpacity
-                    key={niveau}
-                    style={[
-                      styles.levelButton,
-                      newLanguage.niveau === niveau && styles.selectedLevelButton,
-                      errors.niveau && styles.levelButtonError
-                    ]}
-                    onPress={() => {
-                      setNewLanguage({ ...newLanguage, niveau });
-                      if (errors.niveau) setErrors(prev => ({ ...prev, niveau: null }));
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.levelButtonText,
-                        newLanguage.niveau === niveau && styles.selectedLevelButtonText
-                      ]}
-                    >
-                      {niveau}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {errors.niveau && <Text style={styles.errorText}>{errors.niveau}</Text>}
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.button, styles.submitButton]}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.buttonText}>
-                  {editingLanguage ? 'Modifier' : 'Ajouter'}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
+            onPress={() => setShowLanguageModal(false)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              style={styles.modalContent}
+              onPress={e => e.stopPropagation()}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {editingLanguage ? 'Modifier la langue' : 'Ajouter une langue'}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setShowLanguageModal(false);
+                    setEditingLanguage(null);
+                    setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+                  }}
+                >
+                  <MaterialCommunityIcons name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScrollContent}>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Nom de la langue *</Text>
+                  <TextInput
+                    style={[styles.input, errors.nomLangue && styles.inputError]}
+                    placeholder="Ex: Français, Anglais, Espagnol..."
+                    value={newLanguage.nomLangue}
+                    onChangeText={(text) => {
+                      setNewLanguage({ ...newLanguage, nomLangue: text });
+                      if (errors.nomLangue) setErrors(prev => ({ ...prev, nomLangue: null }));
+                    }}
+                  />
+                  {errors.nomLangue && <Text style={styles.errorText}>{errors.nomLangue}</Text>}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Niveau *</Text>
+                  <View style={styles.levelButtons}>
+                    {["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"].map((niveau) => (
+                      <TouchableOpacity
+                        key={niveau}
+                        style={[
+                          styles.levelButton,
+                          newLanguage.niveau === niveau && styles.selectedLevelButton,
+                          errors.niveau && styles.levelButtonError
+                        ]}
+                        onPress={() => {
+                          setNewLanguage({ ...newLanguage, niveau });
+                          if (errors.niveau) setErrors(prev => ({ ...prev, niveau: null }));
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.levelButtonText,
+                            newLanguage.niveau === niveau && styles.selectedLevelButtonText
+                          ]}
+                        >
+                          {niveau}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {errors.niveau && <Text style={styles.errorText}>{errors.niveau}</Text>}
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.button, styles.submitButton]}
+                  onPress={handleSubmit}
+                >
+                  <Text style={styles.buttonText}>
+                    {editingLanguage ? 'Modifier' : 'Ajouter'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     );
   };
 
   const handleLanguageSubmit = async () => {
     try {
+      if (!candidatId) {
+        console.error('CandidatId is missing');
+        Alert.alert('Erreur', 'ID du candidat manquant');
+        return;
+      }
+
       const languageData = {
-        ...newLanguage,
-        candidatId
+        nomLangue: newLanguage.nomLangue.trim(),
+        niveau: newLanguage.niveau,
+        candidatId: Number(candidatId)
       };
 
-      console.log('Adding language:', languageData);
+      console.log('Submitting language:', languageData);
 
       if (editingLanguage && editingLanguage.id) {
         console.log('Updating language with ID:', editingLanguage.id);
@@ -1059,23 +1119,18 @@ const EditProfileCandidat = ({ route }) => {
         console.log('Language created successfully');
       }
 
-      // Rafraîchir la liste des langues
-      if (candidatId) {
-        console.log('Refreshing languages list');
-        await dispatch(fetchLangues(candidatId));
-      }
+      // Refresh languages list
+      await dispatch(fetchLangues(candidatId));
 
-      setNewLanguage({
-        nomLangue: '',
-        niveau: 'DEBUTANT'
-      });
-      setEditingLanguage(null);
+      // Reset form and close modal
+      setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
       setShowLanguageModal(false);
+      setEditingLanguage(null);
     } catch (error) {
       console.error('Error submitting language:', error);
       Alert.alert(
         'Erreur',
-        'Une erreur est survenue lors de la soumission de la langue'
+        error.message || 'Une erreur est survenue lors de la soumission de la langue'
       );
     }
   };
@@ -1165,31 +1220,25 @@ const EditProfileCandidat = ({ route }) => {
 
   const renderProfileImage = () => {
     return (
-      <View style={styles.profileImageContainer}>
+      <TouchableOpacity onPress={handleAvatarPress} style={styles.avatarContainer}>
         {image ? (
           <Image
             source={{ uri: image }}
-            style={styles.profileImage}
+            style={styles.avatar}
+            onError={(e) => {
+              console.log('Error loading image:', e.nativeEvent.error);
+              setImage(null);
+            }}
           />
         ) : (
-          <MaterialCommunityIcons
-            name="account"
-            size={60}
-            color="#999"
-            style={styles.placeholderIcon}
-          />
+          <View style={[styles.avatar, styles.placeholderAvatar]}>
+            <MaterialCommunityIcons name="account" size={40} color="#fff" />
+          </View>
         )}
-        <TouchableOpacity
-          style={styles.cameraButton}
-          onPress={handleAvatarPress}
-        >
-          <MaterialCommunityIcons
-            name="camera"
-            size={20}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.editAvatarButton}>
+          <MaterialCommunityIcons name="camera" size={20} color="#fff" />
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -1928,6 +1977,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     flex: 1,
+  },
+  avatarContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#3A317B',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  placeholderAvatar: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
