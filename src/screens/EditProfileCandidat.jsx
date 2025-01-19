@@ -14,28 +14,193 @@ import {
   Platform,
   Modal,
   Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
 import * as ImagePicker from 'expo-image-picker';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchFormations,
+  fetchExperiences,
+  fetchLangues,
+  fetchCompetences,
+  fetchAbout,
+  createFormation,
+  updateFormation,
+  deleteFormation,
+  createExperience,
+  updateExperience,
+  deleteExperience,
+  createLangue,
+  updateLangue,
+  deleteLangue,
+  createCompetence,
+  updateCompetence,
+  deleteCompetence,
+  updateAbout
+} from '../redux/slices/candidatProfileThunks';
+import { KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-const EditProfileCandidat = () => {
+const EditProfileCandidat = ({ route }) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const {
+    loading,
+    error,
+    formations: reduxFormations,
+    experiences: reduxExperiences,
+    langues: reduxLangues,
+    competences: reduxCompetences,
+    about
+  } = useSelector((state) => {
+    console.log('Current Profile State:', state.candidatProfile);
+    console.log('About in Redux state:', state.candidatProfile.about);
+    return state.candidatProfile;
+  });
+
+  const { candidatId, firstName: authFirstName, lastName: authLastName } = useSelector((state) => {
+    console.log('Current Auth State:', state.auth);
+    return {
+      candidatId: state.auth.id, // Get ID directly from auth state
+      firstName: state.auth.candidat?.firstName || '',
+      lastName: state.auth.candidat?.lastName || ''
+    };
+  });
+
+  console.log('CandidatId:', candidatId);
+
   const scrollY = useRef(new Animated.Value(0)).current;
   const [image, setImage] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    firstName: '',
-    lastName: '',
+    firstName: authFirstName,
+    lastName: authLastName,
     address: '',
+    about: ''
   });
+
+  const [aboutText, setAboutText] = useState('');
+
+  const [formations, setFormations] = useState([]);
+  const initialFormationState = {
+    nomEcole: '',
+    niveauEtude: '',
+    dateDebut: '',
+    dateFin: '',
+  };
+  const [newFormation, setNewFormation] = useState(initialFormationState);
+  const [editingFormation, setEditingFormation] = useState(null);
+  const [showFormationModal, setShowFormationModal] = useState(false);
+
+  const [experiences, setExperiences] = useState([]);
+  const [newExperience, setNewExperience] = useState({
+    poste: '',
+    dateDebut: '',
+    dateFin: ''
+  });
+  const [editingExperience, setEditingExperience] = useState(null);
+  const [showExperienceModal, setShowExperienceModal] = useState(false);
+
+  const [skills, setSkills] = useState([]);
+  const [newSkill, setNewSkill] = useState('');
+
+  const [languages, setLanguages] = useState([]);
+  const [editingLanguage, setEditingLanguage] = useState(null);
+  const [newLanguage, setNewLanguage] = useState({ nomLangue: '', niveau: 'DEBUTANT' });
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const languageLevels = ["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"];
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [formationToDelete, setFormationToDelete] = useState(null);
+
+  useEffect(() => {
+    if (candidatId) {
+      console.log('Fetching initial data for candidat:', candidatId);
+      dispatch(fetchFormations(candidatId));
+    }
+  }, [candidatId, dispatch]);
+
+  useEffect(() => {
+    console.log('About effect triggered. Current about:', about);
+    if (about && Array.isArray(about) && about.length > 0) {
+      console.log('Setting aboutText with:', about[0].description);
+      setAboutText(about[0].description || '');
+    }
+  }, [about]);
+
+  useEffect(() => {
+    if (reduxFormations) {
+      console.log('Updating formations:', reduxFormations);
+      const mappedFormations = reduxFormations.map(f => ({
+        id: f.id,
+        titre: f.niveauEtude || 'Sans titre',
+        ecole: f.nomEcole || '',
+        dateDebut: f.dateDebut || '',
+        dateFin: f.dateFin || '',
+        description: f.description || ''
+      }));
+      setFormations(mappedFormations);
+    }
+  }, [reduxFormations]);
+
+  useEffect(() => {
+    if (reduxExperiences) {
+      console.log('Updating experiences:', reduxExperiences);
+      const mappedExperiences = reduxExperiences.map(e => ({
+        id: e.id,
+        titre: e.poste || 'Sans titre',
+        entreprise: e.entreprise || '',
+        dateDebut: e.dateDebut || '',
+        dateFin: e.dateFin || '',
+        description: e.description || ''
+      }));
+      setExperiences(mappedExperiences);
+    }
+  }, [reduxExperiences]);
+
+  useEffect(() => {
+    if (reduxCompetences) {
+      console.log('Updating competences:', reduxCompetences);
+      const competencesList = reduxCompetences.map(c => c.nomCompetence || '').filter(Boolean);
+      setSkills(competencesList);
+    }
+  }, [reduxCompetences]);
+
+  useEffect(() => {
+    if (reduxLangues) {
+      console.log('Updating langues:', reduxLangues);
+      const mappedLanguages = reduxLangues.map(l => ({
+        id: l.id,
+        nomLangue: l.nomLangue || 'Non spécifié',
+        niveau: l.niveau || 'DEBUTANT'
+      }));
+      setLanguages(mappedLanguages);
+    }
+  }, [reduxLangues]);
+
+  useEffect(() => {
+    setEditFormData(prev => ({
+      ...prev,
+      firstName: authFirstName,
+      lastName: authLastName
+    }));
+  }, [authFirstName, authLastName]);
+
+  useEffect(() => {
+    if (candidatId) {
+      console.log('Fetching about for candidat:', candidatId);
+      dispatch(fetchAbout(candidatId));
+    }
+  }, [candidatId, dispatch]);
 
   const pickImage = async () => {
     try {
@@ -101,178 +266,457 @@ const EditProfileCandidat = () => {
   });
 
   const toggleEditing = () => {
-    if (isEditing) {
+    if (isEditingProfile) {
       // Sauvegarder les modifications
       handleSave();
     }
-    setIsEditing(!isEditing);
+    setIsEditingProfile(!isEditingProfile);
   };
 
   const handleSave = () => {
     // Ici, vous pouvez ajouter la logique pour sauvegarder les modifications
     console.log('Saving changes:', editFormData);
-    setIsEditing(false);
+    setIsEditingProfile(false);
   };
 
-  const TopNavBar = ({ isEditing, onSave, onEdit }) => {
+  const TopNavBar = () => {
     const navigation = useNavigation();
     return (
       <View style={styles.topNavBar}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back-ios" size={24} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={isEditing ? onSave : onEdit}>
-          <Icon name={isEditing ? "check" : "edit"} size={24} color="#fff" />
+        <TouchableOpacity onPress={() => setIsEditingProfile(!isEditingProfile)}>
+          <Icon name={isEditingProfile ? "check" : "edit"} size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     );
   };
 
-  const [formations, setFormations] = useState([
-    { id: 1, diplome: "Master en Informatique", ecole: "École Polytechnique", annee: "2020-2022", description: "Spécialisation en Intelligence Artificielle" },
-    { id: 2, diplome: "Licence en Informatique", ecole: "Université Paris Saclay", annee: "2017-2020", description: "Formation générale en informatique" }
-  ]);
-  const [newFormation, setNewFormation] = useState({
-    diplome: '',
-    ecole: '',
-    annee: '',
-    description: ''
-  });
-
-  const [experiences, setExperiences] = useState([
-    { id: 1, poste: "Développeur Full Stack", entreprise: "Tech Solutions", periode: "2022-Present", description: "Développement d'applications web et mobile" },
-    { id: 2, poste: "Développeur Frontend", entreprise: "Digital Agency", periode: "2020-2022", description: "Création d'interfaces utilisateur modernes" }
-  ]);
-  const [newExperience, setNewExperience] = useState({
-    poste: '',
-    entreprise: '',
-    periode: '',
-    description: ''
-  });
-
-  const [skills, setSkills] = useState(['React Native', 'JavaScript', 'Node.js', 'Git']);
-  const [newSkill, setNewSkill] = useState('');
-
-  const [languages, setLanguages] = useState([
-    { lang: 'Français', level: 'Natif' },
-    { lang: 'Anglais', level: 'Professionnel' },
-    { lang: 'Arabe', level: 'Natif' }
-  ]);
-  const [newLanguage, setNewLanguage] = useState({ lang: '', level: '' });
-
-  const [showFormationModal, setShowFormationModal] = useState(false);
-  const [showExperienceModal, setShowExperienceModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-
-  const addSkill = () => {
+  const addSkill = async () => {
     if (newSkill.trim()) {
-      setSkills([...skills, newSkill.trim()]);
-      setNewSkill('');
+      try {
+        console.log('Adding skill - candidatId:', candidatId);
+        console.log('Adding skill - newSkill:', newSkill.trim());
+        
+        if (!candidatId) {
+          console.error('CandidatId is missing or invalid');
+          return;
+        }
+
+        const response = await dispatch(createCompetence({
+          nomCompetence: newSkill.trim(),
+          candidatId: parseInt(candidatId, 10)
+        })).unwrap();
+
+        // Mettre à jour immédiatement le state local
+        setSkills([...skills, newSkill.trim()]);
+        setNewSkill('');
+        
+        console.log('Compétence ajoutée avec succès:', response);
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout de la compétence:', error);
+      }
     }
   };
 
-  const removeSkill = (index) => {
-    setSkills(skills.filter((_, i) => i !== index));
-  };
-
-  const addLanguage = () => {
-    if (newLanguage.lang.trim() && newLanguage.level.trim()) {
-      setLanguages([...languages, { ...newLanguage }]);
-      setNewLanguage({ lang: '', level: '' });
+  const removeSkill = async (index) => {
+    try {
+      const skillToRemove = reduxCompetences[index];
+      await dispatch(deleteCompetence(skillToRemove.id)).unwrap();
+      
+      // Mettre à jour immédiatement le state local
+      const newSkills = [...skills];
+      newSkills.splice(index, 1);
+      setSkills(newSkills);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la compétence:', error);
     }
   };
 
-  const removeLanguage = (index) => {
-    setLanguages(languages.filter((_, i) => i !== index));
-  };
+  const addLanguage = async () => {
+    try {
+      if (!newLanguage.nomLangue.trim()) {
+        Alert.alert('Erreur', 'Le nom de la langue est requis');
+        return;
+      }
+      if (!newLanguage.niveau) {
+        Alert.alert('Erreur', 'Le niveau est requis');
+        return;
+      }
 
-  const addFormation = () => {
-    if (editingItem) {
-      setFormations(formations.map(f => 
-        f.id === editingItem.id ? { ...newFormation, id: f.id } : f
-      ));
-    } else {
-      setFormations([...formations, { ...newFormation, id: Date.now() }]);
+      console.log('Adding language:', newLanguage);
+      const result = await dispatch(createLangue({
+        nomLangue: newLanguage.nomLangue.trim(),
+        niveau: newLanguage.niveau,
+        candidatId
+      })).unwrap();
+      
+      console.log('Language added successfully:', result);
+      
+      // Refresh the languages list
+      await dispatch(fetchLangues(candidatId));
+      
+      // Reset form and close modal
+      setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+      setShowLanguageModal(false);
+      setEditingLanguage(null);
+    } catch (error) {
+      console.error('Error adding language:', error);
+      Alert.alert('Erreur', 'Impossible d\'ajouter la langue. Veuillez réessayer.');
     }
-    setNewFormation({ diplome: '', ecole: '', annee: '', description: '' });
-    setShowFormationModal(false);
-    setEditingItem(null);
   };
 
-  const editFormation = (formation) => {
-    setNewFormation(formation);
-    setEditingItem(formation);
+  const removeLanguage = async (langueId) => {
+    try {
+      console.log('Removing language with ID:', langueId);
+      await dispatch(deleteLangue(langueId)).unwrap();
+      
+      // Refresh the languages list
+      await dispatch(fetchLangues(candidatId));
+      
+      console.log('Language removed successfully');
+    } catch (error) {
+      console.error('Error removing language:', error);
+      Alert.alert('Erreur', 'Impossible de supprimer la langue. Veuillez réessayer.');
+    }
+  };
+
+  const handleFormationSubmit = async () => {
+    try {
+      const formationData = {
+        ...newFormation,
+        candidatId
+      };
+
+      console.log('handleFormationSubmit - starting with:', {
+        editingFormation,
+        formationData
+      });
+
+      if (editingFormation) {
+        console.log('Updating formation with ID:', editingFormation.id);
+        await dispatch(updateFormation({
+          formationId: editingFormation.id,
+          formationData: formationData
+        })).unwrap();
+        console.log('Formation updated successfully');
+      } else {
+        console.log('Creating new formation');
+        await dispatch(createFormation(formationData)).unwrap();
+        console.log('Formation created successfully');
+      }
+
+      // Rafraîchir la liste des formations
+      if (candidatId) {
+        console.log('Refreshing formations list');
+        await dispatch(fetchFormations(candidatId));
+      }
+
+      setNewFormation({
+        nomEcole: '',
+        niveauEtude: '',
+        dateDebut: '',
+        dateFin: ''
+      });
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error submitting formation:', error);
+      // Ne pas afficher l'erreur si la formation a été créée avec succès
+      if (error.message !== 'No formation data received from API') {
+        Alert.alert(
+          'Erreur',
+          'Une erreur est survenue lors de la soumission de la formation'
+        );
+      } else {
+        // Si c'est l'erreur "No formation data", on ferme quand même le modal
+        setNewFormation({
+          nomEcole: '',
+          niveauEtude: '',
+          dateDebut: '',
+          dateFin: ''
+        });
+        handleCloseModal();
+      }
+    }
+  };
+
+  const handleEditFormation = (formation) => {
+    console.log('handleEditFormation - formation to edit:', formation);
+    
+    // Mapper les champs pour correspondre au format du formulaire
+    const formationToEdit = {
+      id: formation.id,
+      nomEcole: formation.ecole || formation.nomEcole || '',
+      niveauEtude: formation.titre || formation.niveauEtude || '',
+      dateDebut: formation.dateDebut || '',
+      dateFin: formation.dateFin || ''
+    };
+
+    console.log('Formation mapped for editing:', formationToEdit);
+    
+    // Stocker la formation complète dans editingFormation
+    setEditingFormation(formationToEdit);
+    
+    // Mettre à jour le formulaire avec les valeurs existantes
+    setNewFormation({
+      nomEcole: formationToEdit.nomEcole,
+      niveauEtude: formationToEdit.niveauEtude,
+      dateDebut: formationToEdit.dateDebut,
+      dateFin: formationToEdit.dateFin
+    });
+    
+    // Ouvrir le modal
     setShowFormationModal(true);
   };
 
-  const removeFormation = (id) => {
-    setFormations(formations.filter(f => f.id !== id));
+  const handleCloseModal = () => {
+    setShowFormationModal(false);
+    setEditingFormation(null);
+    setNewFormation(initialFormationState);
   };
 
-  const addExperience = () => {
-    if (editingItem) {
-      setExperiences(experiences.map(e => 
-        e.id === editingItem.id ? { ...newExperience, id: e.id } : e
-      ));
-    } else {
-      setExperiences([...experiences, { ...newExperience, id: Date.now() }]);
+  const handleDeleteFormation = (formation) => {
+    setFormationToDelete(formation);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteFormation = async () => {
+    try {
+      if (formationToDelete?.id) {
+        console.log('Deleting formation:', formationToDelete.id);
+        await dispatch(deleteFormation(formationToDelete.id)).unwrap();
+        console.log('Formation deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting formation:', error);
+    } finally {
+      setShowDeleteConfirm(false);
+      setFormationToDelete(null);
     }
-    setNewExperience({ poste: '', entreprise: '', periode: '', description: '' });
-    setShowExperienceModal(false);
-    setEditingItem(null);
   };
 
-  const editExperience = (experience) => {
-    setNewExperience(experience);
-    setEditingItem(experience);
+  const ExperienceModal = () => {
+    const [errors, setErrors] = useState({});
+    
+    const validateForm = () => {
+      const newErrors = {};
+      if (!newExperience.poste) newErrors.poste = "Le poste est requis";
+      if (!newExperience.dateDebut) newErrors.dateDebut = "La date de début est requise";
+      if (!newExperience.dateFin) newErrors.dateFin = "La date de fin est requise";
+      
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = () => {
+      if (validateForm()) {
+        handleExperienceSubmit();
+      }
+    };
+
+    return (
+      <Modal
+        visible={showExperienceModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowExperienceModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingExperience ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
+              </Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => {
+                  setShowExperienceModal(false);
+                  setEditingExperience(null);
+                  setNewExperience({ poste: '', dateDebut: '', dateFin: '' });
+                }}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Poste *</Text>
+              <TextInput
+                style={[styles.input, errors.poste && styles.inputError]}
+                placeholder="Ex: Développeur Java"
+                value={newExperience.poste}
+                onChangeText={(text) => {
+                  setNewExperience(prev => ({ ...prev, poste: text }));
+                  if (errors.poste) setErrors(prev => ({ ...prev, poste: null }));
+                }}
+              />
+              {errors.poste && <Text style={styles.errorText}>{errors.poste}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Date de début *</Text>
+              <TextInput
+                style={[styles.input, errors.dateDebut && styles.inputError]}
+                placeholder="AAAA-MM-JJ (Ex: 2020-09-01)"
+                value={newExperience.dateDebut}
+                onChangeText={(text) => {
+                  setNewExperience(prev => ({ ...prev, dateDebut: text }));
+                  if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
+                }}
+              />
+              {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Date de fin *</Text>
+              <TextInput
+                style={[styles.input, errors.dateFin && styles.inputError]}
+                placeholder="AAAA-MM-JJ (Ex: 2023-06-30)"
+                value={newExperience.dateFin}
+                onChangeText={(text) => {
+                  setNewExperience(prev => ({ ...prev, dateFin: text }));
+                  if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
+                }}
+              />
+              {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.submitButton]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.buttonText}>
+                  {editingExperience ? 'Modifier' : 'Ajouter'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const handleExperienceSubmit = async () => {
+    try {
+      const experienceData = {
+        ...newExperience,
+        candidatId
+      };
+
+      console.log('handleExperienceSubmit - starting with:', {
+        editingExperience,
+        experienceData
+      });
+
+      if (editingExperience && editingExperience.id) {
+        console.log('Updating experience with ID:', editingExperience.id);
+        await dispatch(updateExperience({
+          experienceId: editingExperience.id,
+          experienceData: {
+            ...experienceData,
+            id: editingExperience.id
+          }
+        })).unwrap();
+        console.log('Experience updated successfully');
+      } else {
+        console.log('Creating new experience');
+        await dispatch(createExperience(experienceData)).unwrap();
+        console.log('Experience created successfully');
+      }
+
+      // Rafraîchir la liste des expériences
+      if (candidatId) {
+        console.log('Refreshing experiences list');
+        await dispatch(fetchExperiences(candidatId));
+      }
+
+      setNewExperience({
+        poste: '',
+        dateDebut: '',
+        dateFin: ''
+      });
+      setEditingExperience(null);
+      setShowExperienceModal(false);
+    } catch (error) {
+      console.error('Error submitting experience:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la soumission de l\'expérience'
+      );
+    }
+  };
+
+  const handleEditExperience = (experience) => {
+    setEditingExperience(experience);
+    setNewExperience({
+      id: experience.id,
+      poste: experience.poste,
+      dateDebut: experience.dateDebut,
+      dateFin: experience.dateFin
+    });
     setShowExperienceModal(true);
   };
 
-  const removeExperience = (id) => {
-    setExperiences(experiences.filter(e => e.id !== id));
+  const handleDeleteExperience = async (experienceId) => {
+    try {
+      await dispatch(deleteExperience(experienceId)).unwrap();
+      if (candidatId) {
+        await dispatch(fetchExperiences(candidatId));
+      }
+    } catch (error) {
+      console.error('Error deleting experience:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la suppression de l\'expérience'
+      );
+    }
   };
 
-  const renderFormationCard = (formation) => (
-    <View style={styles.card} key={formation.id}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleWrapper}>
-          <View style={styles.cardIconContainer}>
-            <MaterialCommunityIcons name="school" size={24} color="#3A317B" />
-          </View>
-          <Text style={styles.cardTitle}>{formation.diplome}</Text>
+  const renderFormationCard = (formation) => {
+    const displayData = {
+      nomEcole: formation.ecole || formation.nomEcole,
+      niveauEtude: formation.titre || formation.niveauEtude,
+      dateDebut: formation.dateDebut,
+      dateFin: formation.dateFin,
+      id: formation.id
+    };
+
+    return (
+      <View key={displayData.id} style={styles.cardContainer}>
+        <View style={[styles.cardIconContainer, styles.formationIcon]}>
+          <MaterialCommunityIcons name="school" size={24} color="#fff" />
         </View>
-        <View style={styles.cardActions}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => editFormation(formation)}
-          >
-            <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => removeFormation(formation.id)}
-          >
-            <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
-          </TouchableOpacity>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{displayData.nomEcole}</Text>
+            <View style={styles.cardActions}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.editButton]}
+                onPress={() => handleEditFormation(formation)}
+              >
+                <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.deleteButton]}
+                onPress={() => handleDeleteFormation(formation)}
+              >
+                <MaterialCommunityIcons name="delete" size={20} color="#FF0000" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.cardDivider} />
+          <View style={styles.cardDetails}>
+            <Text style={styles.detailText}>Niveau: {displayData.niveauEtude}</Text>
+            <Text style={styles.detailText}>
+              Période: {new Date(displayData.dateDebut).toLocaleDateString()} - {new Date(displayData.dateFin).toLocaleDateString()}
+            </Text>
+          </View>
         </View>
       </View>
-      <View style={styles.cardBody}>
-        <View style={styles.cardInfoRow}>
-          <View style={styles.infoIconContainer}>
-            <MaterialCommunityIcons name="office-building" size={18} color="#666" />
-          </View>
-          <Text style={styles.cardInfoText}>{formation.ecole}</Text>
-        </View>
-        <View style={styles.cardInfoRow}>
-          <View style={styles.infoIconContainer}>
-            <MaterialCommunityIcons name="calendar" size={18} color="#666" />
-          </View>
-          <Text style={styles.cardInfoText}>{formation.annee}</Text>
-        </View>
-        <Text style={styles.cardDescription}>{formation.description}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderExperienceCard = (experience) => {
     return (
@@ -280,20 +724,18 @@ const EditProfileCandidat = () => {
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
             <View style={styles.itemTitleContainer}>
-              <Text style={styles.itemTitle}>{experience.poste}</Text>
+              <Text style={styles.itemTitle}>{experience.titre}</Text>
               <Text style={styles.itemSubtitle}>{experience.entreprise}</Text>
             </View>
             <View style={styles.itemActions}>
-              <TouchableOpacity 
-                onPress={() => {
-                  setEditingItem(experience);
-                  setNewExperience(experience);
-                  setShowExperienceModal(true);
-                }}
-              >
+              <TouchableOpacity onPress={() => {
+                setNewExperience(experience);
+                setEditingExperience(experience);
+                setShowExperienceModal(true);
+              }}>
                 <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => removeExperience(experience.id)}>
+              <TouchableOpacity onPress={() => handleDeleteExperience(experience.id)}>
                 <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
               </TouchableOpacity>
             </View>
@@ -302,7 +744,7 @@ const EditProfileCandidat = () => {
           <View style={styles.itemDetails}>
             <View style={styles.dateContainer}>
               <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
-              <Text style={styles.dateText}>{experience.periode}</Text>
+              <Text style={styles.dateText}>{experience.dateDebut} - {experience.dateFin || 'Présent'}</Text>
             </View>
             {experience.description && (
               <Text style={styles.itemDescription}>{experience.description}</Text>
@@ -313,161 +755,443 @@ const EditProfileCandidat = () => {
     );
   };
 
-  const FormationModal = () => (
-    <Modal
-      visible={showFormationModal}
-      animationType="slide"
-      transparent={true}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingItem ? 'Modifier la formation' : 'Ajouter une formation'}
-            </Text>
+  const renderAboutCard = () => {
+    console.log('Rendering about card. Current state:', {
+      loading: loading.about,
+      error: error.about,
+      about,
+      aboutText,
+      isEditingAbout
+    });
+
+    // Récupérer l'ID de l'about depuis le tableau
+    const aboutId = about && Array.isArray(about) && about.length > 0 ? about[0].id : null;
+
+    return (
+      <View style={styles.cardContainer}>
+        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
+          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
+        </View>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>À propos de moi</Text>
             <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => {
-                setShowFormationModal(false);
-                setEditingItem(null);
-              }}
+              style={styles.editButton}
+              onPress={() => setIsEditingAbout(!isEditingAbout)}
             >
-              <MaterialCommunityIcons name="close" size={24} color="#666" />
+              <MaterialCommunityIcons 
+                name={isEditingAbout ? "check" : "pencil"} 
+                size={20} 
+                color="#3A317B" 
+              />
             </TouchableOpacity>
           </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Diplôme</Text>
+          <View style={styles.cardDivider} />
+          {loading.about ? (
+            <ActivityIndicator size="small" color="#3A317B" />
+          ) : error.about ? (
+            <Text style={styles.errorText}>Erreur: {error.about}</Text>
+          ) : isEditingAbout ? (
             <TextInput
-              style={styles.input}
-              value={newFormation.diplome}
-              onChangeText={(text) => setNewFormation({...newFormation, diplome: text})}
-              placeholder="Ex: Master en Informatique"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>École</Text>
-            <TextInput
-              style={styles.input}
-              value={newFormation.ecole}
-              onChangeText={(text) => setNewFormation({...newFormation, ecole: text})}
-              placeholder="Ex: Université Paris Saclay"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Année</Text>
-            <TextInput
-              style={styles.input}
-              value={newFormation.annee}
-              onChangeText={(text) => setNewFormation({...newFormation, annee: text})}
-              placeholder="Ex: 2020-2022"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={newFormation.description}
-              onChangeText={(text) => setNewFormation({...newFormation, description: text})}
-              placeholder="Description de la formation"
+              style={[styles.aboutInput, { minHeight: 100 }]}
               multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={addFormation}
-          >
-            <Text style={styles.submitButtonText}>
-              {editingItem ? 'Modifier' : 'Ajouter'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const ExperienceModal = () => (
-    <Modal
-      visible={showExperienceModal}
-      animationType="slide"
-      transparent={true}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingItem ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
-            </Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => {
-                setShowExperienceModal(false);
-                setEditingItem(null);
+              value={aboutText}
+              onChangeText={setAboutText}
+              placeholder="Parlez de vous..."
+              placeholderTextColor="#666"
+              onBlur={() => {
+                if (aboutId && aboutText.trim()) {
+                  console.log('Updating about with:', { aboutId, description: aboutText, candidatId });
+                  dispatch(updateAbout({
+                    aboutId,
+                    description: aboutText.trim(),
+                    candidatId
+                  }));
+                  setIsEditingAbout(false);
+                }
               }}
-            >
-              <MaterialCommunityIcons name="close" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Poste</Text>
-            <TextInput
-              style={styles.input}
-              value={newExperience.poste}
-              onChangeText={(text) => setNewExperience({...newExperience, poste: text})}
-              placeholder="Ex: Développeur Full Stack"
             />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Entreprise</Text>
-            <TextInput
-              style={styles.input}
-              value={newExperience.entreprise}
-              onChangeText={(text) => setNewExperience({...newExperience, entreprise: text})}
-              placeholder="Ex: Tech Solutions"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Période</Text>
-            <TextInput
-              style={styles.input}
-              value={newExperience.periode}
-              onChangeText={(text) => setNewExperience({...newExperience, periode: text})}
-              placeholder="Ex: 2022-Présent"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={newExperience.description}
-              onChangeText={(text) => setNewExperience({...newExperience, description: text})}
-              placeholder="Description de l'expérience"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={addExperience}
-          >
-            <Text style={styles.submitButtonText}>
-              {editingItem ? 'Modifier' : 'Ajouter'}
+          ) : (
+            <Text style={styles.aboutText}>
+              {aboutText || "Aucune description ajoutée"}
             </Text>
-          </TouchableOpacity>
+          )}
         </View>
       </View>
-    </Modal>
-  );
+    );
+  };
+
+  const FormationModal = () => {
+    const [errors, setErrors] = useState({});
+    
+    const validateForm = () => {
+      const newErrors = {};
+      if (!newFormation.nomEcole) newErrors.nomEcole = "Le nom de l'école est requis";
+      if (!newFormation.niveauEtude) newErrors.niveauEtude = "Le niveau d'étude est requis";
+      if (!newFormation.dateDebut) newErrors.dateDebut = "La date de début est requise";
+      if (!newFormation.dateFin) newErrors.dateFin = "La date de fin est requise";
+      
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = () => {
+      if (validateForm()) {
+        handleFormationSubmit();
+      }
+    };
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showFormationModal}
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingFormation ? 'Modifier la formation' : 'Ajouter une formation'}
+              </Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={handleCloseModal}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Nom de l'école *</Text>
+              <TextInput
+                style={[styles.input, errors.nomEcole && styles.inputError]}
+                placeholder="Ex: ESTEM"
+                value={newFormation.nomEcole}
+                onChangeText={(text) => {
+                  setNewFormation(prev => ({ ...prev, nomEcole: text }));
+                  if (errors.nomEcole) setErrors(prev => ({ ...prev, nomEcole: null }));
+                }}
+              />
+              {errors.nomEcole && <Text style={styles.errorText}>{errors.nomEcole}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Niveau d'études *</Text>
+              <TextInput
+                style={[styles.input, errors.niveauEtude && styles.inputError]}
+                placeholder="Ex: BAC_PLUS_5"
+                value={newFormation.niveauEtude}
+                onChangeText={(text) => {
+                  setNewFormation(prev => ({ ...prev, niveauEtude: text }));
+                  if (errors.niveauEtude) setErrors(prev => ({ ...prev, niveauEtude: null }));
+                }}
+              />
+              {errors.niveauEtude && <Text style={styles.errorText}>{errors.niveauEtude}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Date de début *</Text>
+              <TextInput
+                style={[styles.input, errors.dateDebut && styles.inputError]}
+                placeholder="AAAA-MM-JJ (Ex: 2020-09-01)"
+                value={newFormation.dateDebut}
+                onChangeText={(text) => {
+                  setNewFormation(prev => ({ ...prev, dateDebut: text }));
+                  if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
+                }}
+              />
+              {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Date de fin *</Text>
+              <TextInput
+                style={[styles.input, errors.dateFin && styles.inputError]}
+                placeholder="AAAA-MM-JJ (Ex: 2024-06-30)"
+                value={newFormation.dateFin}
+                onChangeText={(text) => {
+                  setNewFormation(prev => ({ ...prev, dateFin: text }));
+                  if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
+                }}
+              />
+              {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.submitButton]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.buttonText}>
+                  {editingFormation ? 'Modifier' : 'Ajouter'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const LanguageModal = () => {
+    const [errors, setErrors] = useState({});
+    
+    const validateForm = () => {
+      const newErrors = {};
+      if (!newLanguage.nomLangue.trim()) newErrors.nomLangue = "Le nom de la langue est requis";
+      if (!newLanguage.niveau) newErrors.niveau = "Le niveau est requis";
+      
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = () => {
+      if (validateForm()) {
+        handleLanguageSubmit();
+      }
+    };
+
+    return (
+      <Modal
+        visible={showLanguageModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingLanguage ? 'Modifier la langue' : 'Ajouter une langue'}
+              </Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => {
+                  setShowLanguageModal(false);
+                  setEditingLanguage(null);
+                  setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+                }}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Nom de la langue *</Text>
+              <TextInput
+                style={[styles.input, errors.nomLangue && styles.inputError]}
+                placeholder="Ex: Français, Anglais, Espagnol..."
+                value={newLanguage.nomLangue}
+                onChangeText={(text) => {
+                  setNewLanguage({ ...newLanguage, nomLangue: text });
+                  if (errors.nomLangue) setErrors(prev => ({ ...prev, nomLangue: null }));
+                }}
+              />
+              {errors.nomLangue && <Text style={styles.errorText}>{errors.nomLangue}</Text>}
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Niveau *</Text>
+              <View style={styles.levelButtons}>
+                {["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"].map((niveau) => (
+                  <TouchableOpacity
+                    key={niveau}
+                    style={[
+                      styles.levelButton,
+                      newLanguage.niveau === niveau && styles.selectedLevelButton,
+                      errors.niveau && styles.levelButtonError
+                    ]}
+                    onPress={() => {
+                      setNewLanguage({ ...newLanguage, niveau });
+                      if (errors.niveau) setErrors(prev => ({ ...prev, niveau: null }));
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.levelButtonText,
+                        newLanguage.niveau === niveau && styles.selectedLevelButtonText
+                      ]}
+                    >
+                      {niveau}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.niveau && <Text style={styles.errorText}>{errors.niveau}</Text>}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.button, styles.submitButton]}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.buttonText}>
+                  {editingLanguage ? 'Modifier' : 'Ajouter'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const handleLanguageSubmit = async () => {
+    try {
+      const languageData = {
+        ...newLanguage,
+        candidatId
+      };
+
+      console.log('Adding language:', languageData);
+
+      if (editingLanguage && editingLanguage.id) {
+        console.log('Updating language with ID:', editingLanguage.id);
+        await dispatch(updateLangue({
+          langueId: editingLanguage.id,
+          langueData: languageData
+        })).unwrap();
+        console.log('Language updated successfully');
+      } else {
+        console.log('Creating new language');
+        await dispatch(createLangue(languageData)).unwrap();
+        console.log('Language created successfully');
+      }
+
+      // Rafraîchir la liste des langues
+      if (candidatId) {
+        console.log('Refreshing languages list');
+        await dispatch(fetchLangues(candidatId));
+      }
+
+      setNewLanguage({
+        nomLangue: '',
+        niveau: 'DEBUTANT'
+      });
+      setEditingLanguage(null);
+      setShowLanguageModal(false);
+    } catch (error) {
+      console.error('Error submitting language:', error);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la soumission de la langue'
+      );
+    }
+  };
+
+  const renderDeleteConfirmationModal = () => {
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteConfirm}
+        onRequestClose={() => {
+          setShowDeleteConfirm(false);
+          setFormationToDelete(null);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { padding: 20 }]}>
+            <Text style={styles.modalTitle}>Confirmer la suppression</Text>
+            <Text style={styles.modalText}>
+              Êtes-vous sûr de vouloir supprimer cette formation ?
+              {formationToDelete && (
+                `\n${formationToDelete.nomEcole} - ${formationToDelete.niveauEtude}`
+              )}
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowDeleteConfirm(false);
+                  setFormationToDelete(null);
+                }}
+              >
+                <Text style={styles.buttonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDeleteFormation}
+              >
+                <Text style={[styles.buttonText, { color: '#fff' }]}>Supprimer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderLanguages = () => {
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Langues</Text>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => {
+              setEditingLanguage(null);
+              setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+              setShowLanguageModal(true);
+            }}
+          >
+            <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        {languages.map((language, index) => (
+          <View key={index} style={styles.item}>
+            <View style={styles.itemContent}>
+              <Text style={styles.itemTitle}>{language.nomLangue}</Text>
+              <Text style={styles.itemSubtitle}>{language.niveau}</Text>
+            </View>
+            <View style={styles.itemActions}>
+              <TouchableOpacity onPress={() => {
+                setNewLanguage(language);
+                setEditingLanguage(language);
+                setShowLanguageModal(true);
+              }}>
+                <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => removeLanguage(language.id)}>
+                <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderProfileImage = () => {
+    return (
+      <View style={styles.profileImageContainer}>
+        {image ? (
+          <Image
+            source={{ uri: image }}
+            style={styles.profileImage}
+          />
+        ) : (
+          <MaterialCommunityIcons
+            name="account"
+            size={60}
+            color="#999"
+            style={styles.placeholderIcon}
+          />
+        )}
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={handleAvatarPress}
+        >
+          <MaterialCommunityIcons
+            name="camera"
+            size={20}
+            color="#fff"
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -488,11 +1212,7 @@ const EditProfileCandidat = () => {
         ]}
       >
         <View style={[styles.headerBackground, { height: HEADER_MAX_HEIGHT }]}>
-          <TopNavBar 
-            isEditing={isEditing}
-            onSave={handleSave}
-            onEdit={() => setIsEditing(true)}
-          />
+          <TopNavBar />
           <Animated.View 
             style={[
               styles.headerContent,
@@ -502,31 +1222,22 @@ const EditProfileCandidat = () => {
               },
             ]}
           >
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={{ uri: image || 'https://via.placeholder.com/120' }}
-                style={styles.profileImage}
-              />
-              <TouchableOpacity
-                style={styles.editImageButton}
-                onPress={pickImage}
-              >
-                <MaterialCommunityIcons name="camera" size={24} color="#fff" />
-              </TouchableOpacity>
+            <View style={styles.profileSection}>
+              {renderProfileImage()}
             </View>
 
-            {isEditing ? (
+            {isEditingProfile ? (
               <View style={styles.editProfileForm}>
                 <TextInput
                   style={styles.editInput}
-                  defaultValue="John"
+                  defaultValue={authFirstName}
                   placeholder="Prénom"
                   placeholderTextColor="#999"
                   onChangeText={(text) => setEditFormData({...editFormData, firstName: text})}
                 />
                 <TextInput
                   style={styles.editInput}
-                  defaultValue="Doe"
+                  defaultValue={authLastName}
                   placeholder="Nom"
                   placeholderTextColor="#999"
                   onChangeText={(text) => setEditFormData({...editFormData, lastName: text})}
@@ -541,8 +1252,8 @@ const EditProfileCandidat = () => {
               </View>
             ) : (
               <>
-                <Text style={styles.nameText}>John Doe</Text>
-                <Text style={styles.addressText}>Paris, France</Text>
+                <Text style={styles.nameText}>{authFirstName} {authLastName}</Text>
+                <Text style={styles.addressText}>{editFormData.address || "Aucune adresse"}</Text>
               </>
             )}
           </Animated.View>
@@ -559,24 +1270,8 @@ const EditProfileCandidat = () => {
       >
         <View style={styles.spacer} />
 
-        {/* About Me Card */}
-        <View style={styles.cardContainer}>
-          <View style={[styles.cardIconContainer, styles.aboutIcon]}>
-            <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>À propos de moi</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <TextInput
-              style={styles.aboutInput}
-              multiline
-              placeholder="Parlez de vous..."
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
+        {/* About Card */}
+        {renderAboutCard()}
 
         {/* Skills Card */}
         <View style={styles.cardContainer}>
@@ -590,7 +1285,7 @@ const EditProfileCandidat = () => {
             <View style={styles.cardDivider} />
             <View style={styles.skillsContainer}>
               {skills.map((skill, index) => (
-                <View key={`skill-${index}`} style={styles.skillBadge}>
+                <View key={index} style={styles.skillBadge}>
                   <Text style={styles.skillText}>{skill}</Text>
                   <TouchableOpacity onPress={() => removeSkill(index)}>
                     <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
@@ -625,14 +1320,45 @@ const EditProfileCandidat = () => {
             <View style={styles.cardDivider} />
             <View style={styles.formationsContainer}>
               {formations.map((formation, index) => (
-                renderFormationCard(formation)
+                <View key={formation.id} style={styles.formationCard}>
+                  <View style={styles.formationHeader}>
+                    <Text style={styles.formationTitle}>{formation.titre}</Text>
+                    <View style={styles.actionContainer}>
+                      <TouchableOpacity 
+                        style={[styles.iconButton, styles.editIconButton]}
+                        onPress={() => handleEditFormation(formation)}
+                      >
+                        <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.iconButton, styles.deleteIconButton]}
+                        onPress={() => {
+                          if (formation.id) {
+                            dispatch(deleteFormation(formation.id));
+                          }
+                        }}
+                      >
+                        <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <Text style={styles.formationSchool}>{formation.ecole}</Text>
+                  <Text style={styles.formationDate}>
+                    {formation.dateDebut} - {formation.dateFin || 'Présent'}
+                  </Text>
+                  <Text style={styles.formationDescription}>{formation.description}</Text>
+                </View>
               ))}
             </View>
-            <View style={styles.addFormationContainer}>
-              <TouchableOpacity style={styles.addButton} onPress={() => setShowFormationModal(true)}>
-                <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => {
+                setEditingFormation(null);
+                setShowFormationModal(true);
+              }}
+            >
+              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -647,17 +1373,50 @@ const EditProfileCandidat = () => {
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.experiencesContainer}>
-              {experiences.map((experience) => (
-                <View key={experience.id || Math.random().toString()}>
-                  {renderExperienceCard(experience)}
+              {experiences.map((experience, index) => (
+                <View key={experience.id} style={styles.experienceCard}>
+                  <View style={styles.experienceHeader}>
+                    <Text style={styles.experienceTitle}>{experience.titre}</Text>
+                    <View style={styles.actionContainer}>
+                      <TouchableOpacity 
+                        style={[styles.iconButton, styles.editIconButton]}
+                        onPress={() => {
+                          setNewExperience(experience);
+                          setEditingExperience(experience);
+                          setShowExperienceModal(true);
+                        }}
+                      >
+                        <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.iconButton, styles.deleteIconButton]}
+                        onPress={() => {
+                          if (experience.id) {
+                            dispatch(deleteExperience(experience.id));
+                          }
+                        }}
+                      >
+                        <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <Text style={styles.experienceCompany}>{experience.entreprise}</Text>
+                  <Text style={styles.experienceDate}>
+                    {experience.dateDebut} - {experience.dateFin || 'Présent'}
+                  </Text>
+                  <Text style={styles.experienceDescription}>{experience.description}</Text>
                 </View>
               ))}
             </View>
-            <View style={styles.addExperienceContainer}>
-              <TouchableOpacity style={styles.addButton} onPress={() => setShowExperienceModal(true)}>
-                <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => {
+                setEditingExperience(null);
+                setShowExperienceModal(true);
+              }}
+            >
+              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -673,42 +1432,39 @@ const EditProfileCandidat = () => {
             <View style={styles.cardDivider} />
             <View style={styles.languagesContainer}>
               {languages.map((language, index) => (
-                <View key={`language-${index}`} style={styles.languageItem}>
-                  <Text style={styles.languageName}>{language.lang}</Text>
+                <View key={index} style={styles.languageItem}>
+                  <Text style={styles.languageName}>{language.nomLangue || 'Non spécifié'}</Text>
                   <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>{language.level}</Text>
-                    <TouchableOpacity onPress={() => removeLanguage(index)}>
+                    <Text style={styles.levelText}>{language.niveau}</Text>
+                    <TouchableOpacity 
+                      style={styles.deleteButton} 
+                      onPress={() => {
+                        console.log('Removing language:', language);
+                        if (language.id) {
+                          removeLanguage(language.id);
+                        }
+                      }}
+                    >
                       <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
                     </TouchableOpacity>
                   </View>
                 </View>
               ))}
             </View>
-            <View style={styles.addLanguageContainer}>
-              <TextInput
-                style={styles.languageInput}
-                value={newLanguage.lang}
-                onChangeText={(text) => setNewLanguage({ ...newLanguage, lang: text })}
-                placeholder="Langue"
-                placeholderTextColor="#666"
-              />
-              <TextInput
-                style={styles.levelInput}
-                value={newLanguage.level}
-                onChangeText={(text) => setNewLanguage({ ...newLanguage, level: text })}
-                placeholder="Niveau"
-                placeholderTextColor="#666"
-              />
-              <TouchableOpacity style={styles.addButton} onPress={addLanguage}>
-                <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={styles.addButton} 
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.ScrollView>
 
       <FormationModal />
       <ExperienceModal />
+      <LanguageModal />
+      {renderDeleteConfirmationModal()}
       <View style={styles.bottomTabContainer}>
         <BottomTabNavigation />
       </View>
@@ -766,37 +1522,44 @@ const styles = StyleSheet.create({
     paddingTop: HEADER_MAX_HEIGHT,
     paddingHorizontal: 16,
   },
-  avatarContainer: {
+  profileImageContainer: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    position: 'relative',
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  cameraIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#3A317B',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#fff',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    zIndex: 10,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#3A317B',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  placeholderIcon: {
+    opacity: 0.5,
   },
   nameText: {
     fontSize: 24,
@@ -971,7 +1734,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 40,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E0F0F0',
     borderRadius: 8,
     paddingHorizontal: 12,
     color: '#333',
@@ -1040,259 +1803,131 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
     padding: 20,
-    maxHeight: '80%',
+    width: '100%',
+    maxHeight: '80%'
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 20
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: 'bold',
+    color: '#3A317B'
   },
-  closeButton: {
-    padding: 8,
+  formScrollView: {
+    maxHeight: '70%'
   },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 15
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-    marginBottom: 8,
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#333',
+    fontWeight: '500'
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#333',
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  submitButton: {
-    backgroundColor: '#3A317B',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  cardTitleWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  cardIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  cardBody: {
-    marginLeft: 4,
-  },
-  cardInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  cardInfoText: {
-    fontSize: 15,
-    color: '#666',
-    flex: 1,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginTop: 8,
-    marginLeft: 44,
-  },
-  itemContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  itemContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  itemTitleContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  itemTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  itemSubtitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  itemActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  itemDivider: {
-    height: 1,
-    backgroundColor: '#F0F0F7',
-    marginVertical: 12,
-  },
-  itemDetails: {
-    marginLeft: 4,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dateText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-  },
-  itemDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  profileImageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    position: 'relative',
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#3A317B',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    zIndex: 10,
-  },
-  editProfileForm: {
-    width: '100%',
-    paddingHorizontal: 20,
-    marginTop: 15,
-  },
-  editInput: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    fontSize: 16,
-    color: '#333',
     borderWidth: 1,
     borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff'
+  },
+  inputError: {
+    borderColor: '#ff4444'
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 12,
+    marginTop: 5
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff'
+  },
+  picker: {
+    height: 50
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20
+  },
+  button: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 5
+  },
+  cancelButton: {
+    backgroundColor: '#f5f5f5'
+  },
+  submitButton: {
+    backgroundColor: '#3A317B'
+  },
+  buttonText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#fff'
+  },
+  closeButton: {
+    padding: 5
+  },
+  formationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  experienceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconButton: {
+    padding: 8,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  editIconButton: {
+    backgroundColor: '#E8F0FE',
+  },
+  deleteIconButton: {
+    backgroundColor: '#FEE8E8',
+  },
+  formationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  experienceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
   },
 });
 

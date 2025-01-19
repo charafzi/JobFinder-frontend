@@ -10,11 +10,9 @@ import {
   Register,
   ResetSuccessfully,
   Welcome, Map, Search, Filter,
-EntrepriseHomeScreen,
+  EntrepriseHomeScreen,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
-
-import { TabNavigator } from ".";
 import CompanyProfile from "../screens/CompanyProfile";
 import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';

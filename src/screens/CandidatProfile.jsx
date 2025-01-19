@@ -20,7 +20,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { fetchFormations, fetchExperiences, deleteExperience, updateExperience, createExperience } from '../redux/slices/candidatProfileThunks';
+import { fetchFormations, fetchExperiences, deleteExperience, updateExperience, createExperience, fetchLangues, fetchCompetences, fetchAbout } from '../redux/slices/candidatProfileThunks';
+import { resetProfile } from '../redux/slices/candidatProfileSlice';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
@@ -115,16 +116,71 @@ const ExperienceSection = ({ experiences }) => {
 };
 
 const CandidatProfile = () => {
-  const navigation = useNavigation();
   const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const candidatId = useSelector(state => state.auth.id);
+  const { firstName, lastName } = useSelector(state => state.auth.candidat);
+  
+  // Log auth state
+  const authState = useSelector(state => state.auth);
+  console.log('CandidatProfile - Auth State:', {
+    candidatId,
+    authState,
+    firstName,
+    lastName
+  });
+  
+  // Récupérer les données du state
+  const {
+    formations,
+    experiences,
+    langues,
+    competences,
+    about,
+    loading,
+    error
+  } = useSelector(state => state.candidatProfile);
+
+  // Charger toutes les données au montage du composant
+  useEffect(() => {
+    if (candidatId) {
+      console.log('CandidatProfile - candidatId:', candidatId);
+      console.log('CandidatProfile - Current Redux State:', {
+        formations: formations?.length,
+        experiences: experiences?.length,
+        langues: langues?.length,
+        competences: competences?.length,
+        about: about?.length
+      });
+      
+      dispatch(fetchFormations(candidatId));
+      dispatch(fetchExperiences(candidatId));
+      dispatch(fetchLangues(candidatId));
+      dispatch(fetchCompetences(candidatId));
+      dispatch(fetchAbout(candidatId));
+    }
+
+    // Cleanup function
+    return () => {
+      dispatch(resetProfile());
+    };
+  }, [candidatId, dispatch]);
+
+  // Log des données reçues
+  useEffect(() => {
+    console.log('Profile Data:', {
+      formations,
+      experiences,
+      langues,
+      competences,
+      about,
+      loading,
+      error
+    });
+  }, [formations, experiences, langues, competences, about, loading, error]);
+
   const scrollY = useRef(new Animated.Value(0)).current;
   
-  const { formations, experiences } = useSelector((state) => state.candidatProfile);
-  const { formations: formationsLoading, experiences: experiencesLoading } = 
-    useSelector((state) => state.candidatProfile.loading);
-  const { formations: formationsError, experiences: experiencesError } = 
-    useSelector((state) => state.candidatProfile.error);
-
   const [expandedSections, setExpandedSections] = useState({
     aboutMe: false,
     workExperience: false,
@@ -134,155 +190,161 @@ const CandidatProfile = () => {
     appreciation: false,
   });
 
-  useEffect(() => {
-    const loadProfileData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchFormations()),
-          dispatch(fetchExperiences())
-        ]);
-      } catch (error) {
-        console.error('Error loading profile data:', error);
-      }
-    };
-
-    loadProfileData();
-  }, [dispatch]);
-
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     { useNativeDriver: true }
   );
 
-  const isLoading = formationsLoading || experiencesLoading;
-  const hasError = formationsError || experiencesError;
-
-  const renderFormations = () => (
-    <View style={styles.contentSection}>
-      {formations.map((formation, index) => (
-        <View key={index} style={styles.cardContainer}>
-          <View style={styles.cardIconContainer}>
-            <MaterialCommunityIcons name="school-outline" size={24} color="#fff" />
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{formation.nomEcole}</Text>
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelText}>{formation.niveauEtude}</Text>
-              </View>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.cardFooter}>
-              <View style={styles.dateContainer}>
-                <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
-                <Text style={styles.dateText}>
-                  {new Date(formation.dateDebut).toLocaleDateString()} - {new Date(formation.dateFin).toLocaleDateString()}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-
-  const renderExperiences = () => (
-    <ExperienceSection experiences={experiences} />
-  );
-
-  const renderAboutMe = () => (
-    <View style={styles.contentSection}>
-      <View style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
-          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>À propos de moi</Text>
-          </View>
-          <View style={styles.cardDivider} />
-          <Text style={styles.aboutText}>
-            Passionné par le développement logiciel et les nouvelles technologies. 
-            Je suis constamment à la recherche de nouveaux défis et d'opportunités d'apprentissage.
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderSkills = () => (
-    <View style={styles.contentSection}>
-      <View style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.skillsIcon]}>
-          <MaterialCommunityIcons name="lightbulb-on" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Compétences</Text>
-          </View>
-          <View style={styles.cardDivider} />
-          <View style={styles.skillsContainer}>
-            {['React Native', 'JavaScript', 'Node.js', 'Git'].map((skill, index) => (
-              <View key={index} style={styles.skillBadge}>
-                <Text style={styles.skillText}>{skill}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderLanguages = () => (
-    <View style={styles.contentSection}>
-      <View style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.languageIcon]}>
-          <MaterialCommunityIcons name="translate" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Langues</Text>
-          </View>
-          <View style={styles.cardDivider} />
-          <View style={styles.languagesContainer}>
-            {[
-              { lang: 'Français', level: 'Natif' },
-              { lang: 'Anglais', level: 'Professionnel' },
-              { lang: 'Arabe', level: 'Natif' }
-            ].map((language, index) => (
-              <View key={index} style={styles.languageItem}>
-                <Text style={styles.languageName}>{language.lang}</Text>
-                <View style={styles.levelBadge}>
-                  <Text style={styles.levelText}>{language.level}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-    </View>
-  );
+  const isLoading = Object.values(loading).some(value => value === true);
+  const hasError = Object.values(error).some(value => value !== null);
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3A317B" />
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#FF9228" />
+        <Text style={styles.loadingText}>Chargement du profil...</Text>
       </View>
     );
   }
 
   if (hasError) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.errorText}>
-          {formationsError || experiencesError}
+          Une erreur est survenue lors du chargement du profil.
         </Text>
       </View>
     );
   }
 
+  const renderFormations = () => {
+    console.log('Rendering formations:', formations);
+    return (
+    <View style={styles.contentSection}>
+      {formations && formations.length > 0 ? (
+        formations.map((formation, index) => (
+          <View key={index} style={styles.cardContainer}>
+            <View style={styles.cardIconContainer}>
+              <MaterialCommunityIcons name="school-outline" size={24} color="#fff" />
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{formation.nomEcole}</Text>
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelText}>{formation.niveauEtude}</Text>
+                </View>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardFooter}>
+                <View style={styles.dateContainer}>
+                  <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
+                  <Text style={styles.dateText}>
+                    {new Date(formation.dateDebut).toLocaleDateString()} - {new Date(formation.dateFin).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noDataText}>Aucune formation ajoutée</Text>
+      )}
+    </View>
+  )};
+
+  const renderExperiences = () => {
+    console.log('Rendering experiences:', experiences);
+    return (
+    <View style={styles.contentSection}>
+      {experiences && experiences.length > 0 ? (
+        experiences.map((experience, index) => (
+          <View key={index} style={styles.cardContainer}>
+            <View style={[styles.cardIconContainer, styles.experienceIcon]}>
+              <MaterialCommunityIcons name="briefcase" size={24} color="#fff" />
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{experience.poste}</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.cardFooter}>
+                <View style={styles.dateContainer}>
+                  <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
+                  <Text style={styles.dateText}>
+                    {new Date(experience.dateDebut).toLocaleDateString()} - {new Date(experience.dateFin).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noDataText}>Aucune expérience ajoutée</Text>
+      )}
+    </View>
+  )};
+
+  const renderSkills = () => {
+    console.log('Rendering competences:', competences);
+    return (
+    <View style={styles.contentSection}>
+      {competences && competences.length > 0 ? (
+        <View style={styles.skillsContainer}>
+          {competences.map((competence, index) => (
+            <View key={index} style={styles.skillBadge}>
+              <Text style={styles.skillText}>{competence.nomCompetence}</Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={styles.noDataText}>Aucune compétence ajoutée</Text>
+      )}
+    </View>
+  )};
+
+  const renderAboutMe = () => {
+    console.log('Rendering about:', about);
+    return (
+    <View style={styles.contentSection}>
+      {about && about.length > 0 ? (
+        <View style={styles.aboutContainer}>
+          <Text style={styles.aboutText}>{about[0].description}</Text>
+        </View>
+      ) : (
+        <Text style={styles.noDataText}>Aucune description ajoutée</Text>
+      )}
+    </View>
+  )};
+
+  const renderLanguages = () => {
+    console.log('CandidatProfile - renderLanguages called with:', {
+      languesData: langues,
+      loading: loading.langues,
+      error: error.langues
+    });
+    
+    return (
+    <View style={styles.contentSection}>
+      {loading.langues ? (
+        <ActivityIndicator size="small" color="#FF9228" />
+      ) : error.langues ? (
+        <Text style={styles.errorText}>Erreur: {error.langues}</Text>
+      ) : langues && langues.length > 0 ? (
+        langues.map((langue, index) => (
+          <View key={index} style={styles.languageItem}>
+            <Text style={styles.languageName}>{langue.nomLangue || 'Non spécifié'}</Text>
+            <Text style={styles.languageLevel}>{langue.niveau}</Text>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noDataText}>Aucune langue ajoutée</Text>
+      )}
+    </View>
+  )};
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
       <Animated.View 
         style={[
           styles.header,
@@ -318,15 +380,19 @@ const CandidatProfile = () => {
                 color="#3A317B" 
               />
             </View>
-            <Text style={styles.userName}>Nom et Prénom</Text>
-            <Text style={styles.userTitle}>Professionnel</Text>
-            <Text style={styles.location}>Location not specified</Text>
+            <Text style={styles.userName}>{firstName} {lastName}</Text>
             <TouchableOpacity 
               style={styles.editButton}
-              onPress={() => navigation.navigate("EditProfileCandidat")}
+              onPress={() => {
+                navigation.navigate('EditProfileCandidat', {
+                  candidatId: candidatId,
+                  firstName: firstName,
+                  lastName: lastName
+                });
+              }}
             >
               <Icon name="edit" size={18} color="#fff" style={styles.editIcon} />
-              <Text style={styles.editButtonText}>Edit profile</Text>
+              <Text style={styles.editButtonText}>Modifier le profil</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -381,7 +447,6 @@ const CandidatProfile = () => {
           onToggle={() => setExpandedSections(prev => ({...prev, language: !prev.language}))}
         />
       </Animated.ScrollView>
-
       <View style={styles.bottomTabContainer}>
         <BottomTabNavigation />
       </View>
@@ -425,11 +490,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginVertical: 8,
     textAlign: 'center',
+    fontFamily: 'Roboto',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    letterSpacing: 0.5
   },
   userTitle: {
     fontSize: 16,
@@ -447,19 +517,26 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FF9228',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
-    marginTop: 5,
-  },
-  editIcon: {
-    marginRight: 8,
+    marginTop: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   editButtonText: {
     color: '#fff',
+    marginLeft: 8,
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Roboto',
+  },
+  editIcon: {
+    marginRight: 4,
   },
   content: {
     paddingTop: HEADER_MAX_HEIGHT + 20,
@@ -646,6 +723,10 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
+  languageLevel: {
+    fontSize: 14,
+    color: '#666',
+  },
   aboutText: {
     fontSize: 14,
     color: '#666',
@@ -734,6 +815,21 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F0F0F7',
     marginVertical: 8,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    padding: 16,
   },
 });
 

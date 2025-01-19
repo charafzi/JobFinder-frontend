@@ -14,15 +14,20 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {Search} from "./index";
 import {useNavigation} from "@react-navigation/native";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const NAVBAR_THEMES = {
     purple: {
-        backgroundColor: "#3A317B",
+        colors: ['#3A317B', '#2D2665'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 },
         titleColor: "#fff",
         iconColor: Color.icon
     },
     default: {
-        backgroundColor: Color.background,
+        colors: [Color.background, Color.background],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 },
         titleColor: Color.text,
         iconColor: Color.text
     },
@@ -68,7 +73,7 @@ const TopNavBar = ({
                        />
                    </TouchableOpacity>
                )}
-               <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
+               <Text style={[styles.title, {color: colorConfig.titleColor}]}>{title}</Text>
 
                <View style={styles.rightIcons}>
                    {showNotification && (

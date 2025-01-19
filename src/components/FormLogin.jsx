@@ -29,7 +29,7 @@ const FormLogin = () => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigation.navigate('tabNavigator');
+      navigation.navigate('candidat');
     }
   }, [isLoggedIn]);
 
