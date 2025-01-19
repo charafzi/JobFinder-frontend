@@ -4,9 +4,8 @@ import { Color } from "../constants/Color";
 import { useNavigation } from "@react-navigation/native";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import axiosInstance, { API_BASE_URL } from "../config/axiosConfig";
 
-const CandidateCard = ({ candidate, onUpdateCandidature }) => {
+const CandidateCard = ({ candidate, handleAccept, handleDecline }) => {
   const [isAccepted, setIsAccepted] = useState(candidate.status === "ACCEPTE");
   const [isDeclined, setIsDeclined] = useState(candidate.status === "REJETEE");
   const navigation = useNavigation();
@@ -16,84 +15,8 @@ const CandidateCard = ({ candidate, onUpdateCandidature }) => {
     setIsDeclined(candidate.status === "REJETEE");
   }, [candidate.status]);
 
-
   const handleViewProfile = () => {
     navigation.navigate("CandidateProfile", { candidate });
-  };
-
-  const acceptCandidature = async (email, offreId) => {
-    try {
-      const response = await axiosInstance.put('/api/candidature/accept', {
-        email: email,
-        offreId: offreId,
-      });
-
-      console.log('Candidature acceptée:', response.data);
-      return { ...candidate, status: "ACCEPTE" };
-    } catch (error) {
-      console.error('Erreur lors de l\'acceptation de la candidature:', error);
-      throw error;
-    }
-  };
-
-  const handleAccept = async () => {
-    try {
-      const email = candidate.candidat.email;
-      const offreId = candidate.offreEmploi.offreId;
-
-      // Accepter la candidature via l'API
-      const updatedCandidature = await acceptCandidature(email, offreId);
-
-      // Mettre à jour la candidature dans la liste du parent
-      onUpdateCandidature(updatedCandidature, "ACCEPTE");
-
-      Alert.alert('Succès', 'La candidature a été acceptée avec succès.');
-
-      // Mettre à jour l'état local
-      setIsAccepted(true);
-      setIsDeclined(false);
-    } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'acceptation de la candidature.');
-      console.error('Erreur lors de l\'acceptation de la candidature:', error);
-    }
-  };
-
-
-  const rejectCandidature = async (email, offreId) => {
-    try {
-      const response = await axiosInstance.put('/api/candidature/dismiss', {
-        email: email,
-        offreId: offreId,
-      });
-
-      console.log('Candidature refuseée:', response.data);
-      return { ...candidate, status: "REJETEE" };
-    } catch (error) {
-      console.error('Erreur lors du refus de la candidature:', error);
-      throw error;
-    }
-  };
-
-  const handleDecline = async () => {
-    try {
-      const email = candidate.candidat.email;
-      const offreId = candidate.offreEmploi.offreId;
-
-      // Accepter la candidature via l'API
-      const updatedCandidature = await rejectCandidature(email, offreId);
-
-      // Mettre à jour la candidature dans la liste du parent
-      onUpdateCandidature(updatedCandidature, "REJETEE");
-
-      Alert.alert('Succès', 'La candidature a été refusée avec succès.');
-
-      // Mettre à jour l'état local
-      setIsDeclined(true);
-      setIsAccepted(false);
-    } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors du refus de la candidature.');
-      console.error('Erreur lors du refus de la candidature:', error);
-    }
   };
 
   const calculateTimeAgo = (dateString) => {
@@ -148,15 +71,15 @@ const CandidateCard = ({ candidate, onUpdateCandidature }) => {
       </View>
       <View style={{ marginVertical: 10 }}>
         <Text style={[styles.title, { marginBottom: 10 }]}>{candidate.offreEmploi?.question || "What are the characteristics of a fake job call form?"}</Text>
-        <Text style={styles.subtitle}>{candidate.offreEmploi?.response || "Because I always find fake job calls so I'm confused which job to take can you share your knowledge here? thank you"}</Text>
+        <Text style={styles.subtitle}>{candidate.response || "Because I always find fake job calls so I'm confused which job to take can you share your knowledge here? thank you"}</Text>
       </View>
       {/* Afficher les boutons uniquement si la candidature n'est pas encore acceptée */}
       {!isAccepted && !isDeclined && candidate.status === "ENVOYEE" && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={handleAccept}>
+          <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(candidate.candidat.email, candidate.offreEmploi.offreId)}>
             <Text style={styles.buttonText}>Accept</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={handleDecline}>
+          <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={() => handleDecline(candidate.candidat.email, candidate.offreEmploi.offreId)}>
             <Text style={styles.buttonText}>Decline</Text>
           </TouchableOpacity>
         </View>

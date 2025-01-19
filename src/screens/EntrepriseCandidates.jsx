@@ -1,79 +1,184 @@
-import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { FlatList, RefreshControl, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { Color } from "../constants/Color";
-import { CandidatCard } from "../components";
-import localCandidates from "../data/data";
-import axiosInstance, { API_BASE_URL } from "../config/axiosConfig";
+import { CandidatCard, LoadingIndicator } from "../components";
 import showToast from "../utils/showToast";
+import { useDispatch, useSelector } from "react-redux";
+import Entypo from "@expo/vector-icons/Entypo";
+import TopNavBar from "../components/TopNavBar";
+import { acceptCandidature, declineCandidature, getCandidaturesByOffre } from "../redux/slices/candidatureEntreprise/candidaturesThunk";
 
-const EntrepriseCandidates = () => {
+const EntrepriseCandidates = ({ route }) => {
+  const dispatch = useDispatch();
+  const { candidatures, isLoading, error, currentPage, totalPages, last } = useSelector((state) => state.entrepCandidatures);
+  const isLoadingMore = useRef(false);
+  const currentScrollPosition = useRef(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef(null);
 
-  const [candidates, setCandidates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const params = {
+    offreId: route.params.offerId,
+    page: 0,
+    size: 3
+  };
 
-  const fetchCandidates = async () => {
+  useEffect(() => {
+    if (error) {
+      showToast("error", "Error Entreprise Candidat", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (currentPage === 0) {
+      currentScrollPosition.current = 0;
+    }
+  }, [currentPage]);
+
+  const loadCandidatures = useCallback(async (page = 0) => {
+    console.log("loading candidatures");
+    console.log("Dispatching getCandidaturesByOffre with params:", { ...params, page });
     try {
-      const response = await axiosInstance.get(`${API_BASE_URL}/api/candidature/33?page=0&size=10`);
-      setCandidates(response.data.content);
+      const result = await dispatch(getCandidaturesByOffre({ ...params, page }));
+      console.log("Dispatch result:", result);
     } catch (error) {
-      setError(error.message);
-      showToast(error, "Error", error.message);
+      console.error("Error dispatching getCandidaturesByOffre:", error);
+    }
+  }, [dispatch])
+
+  const handleLoadMore = async () => {
+    if (
+      !totalPages ||
+      isLoading ||
+      last ||
+      currentPage >= totalPages - 1 ||
+      isLoadingMore.current ||
+      !candidatures?.length
+    ) return;
+
+    isLoadingMore.current = true;
+    try {
+      await loadCandidatures(currentPage + 1);
     } finally {
-      setLoading(false);
+      isLoadingMore.current = false;
     }
   };
 
   useEffect(() => {
-    fetchCandidates();
-  }, []);
+    loadCandidatures(0);
+  }, [loadCandidatures]);
 
-  const updateCandidature = (updatedCandidature, status) => {
-    setCandidates((prevCandidates) =>
-      prevCandidates.map((candidature) =>
-        candidature.candidat.id === updatedCandidature.candidat.id
-          ? { ...candidature, status: status }
-          : candidature
-      )
+  const handleAccept = (email, offreId) => {
+    dispatch(acceptCandidature({ email, offreId }));
+  };
+
+  const handleDecline = (email, offreId) => {
+    dispatch(declineCandidature({ email, offreId }));
+  };
+
+  const handleScroll = (event) => {
+    currentScrollPosition.current = event.nativeEvent.contentOffset.y;
+  };
+
+  useEffect(() => {
+    if (flatListRef.current && currentScrollPosition.current > 0 && params.page > 0) {
+      flatListRef.current.scrollToOffset({
+        offset: currentScrollPosition.current,
+        animated: false
+      });
+    }
+  }, [params.page]);
+
+  const renderItem = useCallback(({ item }) => (
+    <CandidatCard
+      candidate={item}
+      handleAccept={handleAccept}
+      handleDecline={handleDecline}
+    />
+  ), []);
+
+  const handleRefresh = useCallback(async () => {
+    if (isLoading || isLoadingMore.current) return;
+    setRefreshing(true)
+    try {
+      await loadCandidatures(0);
+    } catch (error) {
+      console.error("Error during refresh:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [isLoading, isLoadingMore.current, loadCandidatures]);
+
+  const renderEmpty = useCallback(() => {
+    if (isLoading) return null;
+    if (error) {
+      return (
+        <Text style={styles.emptyMessage}>
+          Une erreur s'est produite : {error}
+        </Text>
+      );
+    }
+    return (
+      <Text style={styles.emptyMessage}>
+        Aucun candidat disponible.
+      </Text>
+    );
+  }, [isLoading, error]);
+
+  const renderFooter = () => {
+    if (candidatures.length === 0) return null;
+    return (
+      <View style={styles.footerContainer}>
+        {isLoading ? (
+          <LoadingIndicator
+            size={"large"}
+          ></LoadingIndicator>
+        ) : (
+          <View style={styles.footerContainer}>
+            <Entypo
+              name="box"
+              size={25}
+              color={Color.placeholderText}
+            />
+            <Text style={styles.noMoreResult}>No more applications</Text>
+          </View>
+        )}
+      </View>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text>Error: {error}</Text>
-      </View>
-    );
-  }
-
-  const renderItem = ({ item }) => (
-    <CandidatCard
-      candidate={item}
-      onUpdateCandidature={updateCandidature} // Passer la fonction de mise à jour
-    />
-  );
-
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content"/>
+      <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
+      <TopNavBar></TopNavBar>
       <View style={styles.content}>
         <Text style={styles.header}>Candidates List</Text>
-        <FlatList
-          data={candidates}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.candidat.id.toString()}
-          ListEmptyComponent={
-            <Text style={styles.emptyMessage}>Aucun candidat disponible.</Text>
-          }
-        />
+        {
+          isLoading && !refreshing && !isLoadingMore ? (
+            <LoadingIndicator />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={candidatures}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.candidat.id.toString()}
+              ListEmptyComponent={renderEmpty}
+              onEndReached={handleLoadMore}
+              onScroll={(event) => {
+                currentScrollPosition.current = event.nativeEvent.contentOffset.y;
+              }}
+              onEndReachedThreshold={0.75}
+              initialNumToRender={5}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={[Color.spinner]}
+                  tintColor={Color.spinner}
+                />
+              }
+              ListFooterComponent={renderFooter}
+            />
+          )}
       </View>
     </SafeAreaView>
   );
@@ -101,5 +206,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
     color: Color.text,
+  },
+  footerContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noMoreResult: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: Color.placeholderText,
+    padding: 10
   },
 });
