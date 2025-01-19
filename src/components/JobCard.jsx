@@ -1,7 +1,8 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Color } from "../constants/Color";
-import React, {  useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { logo } from "../../assets";
+import { useNavigation } from "@react-navigation/native";
 
 const MAX_REQUIREMENTS = 4;
 
@@ -40,7 +41,7 @@ const calculateTimeAgo = (dateString) => {
 
 const JobCard = ({ jobPoste }) => {
 
-
+  const navigation = useNavigation();
   const handleViewPress = useCallback(() => {
     console.log("Icon press", jobPoste.id);
   }, [jobPoste.id]);
@@ -62,12 +63,15 @@ const JobCard = ({ jobPoste }) => {
     );
   }, [jobPoste.requirements]);
 
-  const formattedPublicationDate = useMemo(() => formatDate(jobPoste.publicationDate), [jobPoste.publicationDate]);
-  const formattedDeadlineDate = useMemo(() => formatDate(jobPoste.deadlineDate), [jobPoste.deadlineDate]);
   const timeAgo = useMemo(() => calculateTimeAgo(jobPoste.publicationDate), [jobPoste.publicationDate]);
 
+  const handleJobOfferPress = () => {
+    console.log(jobPoste.id);
+    navigation.navigate('EntrepriseJobDetails', { offre: jobPoste });
+  };
+
   return (
-    <TouchableOpacity style={styles.cardContainer}>
+    <TouchableOpacity style={styles.cardContainer} onPress={handleJobOfferPress}>
       <View style={styles.row}>
         <Image source={logo} style={styles.entrepriseLogo} />
         <View style={{ marginLeft: 20 }}>
@@ -81,7 +85,7 @@ const JobCard = ({ jobPoste }) => {
       <View style={[styles.row]}>
         <Text style={styles.postedTime}>{timeAgo}</Text>
         <Text style={styles.salary}>{jobPoste?.salary} DH</Text>
-        <Text style={[styles.postedTime, {fontWeight: "bold"}]}>/Mo</Text>
+        <Text style={[styles.postedTime, { fontWeight: "bold" }]}>/Mo</Text>
       </View>
     </TouchableOpacity>
   );
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  row: { flexDirection: "row", alignItems: "center", marginVertical: 10,},
+  row: { flexDirection: "row", alignItems: "center", marginVertical: 10, },
   requirementsContainer: {
     flexWrap: "wrap",
     flexDirection: "row",
