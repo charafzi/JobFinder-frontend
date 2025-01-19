@@ -21,6 +21,7 @@ import {
   DateModal,
   ExigencesModal,
   FormField,
+  LocationMapModal,
 } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
 
@@ -43,10 +44,11 @@ const AddJob = ({ navigation }) => {
       typeContrat: "",
       salaire: "",
       dateLimite: "",
-      address: "", // Adresse complète
-      city: "", // Ville
-      longitude: "", // Longitude
-      latitude: "", // Latitude
+      address: "",
+      city: "",
+      longitude: "",
+      latitude: "",
+      question: "",
     },
     resolver: (data) => {
       const errors = {};
@@ -135,11 +137,14 @@ const AddJob = ({ navigation }) => {
       if (!data.city) {
         errors.city = { message: "La ville est requise" };
       }
-      if (!data.longitude) {
-        errors.longitude = { message: "La longitude est requise" };
+      if (!data.longitude || !data.latitude) {
+        errors.location = { message: "La localisation est requise" };
       }
-      if (!data.latitude) {
-        errors.latitude = { message: "La latitude est requise" };
+
+      if (data.question.trim().length < 10) {
+        errors.question = {
+          message: "La question doit contenir au moins 10 caractères",
+        };
       }
 
       return {
@@ -154,7 +159,12 @@ const AddJob = ({ navigation }) => {
   const [editingField, setEditingField] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [date, setDate] = useState(dayjs());
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
+  const handleSetLocation = (location) => {
+    setValue('longitude', location.longitude.toString());
+    setValue('latitude', location.latitude.toString());
+  }
   const onSubmit = (data) => {
     console.log("Form Data:", data);
     navigation.navigate("jobPreview", data);
@@ -221,8 +231,36 @@ const AddJob = ({ navigation }) => {
             {renderFormField("poste", "Enter poste")}
             {renderFormField("city", "Enter city")}
             {renderFormField("address", "Enter address")}
-            {renderFormField("longitude", "Enter longitude", { keyboardType: "numeric" })}
-            {renderFormField("latitude", "Enter latitude", { keyboardType: "numeric" })}
+            <Controller
+              control={control}
+              name="longitude"
+              render={({ field: { value: longitudeValue } }) => (
+                <Controller
+                  control={control}
+                  name="latitude"
+                  render={({ field: { value: latitudeValue } }) => (
+                    <View style={styles.card}>
+                      <View style={styles.fieldHeader}>
+                        <Text style={styles.text}>Localisation</Text>
+                        <TouchableOpacity onPress={() => setShowLocationModal(true)}>
+                          <Feather
+                            name={!longitudeValue ? "plus" : "edit-2"}
+                            size={!longitudeValue ? 24 : 20}
+                            color={Color.link}
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      {(!longitudeValue || !latitudeValue) && errors.location && (
+                        <Text style={styles.errorText}>
+                          {errors.location.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+              )}
+            />
 
             <Controller
               control={control}
@@ -318,6 +356,8 @@ const AddJob = ({ navigation }) => {
                 </View>
               )}
             />
+
+            {renderFormField("question", "Entrez une question pour les candidats")}
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -336,6 +376,13 @@ const AddJob = ({ navigation }) => {
           },
           [setValue],
         )}
+        control={control}
+      />
+
+      <LocationMapModal
+        showModal={showLocationModal}
+        handleCloseModal={() => setShowLocationModal(false)}
+        handleSetLocation={handleSetLocation}
         control={control}
       />
 
