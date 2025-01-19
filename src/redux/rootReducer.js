@@ -7,6 +7,7 @@ import offresReducer from './slices/offres/offreSlice';
 import candidaturesReducer from './slices/candidaturesCandidat/candidaturesSlice'
 import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
 import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSlice';
+import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice'
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
@@ -16,7 +17,8 @@ const rootReducer = combineReducers({
   offres : offresReducer,
   entrepriseOffres : entrepriseOffresReducer,
   candidatures : candidaturesReducer,
-  candidatProfile: candidatProfileReducer
+  candidatProfile: candidatProfileReducer,
+  entrepCandidatures: entrepCandidaturesReducer,
 });
 
 export default rootReducer;
