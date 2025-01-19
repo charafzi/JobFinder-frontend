@@ -12,6 +12,7 @@ import {
     Welcome,
     Map, Search, Filter,
     EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
+  Map, Search, Filter,
 } from "../screens";
 import { TabNavigator } from ".";
 import CompanyProfile from "../screens/CompanyProfile";
