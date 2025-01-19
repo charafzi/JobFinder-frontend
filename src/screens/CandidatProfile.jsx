@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
   View, 
   Text, 
@@ -13,14 +14,25 @@ import {
   Animated,
   ActivityIndicator,
   Modal,
-  TextInput
+  TextInput,
+  ScrollView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { fetchFormations, fetchExperiences, deleteExperience, updateExperience, createExperience, fetchLangues, fetchCompetences, fetchAbout } from '../redux/slices/candidatProfileThunks';
+import { 
+  fetchFormations, 
+  fetchExperiences, 
+  deleteExperience, 
+  updateExperience, 
+  createExperience, 
+  fetchLangues, 
+  fetchCompetences, 
+  fetchAbout,
+  getProfilePicture 
+} from '../redux/slices/candidatProfileThunks';
 import { resetProfile } from '../redux/slices/candidatProfileSlice';
 
 const { width } = Dimensions.get('window');
@@ -119,40 +131,22 @@ const CandidatProfile = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const candidatId = useSelector(state => state.auth.id);
-  const { firstName, lastName } = useSelector(state => state.auth.candidat);
+  const { firstName, lastName, email } = useSelector(state => state.auth.candidat);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
   
-  // Log auth state
-  const authState = useSelector(state => state.auth);
-  console.log('CandidatProfile - Auth State:', {
-    candidatId,
-    authState,
-    firstName,
-    lastName
-  });
-  
-  // Récupérer les données du state
   const {
     formations,
     experiences,
     langues,
     competences,
     about,
+    profilePicture,
     loading,
     error
   } = useSelector(state => state.candidatProfile);
 
-  // Charger toutes les données au montage du composant
   useEffect(() => {
     if (candidatId) {
-      console.log('CandidatProfile - candidatId:', candidatId);
-      console.log('CandidatProfile - Current Redux State:', {
-        formations: formations?.length,
-        experiences: experiences?.length,
-        langues: langues?.length,
-        competences: competences?.length,
-        about: about?.length
-      });
-      
       dispatch(fetchFormations(candidatId));
       dispatch(fetchExperiences(candidatId));
       dispatch(fetchLangues(candidatId));
@@ -166,18 +160,25 @@ const CandidatProfile = () => {
     };
   }, [candidatId, dispatch]);
 
-  // Log des données reçues
+  const fetchProfilePicture = useCallback(async () => {
+    if (email) {
+      try {
+        setIsLoadingImage(true);
+        const result = await dispatch(getProfilePicture(email)).unwrap();
+        if (result) {
+          // Succès silencieux
+        }
+      } catch (error) {
+        // Erreur silencieuse
+      } finally {
+        setIsLoadingImage(false);
+      }
+    }
+  }, [email, dispatch]);
+
   useEffect(() => {
-    console.log('Profile Data:', {
-      formations,
-      experiences,
-      langues,
-      competences,
-      about,
-      loading,
-      error
-    });
-  }, [formations, experiences, langues, competences, about, loading, error]);
+    fetchProfilePicture();
+  }, [fetchProfilePicture]);
 
   const scrollY = useRef(new Animated.Value(0)).current;
   
@@ -218,7 +219,6 @@ const CandidatProfile = () => {
   }
 
   const renderFormations = () => {
-    console.log('Rendering formations:', formations);
     return (
     <View style={styles.contentSection}>
       {formations && formations.length > 0 ? (
@@ -253,7 +253,6 @@ const CandidatProfile = () => {
   )};
 
   const renderExperiences = () => {
-    console.log('Rendering experiences:', experiences);
     return (
     <View style={styles.contentSection}>
       {experiences && experiences.length > 0 ? (
@@ -285,7 +284,6 @@ const CandidatProfile = () => {
   )};
 
   const renderSkills = () => {
-    console.log('Rendering competences:', competences);
     return (
     <View style={styles.contentSection}>
       {competences && competences.length > 0 ? (
@@ -303,7 +301,6 @@ const CandidatProfile = () => {
   )};
 
   const renderAboutMe = () => {
-    console.log('Rendering about:', about);
     return (
     <View style={styles.contentSection}>
       {about && about.length > 0 ? (
@@ -317,12 +314,6 @@ const CandidatProfile = () => {
   )};
 
   const renderLanguages = () => {
-    console.log('CandidatProfile - renderLanguages called with:', {
-      languesData: langues,
-      loading: loading.langues,
-      error: error.langues
-    });
-    
     return (
     <View style={styles.contentSection}>
       {loading.langues ? (
@@ -373,13 +364,23 @@ const CandidatProfile = () => {
               }
             ]}
           >
-            <View style={styles.avatarContainer}>
-              <MaterialCommunityIcons 
-                name="account-circle" 
-                size={60} 
-                color="#3A317B" 
-              />
-            </View>
+            <Animated.View style={[styles.avatarContainer, { transform: [{ scale: 1 }] }]}>
+              {isLoadingImage ? (
+                <ActivityIndicator size="large" color="#3A317B" />
+              ) : profilePicture ? (
+                <Image
+                  source={{ uri: profilePicture }}
+                  style={styles.profileImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <MaterialCommunityIcons 
+                  name="account-circle" 
+                  size={94} 
+                  color="#3A317B" 
+                />
+              )}
+            </Animated.View>
             <Text style={styles.userName}>{firstName} {lastName}</Text>
             <TouchableOpacity 
               style={styles.editButton}
@@ -485,9 +486,23 @@ const styles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 47,
   },
   userName: {
     fontSize: 28,

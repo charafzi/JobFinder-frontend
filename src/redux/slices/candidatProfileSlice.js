@@ -18,7 +18,8 @@ import {
   updateCompetence,
   deleteCompetence,
   updateAbout,
-  deleteAbout
+  deleteAbout,
+  getProfilePicture
 } from './candidatProfileThunks';
 
 const initialState = {
@@ -27,19 +28,22 @@ const initialState = {
   langues: [],
   competences: [],
   about: null,
+  profilePicture: null,
   loading: {
     formations: false,
     experiences: false,
     langues: false,
     competences: false,
-    about: false
+    about: false,
+    profilePicture: false
   },
   error: {
     formations: null,
     experiences: null,
     langues: null,
     competences: null,
-    about: null
+    about: null,
+    profilePicture: null
   },
 };
 
@@ -204,6 +208,19 @@ const candidatProfileSlice = createSlice({
       })
       .addCase(deleteAbout.fulfilled, (state) => {
         state.about = null;
+      })
+      // Profile Picture
+      .addCase(getProfilePicture.pending, (state) => {
+        state.loading.profilePicture = true;
+        state.error.profilePicture = null;
+      })
+      .addCase(getProfilePicture.fulfilled, (state, action) => {
+        state.loading.profilePicture = false;
+        state.profilePicture = action.payload;
+      })
+      .addCase(getProfilePicture.rejected, (state, action) => {
+        state.loading.profilePicture = false;
+        state.error.profilePicture = action.error.message;
       });
   },
 });

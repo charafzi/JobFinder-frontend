@@ -851,7 +851,7 @@ const EditProfileCandidat = ({ route }) => {
             />
           ) : (
             <Text style={styles.aboutText}>
-              {aboutText || "Aucune description ajoutée"}
+              {aboutText || ""}
             </Text>
           )}
         </View>
@@ -1302,7 +1302,7 @@ const EditProfileCandidat = ({ route }) => {
             ) : (
               <>
                 <Text style={styles.nameText}>{authFirstName} {authLastName}</Text>
-                <Text style={styles.addressText}>{editFormData.address || "Aucune adresse"}</Text>
+                <Text style={styles.addressText}>{editFormData.address || ""}</Text>
               </>
             )}
           </Animated.View>

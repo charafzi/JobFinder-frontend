@@ -617,24 +617,17 @@ export const getProfilePicture = createAsyncThunk(
   'candidatProfile/getProfilePicture',
   async (email) => {
     try {
-      console.log('Fetching profile picture for candidat:', email);
       const response = await axiosInstance.get(
         `/api/candidat/profile-picture/${email}`,
         {
-          responseType: 'text'
+          responseType: 'arraybuffer'
         }
       );
 
-      // Construire l'URL complète de l'image
-      const baseUrl = axiosInstance.defaults.baseURL || '';
-      const imageUrl = `${baseUrl}/api/candidat/profile-picture/${email}`;
-      console.log('Profile picture URL:', imageUrl);
-      
-      return imageUrl;
+      const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      return `data:image/jpeg;base64,${base64}`;
     } catch (error) {
-      console.error('Error fetching profile picture:', error);
-      // Si l'erreur est 404, on retourne null au lieu de throw
-      if (error.response && error.response.status === 404) {
+      if (error.response?.status === 404) {
         return null;
       }
       throw error;

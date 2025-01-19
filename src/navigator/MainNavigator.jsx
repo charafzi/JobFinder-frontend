@@ -14,6 +14,7 @@ import {
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
+import EditCompanyProfile from '../screens/EditCompanyProfile';
 import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';
 import UploadCVSuccess from '../screens/UploadCVSuccess';
@@ -42,6 +43,7 @@ const StackNavigator = () => {
       <Stack.Screen name="jobPreview" component={JobPreview} />
       <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
       <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
+      <Stack.Screen name={"EditCompanyProfile"} component={EditCompanyProfile}></Stack.Screen>
       <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
     </Stack.Navigator>
   );

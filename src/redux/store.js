@@ -5,7 +5,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import candidatProfileReducer from './slices/candidatProfileSlice';
 
 /*const store = createStore(rootReducer, applyMiddleware(thunk));*/
-
 const store = configureStore({
   reducer: rootReducer
 })
