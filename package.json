@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
     "@gorhom/bottom-sheet": "^5.0.6",
+    "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/drawer": "^7.1.1",
     "@react-navigation/native": "^7.0.14",
@@ -20,6 +21,7 @@
     "@reduxjs/toolkit": "^2.5.0",
     "@rnmapbox/maps": "^10.1.33",
     "axios": "^1.7.9",
+    "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
     "expo": "~52.0.19",
     "expo-constants": "~17.0.3",
