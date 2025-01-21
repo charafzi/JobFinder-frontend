@@ -31,8 +31,8 @@ import {
   fetchCompetences, 
   fetchAbout,
   getProfilePicture 
-} from '../redux/slices/candidatProfileThunks';
-import { resetProfile } from '../redux/slices/candidatProfileSlice';
+} from '../redux/slices/candidat/candidatProfileThunks';
+import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;

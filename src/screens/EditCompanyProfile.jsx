@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Platform,
   TextInput,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -32,6 +33,48 @@ const EditCompanyProfile = () => {
   const [showIndustriesModal, setShowIndustriesModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Créer les listeners pour le clavier
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (event) => {
+        // event.endCoordinates.height contient la hauteur du clavier
+        console.log('Keyboard shown', event);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      (event) => {
+        console.log('Keyboard hidden', event);
+      }
+    );
+
+    // Optionnel : écouter quand le clavier commence à s'afficher/se cacher
+    const keyboardWillShowListener = Keyboard.addListener(
+      'keyboardWillShow',
+      (event) => {
+        console.log('Keyboard will show', event);
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      'keyboardWillHide',
+      (event) => {
+        console.log('Keyboard will hide', event);
+      }
+    );
+
+    // Nettoyage des listeners quand le composant est démonté
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
+
 
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
@@ -316,11 +359,6 @@ const EditCompanyProfile = () => {
           <AddressCard />
         </View>
       </Animated.ScrollView>
-
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabContainer}>
-        <BottomTabNavigator />
-      </View>
     </SafeAreaView>
   );
 };
