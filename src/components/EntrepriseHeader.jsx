@@ -7,7 +7,7 @@ const EntrepriseHeader = ({ entrepriseLogo, entrepriseName }) => {
     <View style={styles.headerContainer}>
       <View>
         <Text style={styles.name}>Welcome Back </Text>
-        <Text style={styles.name}>{entrepriseName !== "" || "Google"}</Text>
+        <Text style={styles.name}>{entrepriseName !== "" ?  entrepriseName : "Google"}</Text>
       </View>
       <Image source={entrepriseLogo} style={{ marginLeft: 10 }} />
     </View>

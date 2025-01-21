@@ -2,7 +2,6 @@ import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import { logo } from "../../assets";
 import { Color } from "../constants/Color";
 import React from "react";
-import { AntDesign } from "@expo/vector-icons";
 
 const JobPreviewCard = ({ jobPoste }) => {
   return (
@@ -11,15 +10,15 @@ const JobPreviewCard = ({ jobPoste }) => {
         <View style={styles.leftContent}>
           <Image source={logo} style={styles.iconStyle} resizeMode="center" />
           <View style={styles.textContainer}>
-            <Text style={styles.text}>{jobPoste || "Product Designer"}</Text>
+            <Text style={styles.text}>{jobPoste?.poste || "Product Designer"}</Text>
+            <Text style={styles.description}>
+              {jobPoste?.title || "Job vacancies from Apple company"}
+            </Text>
             <Text style={styles.subtitle}>
-              Google inc . California, USA
+              {jobPoste?.city || "Google inc"} . {jobPoste?.typeContrat || "On Site"}
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.bookmarkIcon}>
-          <AntDesign name="heart" size={24} color={Color.primary} />
-        </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>
@@ -62,6 +61,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Color.text,
   },
+  description: {
+    fontSize: 12,
+    fontWeight: "regular",
+    marginVertical: 10,
+    color: Color.text,
+  },
   subtitle: {
     color: Color.subtitle,
     fontSize: 14,
@@ -71,6 +76,7 @@ const styles = StyleSheet.create({
   },
   button: {
     borderRadius: 15,
+    borderWidth: .5,
     paddingHorizontal: 40,
     paddingVertical: 15,
     marginTop: 30,

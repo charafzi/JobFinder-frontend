@@ -18,7 +18,6 @@ import {
   ScrollView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
@@ -32,8 +31,8 @@ import {
   fetchCompetences, 
   fetchAbout,
   getProfilePicture 
-} from '../redux/slices/candidatProfileThunks';
-import { resetProfile } from '../redux/slices/candidatProfileSlice';
+} from '../redux/slices/candidat/candidatProfileThunks';
+import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;

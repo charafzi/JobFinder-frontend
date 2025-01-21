@@ -3,6 +3,7 @@ import axiosInstance, { API_BASE_URL } from "../../config/axiosConfig";
 export const LOGIN_REQUEST = "LOGIN_REQUEST";
 export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
 export const LOGIN_FAILURE = "LOGIN_FAILURE";
+export const LOGOUT = "LOGOUT";
 
 export const login = ({ email, password }) => {
   return async (dispatch) => {
@@ -29,5 +30,11 @@ export const login = ({ email, password }) => {
         }
         dispatch({ type: LOGIN_FAILURE, payload: errorMessage });
       });
+  };
+};
+
+export const logout = () => {
+  return async (dispatch) => {
+    dispatch({ type: LOGOUT });
   };
 };

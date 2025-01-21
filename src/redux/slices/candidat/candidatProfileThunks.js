@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../config/axiosConfig';
 import { Buffer } from 'buffer';
+import axiosInstance from '../../../config/axiosConfig';
 
 // Formations
 export const fetchFormations = createAsyncThunk(
@@ -633,4 +633,4 @@ export const getProfilePicture = createAsyncThunk(
       throw error;
     }
   }
-);
+);  

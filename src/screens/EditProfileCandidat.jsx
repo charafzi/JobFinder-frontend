@@ -46,7 +46,7 @@ import {
   updateAbout,
   uploadProfilePicture,
   getProfilePicture
-} from '../redux/slices/candidatProfileThunks';
+} from '../redux/slices/candidat/candidatProfileThunks';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;

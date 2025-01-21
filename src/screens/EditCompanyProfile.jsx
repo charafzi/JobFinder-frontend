@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 import {
   View,
   Text,
@@ -92,7 +94,9 @@ function EditCompanyProfile() {
   const [profileImage, setProfileImage] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
+
   const [formData, setFormData] = useState({
+
     about: '',
     adress: {
       adress: '',
@@ -814,9 +818,11 @@ function EditCompanyProfile() {
           <AddressCard />
           <View style={styles.bottomSpacing} />
         </View>
+
       </ScrollView>
 
     </View>
+
   );
 }
 

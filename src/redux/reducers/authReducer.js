@@ -7,6 +7,7 @@ const initialState = {
   candidat : {
     firstName: null,
     lastName: null,
+    cvDocumentsId : [] // representing list of CV ids at backend
   },
   entreprise:{
     name: null,
@@ -21,6 +22,7 @@ const initialState = {
   isCandidat : false,
   error: null,
   token: null,
+  refreshToken: null,
 };
 
 const authReducer = (state = initialState, action) => {
@@ -35,10 +37,12 @@ const authReducer = (state = initialState, action) => {
           email: action.payload.email,
           phoneNumber: action.payload.phoneNumber,
           token: action.payload.token,
+          refreshToken: action.payload.refreshToken,
           isCandidat: true,
           candidat: {
             firstName: action.payload.firstName,
             lastName: action.payload.lastName,
+            cvDocumentsId : action.payload.cvDocumentsId
           },
           isLoading: false,
           isLoggedIn: true,
@@ -50,6 +54,7 @@ const authReducer = (state = initialState, action) => {
           email: action.payload.email,
           phoneNumber: action.payload.phoneNumber,
           token: action.payload.token,
+          refreshToken: action.payload.refreshToken,
           isCandidat: false,
           entreprise: {
             name: action.payload.name,
@@ -71,6 +76,13 @@ const authReducer = (state = initialState, action) => {
         isLoading: false,
         isLoggedIn: false,
         error: action.payload,
+      };
+    case "LOGOUT":
+      return initialState;
+    case "REFRESH_TOKEN_SUCCESS":
+      return {
+        ...state,
+        token: action.payload.token
       };
     default:
       return state;

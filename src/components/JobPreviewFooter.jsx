@@ -3,13 +3,13 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Color } from "../constants/Color";
 import React from "react";
 
-const JobPreviewFooter = ({ onPhotoPress }) => {
+const JobPreviewFooter = ({ onPhotoPress, onSubmit }) => {
   return (
     <View style={styles.footer}>
       <TouchableOpacity onPress={onPhotoPress}>
         <AntDesign name="picture" size={24} color={Color.link} />
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onSubmit}>
         <Text style={styles.postButton}>Post</Text>
       </TouchableOpacity>
     </View>

@@ -4,7 +4,10 @@ import forgotPasswordReducer from "./reducers/forgotPasswordReducer";
 import checkEmailReducer from "./reducers/checkEmailReducer";
 import resetPasswordReducer from "./reducers/resetPasswordReducer";
 import offresReducer from './slices/offres/offreSlice';
-import candidatProfileReducer from './slices/candidatProfileSlice';
+import candidaturesReducer from './slices/candidaturesCandidat/candidaturesSlice'
+import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
+import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSlice';
+import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice';
 import { entrepriseProfileReducer } from './slices/EntrepriseProfile';
 
 const rootReducer = combineReducers({
@@ -14,7 +17,11 @@ const rootReducer = combineReducers({
   resetPassword: resetPasswordReducer,
   offres: offresReducer,
   candidatProfile: candidatProfileReducer,
-  entrepriseProfile: entrepriseProfileReducer
+  entrepriseProfile: entrepriseProfileReducer,
+  entrepriseOffres : entrepriseOffresReducer,
+  candidatures : candidaturesReducer,
+  candidatProfile: candidatProfileReducer,
+  entrepCandidatures: entrepCandidaturesReducer,
 });
 
 export default rootReducer;

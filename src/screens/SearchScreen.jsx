@@ -1,26 +1,68 @@
-import {FlatList, Text, View} from "react-native";
+import {FlatList, Image, RefreshControl, Text, View} from "react-native";
 import TopNavBar from "../components/TopNavBar";
 import JobCardSearchPreview from "../components/JobCardSearchPreview";
 import {LoadingIndicator, Search} from "../components";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {StyleSheet} from "react-native";
 import {useDispatch, useSelector} from "react-redux";
 import {Color} from "../constants/Color";
 import {searchOffres} from "../redux/slices/offres/searchOffresThunk";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import Entypo from "@expo/vector-icons/Entypo";
+import {useScrollToTop} from "@react-navigation/native";
+import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
+import showToast from "../utils/showToast";
+import {useAuthCheck} from "../hooks/useAuthCheck";
 
 const SearchScreen = ()=>{
     const dispatch = useDispatch();
-    const { searchOffresList, isLoading, params, last, totalPages } = useSelector((state) => state.offres);
+    const { searchOffresList, isLoading, params, last, totalPages, error } = useSelector((state) => state.offres);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const isLoggedIn = useAuthCheck();
+
+    useScrollToTop(flatListRef);
+
+    // Return early if not logged in
+    if (!isLoggedIn) {
+        return null;
+    }
+
+    useEffect(() => {
+        // Only load initial search if logged in
+        if (isLoggedIn) {
+            dispatch(searchOffres({
+                keyword : "",
+                page: 0
+            }));
+        }
+    }, [isLoggedIn]);
+
+    useEffect(() => {
+        if (error) {
+            showToast("error", "Login failed", error);
+        }
+    }, [error]);
+
+    const handleRefresh = useCallback(async () => {
+        if (isLoading) return;
+
+        setRefreshing(true);
+        try {
+            dispatch(clearSearchOffres());
+            await dispatch(searchOffres({
+                keyword : "",
+                page: 0
+            }));
+
+        } finally {
+            setRefreshing(false);
+        }
+    }, [isLoading]);
 
     const handleLoadMore = async () => {
         if (!totalPages) return;
-
-        //console.log("PAGE NUMBER ", params.page);
-        //console.log("TOTAL PAGES ", totalPages);
 
         if (!isLoading && !last && params.page < totalPages - 1 && !isLoadingMore.current) {
             try {
@@ -40,7 +82,6 @@ const SearchScreen = ()=>{
     const handleScroll = (event) => {
         currentScrollPosition.current = event.nativeEvent.contentOffset.y;
     };
-
 
     useEffect(() => {
         if(params.page === 0){
@@ -65,6 +106,7 @@ const SearchScreen = ()=>{
     ), []);
 
     const renderFooter = () => {
+        if (searchOffresList.length === 0) return null;
         return (
             <View style={styles.footerContainer}>
                 {isLoading ? (
@@ -72,9 +114,9 @@ const SearchScreen = ()=>{
                     size={"large"}
                     ></LoadingIndicator>
                 ) : (
-                    <View style={styles.noMoreResultContainer}>
-                        <AntDesign
-                            name="inbox"
+                    <View style={styles.footerContainer}>
+                        <Entypo
+                            name="box"
                             size={25}
                             color={Color.placeholderText}
                         />
@@ -84,6 +126,20 @@ const SearchScreen = ()=>{
             </View>
         );
     };
+
+    const renderEmpty = () =>{
+        return(
+            <View style={styles.noMoreResultContainer}>
+                <Image
+                    style={styles.noResultImage}
+                    source={require('../../assets/no_result.png')}
+                >
+                </Image>
+                <Text style={styles.noResult}>No results found</Text>
+                <Text style={styles.noResultDesc}>The search could not be found, please check spelling or write another word.</Text>
+            </View>
+        )
+    }
 
     return (
         <View style={styles.mainContainer}>
@@ -95,7 +151,10 @@ const SearchScreen = ()=>{
                 <Search></Search>
             </View>
 
-            {isLoading && <LoadingIndicator></LoadingIndicator>}
+            {isLoading &&
+                <View style={styles.loadingContainer}>
+                <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
+            </View>}
 
             {!isLoading && <FlatList
                 data={searchOffresList}
@@ -112,6 +171,15 @@ const SearchScreen = ()=>{
                 removeClippedSubviews={true}
                 updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
+                ListEmptyComponent={renderEmpty}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={[Color.spinner]}
+                        tintColor={Color.spinner}
+                    />
+                }
             />}
         </View>
     )
@@ -130,12 +198,13 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     noResultContainer : {
-        marginVertical: 160,
+        marginVertical: '50%',
         flex: 1,
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        marginHorizontal: '50%'
     },
     noResult :{
         fontSize: 16,
@@ -164,8 +233,9 @@ const styles = StyleSheet.create({
     noMoreResultContainer:{
       display: "flex",
       alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "center"
+      flexDirection: "column",
+      justifyContent: "center",
+        marginVertical : '50%'
     },
     noMoreResult:{
         fontSize: 12,
@@ -175,6 +245,16 @@ const styles = StyleSheet.create({
     },
     footerList: {
         paddingBottom: 20
+    },
+    loadingContainer:{
+        flex : 1,
+        justifyContent : "center"
+    },
+    footerContainer : {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
     }
 })
 

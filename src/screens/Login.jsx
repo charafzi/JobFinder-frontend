@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import FormLogin from "../components/FormLogin";
 import { Color } from "../constants/Color";
 import { google } from "../../assets";
@@ -19,6 +19,10 @@ const Login = ({ navigation }) => {
     navigation.navigate("register");
   };
 
+  const onLoggedIn = useCallback(() => {
+    navigation.replace("tabNavigator");
+  },[navigation]);
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
@@ -30,7 +34,7 @@ const Login = ({ navigation }) => {
               Please enter your details to sign in
             </Text>
           </View>
-          <FormLogin />
+          <FormLogin onLoggedIn={onLoggedIn}/>
           <TouchableOpacity style={styles.googleButton}>
             <Image source={google} style={styles.googleIcon} />
             <Text style={styles.googleText}>SIGN IN WITH GOOGLE</Text>
