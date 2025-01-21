@@ -34,6 +34,15 @@ const RegisterCandidat = () => {
         );
       })
       .catch((error) => {
+        if (error.response) {
+          console.log('Response Error:', error.response.data);
+          console.log('Status:', error.response.status);
+          console.log('Headers:', error.response.headers);
+        } else if (error.request) {
+          console.log('Request Error:', error.request);
+        } else {
+          console.log('Error:', error.message);
+        }
         showToast(
           "error",
           "Register Error",

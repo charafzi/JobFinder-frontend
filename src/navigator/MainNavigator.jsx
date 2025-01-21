@@ -11,12 +11,13 @@ import {
   ResetSuccessfully,
   Welcome,
   Map, Search, Filter,
-  EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
+    EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
   EntrepriseJobDetailsScreen,
   EntrepriseCandidates,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
+import EditCompanyProfile from '../screens/EditCompanyProfile';
 import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';
 import UploadCVSuccess from '../screens/UploadCVSuccess';
@@ -26,7 +27,7 @@ const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"login"} >
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={"logoscreen"} >
       <Stack.Screen name="tabNavigator" component={TabNavigator} />
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
@@ -50,6 +51,7 @@ const StackNavigator = () => {
       <Stack.Screen name="EditProfileCandidat" component={EditProfileCandidat} />
       <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
       <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
+      <Stack.Screen name={"EditCompanyProfile"} component={EditCompanyProfile}></Stack.Screen>
       <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
     </Stack.Navigator>
   );

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getEntrepriseOffres } from "./getEntrepriseOffresThunk";
+import { getEntrepriseOffres, getNombreOffresParEntreprise } from "./getEntrepriseOffresThunk";
 import { createEntrepriseOffre } from "./createEntrepriseOffreThunk";
 
 const initialState = {
@@ -13,6 +13,7 @@ const initialState = {
   sortDirection: "DESC",
   totalPages: null,
   last: false,
+  nombreOffres: 0,
 };
 
 const EntrepriseOffreSlice = createSlice({
@@ -77,6 +78,18 @@ const EntrepriseOffreSlice = createSlice({
       .addCase(createEntrepriseOffre.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to create job";
+      })
+      // Fetching number of offres
+      .addCase(getNombreOffresParEntreprise.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getNombreOffresParEntreprise.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.nombreOffres = action.payload; // Mettre à jour le nombre d'offres
+      })
+      .addCase(getNombreOffresParEntreprise.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch number of offers";
       });
   },
 });

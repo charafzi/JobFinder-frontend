@@ -3,6 +3,8 @@ import {
   acceptCandidature,
   declineCandidature,
   getCandidaturesByOffre,
+  getNombreCandidaturesAccepteesParEntreprise,
+  getNombreCandidaturesParEntreprise,
 } from "./candidaturesThunk";
 
 const initialState = {
@@ -13,6 +15,8 @@ const initialState = {
   totalElements: 0,
   last: false,
   currentPage: 0,
+  nombreCandidatures: 0,
+  nombreCandidaturesAcceptees: 0, 
 };
 
 const candidaturesSlice = createSlice({
@@ -105,6 +109,30 @@ const candidaturesSlice = createSlice({
         state.error =
           action.payload ??
           "Error occurred when trying to decline the application. Please try again.";
+      })
+      // Fetching number of candidatures
+      .addCase(getNombreCandidaturesParEntreprise.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getNombreCandidaturesParEntreprise.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.nombreCandidatures = action.payload; // Mettre à jour le nombre de candidatures
+      })
+      .addCase(getNombreCandidaturesParEntreprise.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch number of candidatures";
+      })
+      // Fetching number of accepted candidatures
+      .addCase(getNombreCandidaturesAccepteesParEntreprise.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getNombreCandidaturesAccepteesParEntreprise.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.nombreCandidaturesAcceptees = action.payload; // Mettre à jour le nombre de candidatures acceptées
+      })
+      .addCase(getNombreCandidaturesAccepteesParEntreprise.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || "Failed to fetch number of accepted candidatures";
       });
   },
 });

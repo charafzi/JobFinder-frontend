@@ -8,9 +8,9 @@ import EntrepriseProjects from "../screens/EntrepriseProjects";
 import { Color } from "../constants/Color";
 import { useSelector } from "react-redux";
 import SearchScreen from "../screens/SearchScreen";
-import { EntrepriseCandidates } from "../screens";
 import MapScreen from "../screens/MapScreen";
 import {Applications} from "../screens";
+import { MyTabBar } from "../components/MyTabBar";
 
 const Tab = createBottomTabNavigator();
 
@@ -20,37 +20,39 @@ const EntrepriseTabNavigation = () => {
             initialRouteName="home"
             backBehavior="history"
             screenOptions={{
-                tabBarActiveTintColor: Color.text,
-                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
                 headerShown: false,
-                tabBarShowLabel: false,
             }}
+            tabBar={props => <MyTabBar {...props} />}
         >
             <Tab.Screen
                 name="home"
                 component={EntrepriseHomeScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="home-outline" size={size} color={color} />
+                    tabBarIcon: (props) => (
+                        <Ionicons name="home-outline" {...props} />
                     ),
+                    tabBarLabel: "Home",
                 }}
             />
             <Tab.Screen
                 name="addJob"
                 component={AddJob}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <AntDesign name="pluscircle" size={size} color={Color.text} />
+                    tabBarIcon: (props) => (
+                        <AntDesign name="pluscircle" {...props} />
                     ),
+                    tabBarLabel: "Add Job",
                 }}
             />
             <Tab.Screen
+            
                 name="entrepriseProjects"
                 component={EntrepriseProjects}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="briefcase-outline" size={size} color={color} />
+                    tabBarIcon: (props) => (
+                        <Ionicons name="briefcase-outline" {...props} />
                     ),
+                    tabBarLabel: "Projects",
                 }}
             />
         </Tab.Navigator>
@@ -63,38 +65,42 @@ const CandidatTabNavigation = () =>{
             initialRouteName="home"
             backBehavior="history"
             screenOptions={{
-                tabBarActiveTintColor: Color.text,
-                tabBarInactiveTintColor: Color.tabBarInactiveTintColor,
                 headerShown: false,
                 tabBarShowLabel: false,
             }}
+            tabBar={props => <MyTabBar {...props} />}
         >
             <Tab.Screen
                 name="home"
                 component={SearchScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="home-outline" size={size} color={color} />
+                    tabBarIcon: (props) => (
+                        <Ionicons name="home-outline" {...props} />
                     ),
+                    tabBarLabel: "Home",
                 }}
             />
             <Tab.Screen
                 name="map"
                 component={MapScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="map" size={size} color={Color.text} />
+                    tabBarIcon: (props) => (
+                        <Ionicons name="map" {...props} />
                     ),
+                    tabBarLabel: "Map",
                 }}
             />
             <Tab.Screen
                 name="applications"
                 component={Applications}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="briefcase-outline" size={size} color={color} />
+                    tabBarIcon: (props) => (
+                        <Ionicons name="briefcase-outline" {...props} />
                     ),
+                    tabBarLabel: "Candidatures",
                 }}
+
+
             />
         </Tab.Navigator>
     );

@@ -68,7 +68,7 @@ const EntrepriseJobDetailsScreen = ({ route, navigation }) => {
                                             key={index}
                                             style={styles.circle}
                                             onPress={() => {
-                                                navigation.navigate("entrepriseCandidates", { candidature });
+                                                navigation.navigate("entrepriseCandidates", { offerId: route.params.offre.id });
                                             }}
                                         >
                                             {candidature.candidat.profilePicture ? (

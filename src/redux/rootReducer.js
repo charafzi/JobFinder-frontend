@@ -7,14 +7,17 @@ import offresReducer from './slices/offres/offreSlice';
 import candidaturesReducer from './slices/candidaturesCandidat/candidaturesSlice'
 import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
 import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSlice';
-import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice'
+import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice';
+import { entrepriseProfileReducer } from './slices/EntrepriseProfile';
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
   forgotPassword: forgotPasswordReducer,
   checkEmail: checkEmailReducer,
   resetPassword: resetPasswordReducer,
-  offres : offresReducer,
+  offres: offresReducer,
+  candidatProfile: candidatProfileReducer,
+  entrepriseProfile: entrepriseProfileReducer,
   entrepriseOffres : entrepriseOffresReducer,
   candidatures : candidaturesReducer,
   candidatProfile: candidatProfileReducer,

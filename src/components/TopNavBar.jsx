@@ -1,5 +1,14 @@
 import React from "react";
-import {View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput} from "react-native";
+import {
+    View, 
+    Text, 
+    TouchableOpacity, 
+    Image, 
+    StyleSheet, 
+    ImageBackground, 
+    Dimensions, 
+    TextInput
+} from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -11,16 +20,16 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 
 const NAVBAR_THEMES = {
     purple: {
-        colors: ["#38354c", "#3A317B"],
+        colors: ['#3A317B', '#2D2665'],
         start: { x: 0, y: 0 },
-        end: { x: 1, y: 1 },
+        end: { x: 1, y: 0 },
         titleColor: "#fff",
         iconColor: Color.icon
     },
     default: {
         colors: [Color.background, Color.background],
         start: { x: 0, y: 0 },
-        end: { x: 1, y: 1 },
+        end: { x: 1, y: 0 },
         titleColor: Color.text,
         iconColor: Color.text
     },
@@ -42,9 +51,8 @@ const TopNavBar = ({
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
 
-    const handleBackPress =() =>{
+    const handleBackPress = () => {
         if (onBackPress) {
-            // If custom onBackPress is provided, use it
             onBackPress();
         } else {
             navigation.goBack();
@@ -112,6 +120,7 @@ const TopNavBar = ({
                </View>
            </View>
        </LinearGradient>
+
     );
 };
 
@@ -148,8 +157,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
     },
-    icon: {
+    iconButton: {
         padding: 4,
+    },
+    profileButton: {
+        padding: 4,
+        marginLeft: 8,
     },
     profilePic: {
         width: 40,
