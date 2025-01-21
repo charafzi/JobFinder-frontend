@@ -1,9 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
 import notifee, {
   AndroidStyle,
-  AndroidImportance,
-  AndroidVisibility,
-  AndroidNotificationPriority
+  AndroidImportance, AndroidVisibility,
 } from '@notifee/react-native';
 import {Platform} from "react-native";
 import {Color} from "../constants/Color";
@@ -27,27 +25,46 @@ export const requestUserPermission = async () => {
   return enabled;
 };
 
+export const initializeNotificationChannels = async () => {
+  try {
+    await notifee.createChannel({
+      id: 'jobfinder',
+      name: 'JobFinder Notifications',
+      importance: AndroidImportance.HIGH,
+      lightColor: Color.secondary,
+      sound: 'default',
+    });
+    console.log('Notification channel created');
+  } catch (error) {
+    console.error('Error creating notification channel:', error);
+  }
+};
+
+
 export const getFCMToken = async () => {
   const token = await messaging().getToken();
   console.log("FCM Token : ", token);
   return token;
 };
 
-export const createNotificationChannel = async () => {
-  return await notifee.createChannel({
-    id: 'jobfinder',
-    name: 'JobFinder Notifications',
-    importance: AndroidImportance.HIGH,
-    sound: 'default',
-  });
-};
-
 export const displayNotification = async (remoteMessage) => {
   try {
     console.log('Trying to display notification');
-    const channelId = await createNotificationChannel();
 
     await notifee.displayNotification({
+      title: remoteMessage.notification?.title,
+      android: {
+        channelId: 'jobfinder',
+        importance: AndroidImportance.HIGH,
+        color : '#1000ff',
+        style: {
+          type: AndroidStyle.BIGTEXT,
+          text: remoteMessage.notification?.body
+        },
+      },
+    });
+
+    /*await notifee.displayNotification({
       title: remoteMessage.notification?.title,
       body: remoteMessage.notification?.body,
       data: remoteMessage.data,
@@ -58,31 +75,34 @@ export const displayNotification = async (remoteMessage) => {
         importance: AndroidImportance.HIGH,
         sound: 'default',
         style: {
-          type: AndroidStyle.INBOX,
+          type: AndroidStyle.BIGTEXT,
         },
-        priority: AndroidNotificationPriority.HIGH,
+        priority: 'high',
         visibility: AndroidVisibility.PUBLIC,
         pressAction: {
           id: 'default',
         },
       },
-    });
+    });*/
     console.log('Notification displayed successfully');
   } catch (error) {
-    console.error('Error displaying notification:', error);
+    console.warn('Error displaying notification:', error);
   }
 };
 
 export const setupNotifications = () => {
   // Handle FCM messages when app is in foreground
   const unsubscribe = messaging().onMessage(async remoteMessage => {
-    console.log(remoteMessage);
-    await displayNotification(remoteMessage);
+    console.log('Foreground message received:', remoteMessage);
+    await displayNotification(remoteMessage);  // Display notification in foreground
   });
 
   // Handle background messages
   messaging().setBackgroundMessageHandler(async remoteMessage => {
-    await displayNotification(remoteMessage);
+    console.log('Background message received:', remoteMessage);
+    // No need to call displayNotification here as the system will automatically
+    // create the notification in the background
+    return Promise.resolve();
   });
 
   // Handle notification events
@@ -100,6 +120,7 @@ export async function testLocalNotification() {
       id: 'test',
       name: 'Test Channel',
       importance: AndroidImportance.HIGH,
+      lightColor : Color.secondary
     });
 
     await notifee.displayNotification({
@@ -107,7 +128,8 @@ export async function testLocalNotification() {
       body: 'This is a test notification',
       android: {
         channelId,
-        importance: AndroidImportance.HIGH,
+        color : Color.secondary,
+        style: { type: AndroidStyle.BIGTEXT, text: 'Large volume of text shown in the expanded stateLarge volume of text shown in the expanded stateLarge volume of text shown in the expanded stateLarge volume of text shown in the expanded state' },
       },
     });
   } catch (error) {

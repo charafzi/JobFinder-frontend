@@ -8,7 +8,7 @@ import {
   requestUserPermission,
   getFCMToken,
   setupNotifications,
-  testLocalNotification
+  testLocalNotification, initializeNotificationChannels
 } from './src/services/notificationService';
 
 export default function App() {
@@ -16,12 +16,19 @@ export default function App() {
     const initNotifications = async () => {
       await requestUserPermission();
       await getFCMToken();
+      await initializeNotificationChannels();
       const unsubscribe = setupNotifications();
       return unsubscribe;
     };
 
-    initNotifications();
+    const unsubscribe = initNotifications();
+
     testLocalNotification();
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe(); // Cleanup the listener when the component unmounts
+      }
+    };
   }, []);
 
 
