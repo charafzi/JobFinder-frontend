@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Color.background,
     paddingVertical: StatusBar.currentHeight / 2,
+    paddingHorizontal: 30,
   },
   headerContainer: {
     marginBottom: 30,
