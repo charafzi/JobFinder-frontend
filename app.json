@@ -28,6 +28,15 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "915d6ae6-b843-440f-892e-347ade19f4af"
+      }
+    },
+    "owner": "jobfinder"
   }
 }
