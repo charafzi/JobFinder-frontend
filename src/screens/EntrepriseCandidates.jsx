@@ -64,7 +64,10 @@ const EntrepriseCandidates = ({ route }) => {
   };
 
   useEffect(() => {
-    loadCandidatures(0);
+    if (params.offreId) {
+      loadCandidatures(0);
+    }
+
   }, [loadCandidatures]);
 
   const handleAccept = (email, offreId) => {
