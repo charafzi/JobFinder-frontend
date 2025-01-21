@@ -60,7 +60,8 @@
     "socket.io-client": "^2.5.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@babel/plugin-transform-export-namespace-from": "^7.25.9"
   },
   "private": true
 }

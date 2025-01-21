@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { Buffer } from 'buffer';
 import axiosInstance from '../../../config/axiosConfig';
+import { Buffer } from 'buffer';
 
 // Formations
 export const fetchFormations = createAsyncThunk(
@@ -422,14 +422,7 @@ export const fetchAbout = createAsyncThunk(
   'candidatProfile/fetchAbout',
   async (candidatId) => {
     try {
-      //console.log('fetchAbout - Starting request for candidatId:', candidatId);
-      //console.log('fetchAbout - API URL:', `/api/abouts/candidat/${candidatId}`);
-      
       const response = await axiosInstance.get(`/api/abouts/candidat/${candidatId}`);
-      
-      //console.log('fetchAbout - Response status:', response.status);
-      //console.log('fetchAbout - Response headers:', response.headers);
-      //console.log('fetchAbout - Response data:', response.data);
       
       if (!response.data) {
         console.warn('fetchAbout - Response data is empty');
@@ -444,19 +437,37 @@ export const fetchAbout = createAsyncThunk(
   }
 );
 
+export const createAbout = createAsyncThunk(
+  'candidatProfile/createAbout',
+  async ({ description, candidatId }) => {
+    try {
+      console.log('createAbout - Starting request with:', { description, candidatId });
+      const response = await axiosInstance.post('/api/abouts', {
+        description,
+        candidatId: Number(candidatId)
+      });
+      console.log('createAbout - Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating about:', error);
+      throw error;
+    }
+  }
+);
+
 export const updateAbout = createAsyncThunk(
   'candidatProfile/updateAbout',
   async ({ aboutId, description, candidatId }) => {
     try {
-     // console.log('updateAbout - Starting request with:', { aboutId, description, candidatId });
+      console.log('updateAbout - Starting request with:', { aboutId, description, candidatId });
       const response = await axiosInstance.put(`/api/abouts/${aboutId}`, {
         description,
-        candidatId
+        candidatId: Number(candidatId)
       });
-      //console.log('updateAbout - Response data:', response.data);
+      console.log('updateAbout - Response:', response.data);
       return response.data;
     } catch (error) {
-      //console.error('Error updating about:', error);
+      console.error('Error updating about:', error);
       throw error;
     }
   }
@@ -615,22 +626,43 @@ export const uploadProfilePicture = createAsyncThunk(
 // Get Profile Picture
 export const getProfilePicture = createAsyncThunk(
   'candidatProfile/getProfilePicture',
-  async (email) => {
+  async (candidatId) => {
     try {
+      console.log('Fetching profile picture for candidat ID:', candidatId);
+      
       const response = await axiosInstance.get(
-        `/api/candidat/profile-picture/${email}`,
+        `/api/candidat/profile-picture/${candidatId}`,
         {
-          responseType: 'arraybuffer'
+          responseType: 'arraybuffer',
+          headers: {
+            'Accept': 'image/jpeg'
+          }
         }
       );
+
+      if (!response.data) {
+        console.log('No profile picture data received');
+        return null;
+      }
 
       const base64 = Buffer.from(response.data, 'binary').toString('base64');
       return `data:image/jpeg;base64,${base64}`;
     } catch (error) {
+      console.error('Error loading profile picture:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      
       if (error.response?.status === 404) {
         return null;
       }
       throw error;
     }
   }
-);  
+);

@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import MainNavigator from './src/navigator/MainNavigator';
 import Toast from "react-native-toast-message";
 import store from './src/redux/store';
+import 'react-native-reanimated';
 
 export default function App() {
   return (

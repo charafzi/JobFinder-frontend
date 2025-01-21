@@ -1,21 +1,23 @@
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
-  TextInput,
   Image,
   Platform,
   Dimensions,
-  Animated,
   Keyboard,
   Alert,
   ToastAndroid,
 } from 'react-native';
+import Animated, { 
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedScrollHandler,
+  interpolate
+} from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
@@ -86,30 +88,54 @@ const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref
   );
 });
 
-function EditCompanyProfile() {
+function EditCompanyProfile({ route }) {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { entreprise, secteursActivites } = useSelector((state) => state.entrepriseProfile);
+  const { entrepriseId, name: initialName, about: initialAbout, adress: initialAdress } = route.params || {};
+  const { email } = useSelector((state) => state.auth);
   const [image, setImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-
   const [formData, setFormData] = useState({
-
-    about: '',
-    adress: {
+    name: initialName || '',
+    about: initialAbout || '',
+    adress: initialAdress || {
       adress: '',
       city: '',
-      latitude: 33.5731104,
-      longitude: -7.5898434
-    },
-    selectedSectors: []
+      latitude: null,
+      longitude: null
+    }
+  });
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{
+        translateY: interpolate(
+          scrollY.value,
+          [0, HEADER_SCROLL_DISTANCE],
+          [0, -HEADER_SCROLL_DISTANCE],
+        ),
+      }],
+    };
+  });
+
+  const imageStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{
+        scale: interpolate(
+          scrollY.value,
+          [0, HEADER_SCROLL_DISTANCE],
+          [1, 0.6],
+        ),
+      }],
+    };
   });
 
   const [isIndustriesExpanded, setIsIndustriesExpanded] = useState(false);
-  const industriesAnimation = useRef(new Animated.Value(0)).current;
-
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
@@ -135,48 +161,78 @@ function EditCompanyProfile() {
   const [notification, setNotification] = useState({ visible: false, message: '', type: '' });
 
   useEffect(() => {
-    if (entreprise?.activitySectors) {
-      setSelectedSecteurs(entreprise.activitySectors.map(secteur => secteur.id));
+    const loadProfileData = async () => {
+      if (entrepriseId) {
+        try {
+          await dispatch(getProfilePicture(entrepriseId));
+        } catch (error) {
+          console.error('Error loading profile picture:', error);
+        }
+      }
+    };
+
+    loadProfileData();
+  }, [entrepriseId, dispatch]);
+
+  useEffect(() => {
+    if (entrepriseId) {
+      const loadProfile = async () => {
+        try {
+          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
+          if (result) {
+            setProfileImage(result);
+            setImage(result);
+          }
+        } catch (error) {
+          console.error('Error loading profile picture:', error);
+        }
+      };
+
+      loadProfile();
     }
-  }, [entreprise]);
+  }, [entrepriseId, dispatch]);
+
+  useEffect(() => {
+    if (entrepriseId) {
+      const loadEntreprise = async () => {
+        try {
+          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
+          if (result) {
+            setFormData({
+              name: result.name,
+              about: result.about,
+              adress: result.adress
+            });
+          }
+        } catch (error) {
+          console.error('Error loading entreprise data:', error);
+        }
+      };
+
+      loadEntreprise();
+    }
+  }, [entrepriseId, dispatch]);
 
   useEffect(() => {
     dispatch(fetchSecteursActivite());
   }, [dispatch]);
 
   useEffect(() => {
-    if (entreprise) {
-      setFormData({
-        about: entreprise.about || '',
-        adress: entreprise.adress || {
-          adress: '',
-          city: '',
-          latitude: 33.5731104,
-          longitude: -7.5898434
-        },
-        selectedSectors: entreprise.activitySectors || []
-      });
-    }
-  }, [entreprise]);
-
-  useEffect(() => {
-    const loadProfilePicture = async () => {
-      try {
-        if (!entreprise?.id) return;
-        const result = await dispatch(getProfilePicture(entreprise.id)).unwrap();
-        if (result) {
-          setProfileImage(result);
-          setImage(result);
+    if (entrepriseId) {
+      const loadSecteurs = async () => {
+        try {
+          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
+          if (result) {
+            setSelectedSecteurs(result.activitySectors.map(secteur => secteur.id));
+          }
+        } catch (error) {
+          console.error('Error loading secteurs:', error);
         }
-      } catch (error) {
-        console.error('Error loading profile picture:', error);
-      }
-    };
+      };
 
-    if (entreprise?.id) {
-      loadProfilePicture();
+      loadSecteurs();
     }
-  }, [entreprise?.id, dispatch]);
+  }, [entrepriseId, dispatch]);
 
   useEffect(() => {
     if (citySearchText) {
@@ -202,7 +258,7 @@ function EditCompanyProfile() {
   };
 
   const handleSecteurToggle = (secteurId) => {
-    if (!entreprise?.id) {
+    if (!entrepriseId) {
       console.log('No entreprise ID found');
       return;
     }
@@ -213,9 +269,9 @@ function EditCompanyProfile() {
         ? prev.filter(id => id !== secteurId)
         : [...prev, secteurId];
       
-      console.log('Updating secteurs for entreprise:', entreprise.id, 'with selection:', newSelection);
+      console.log('Updating secteurs for entreprise:', entrepriseId, 'with selection:', newSelection);
       dispatch(updateEntrepriseSecteurs({
-        entrepriseId: entreprise.id,
+        entrepriseId: entrepriseId,
         secteurIds: newSelection
       })).then(result => {
         if (result.error) {
@@ -232,10 +288,8 @@ function EditCompanyProfile() {
   const handleSubmit = async () => {
     try {
       const updatedData = {
-        ...entreprise,
-        about: formData.about,
-        adress: formData.adress,
-        activitySectors: formData.selectedSectors
+        ...formData,
+        activitySectors: selectedSecteurs
       };
       await dispatch(updateEntreprise(updatedData)).unwrap();
       navigation.goBack();
@@ -257,7 +311,7 @@ function EditCompanyProfile() {
         const selectedImage = result.assets[0];
         
         // Vérifier l'ID de l'entreprise
-        const id = entreprise?.id;
+        const id = entrepriseId;
         if (!id) {
           showNotification('ID de l\'entreprise non disponible', 'error');
           return;
@@ -402,7 +456,7 @@ function EditCompanyProfile() {
 
       // Créer une copie de l'entreprise avec la nouvelle adresse
       const updatedEntreprise = {
-        ...entreprise,
+        ...formData,
         adress: {
           adress: addressData.adress,
           city: addressData.city,
@@ -448,7 +502,7 @@ function EditCompanyProfile() {
 
   const HeaderInfo = () => (
     <View style={styles.headerInfo}>
-      <Text style={styles.companyName}>{entreprise?.name || 'Nom de l\'entreprise'}</Text>
+      <Text style={styles.companyName}>{formData.name || 'Nom de l\'entreprise'}</Text>
       <View style={styles.infoContainer}>
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="map-marker" size={16} color="#fff" />
@@ -459,7 +513,7 @@ function EditCompanyProfile() {
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="phone" size={16} color="#fff" />
           <Text style={styles.infoText}>
-            {entreprise?.phoneNumber || 'Numéro non spécifié'}
+            {email || 'Numéro non spécifié'}
           </Text>
         </View>
       </View>
@@ -493,7 +547,7 @@ function EditCompanyProfile() {
             <TouchableOpacity 
               style={[styles.editButton, styles.cancelButton]}
               onPress={() => {
-                setFormData(prev => ({ ...prev, about: entreprise?.about || '' }));
+                setFormData(prev => ({ ...prev, about: '' }));
                 setIsEditingAbout(false);
               }}
             >
@@ -504,7 +558,7 @@ function EditCompanyProfile() {
               onPress={async () => {
                 try {
                   const result = await dispatch(updateEntreprise({
-                    ...entreprise,
+                    ...formData,
                     about: formData.about
                   })).unwrap();
                   
@@ -552,9 +606,9 @@ function EditCompanyProfile() {
         </View>
       ) : (
         <View style={styles.selectedIndustriesContainer}>
-          {entreprise?.activitySectors?.map((secteur) => (
-            <View key={secteur.id} style={styles.selectedIndustryTag}>
-              <Text style={styles.selectedIndustryText}>{secteur.nom}</Text>
+          {selectedSecteurs.map((secteurId) => (
+            <View key={secteurId} style={styles.selectedIndustryTag}>
+              <Text style={styles.selectedIndustryText}>{secteurId}</Text>
             </View>
           ))}
         </View>
@@ -769,33 +823,28 @@ function EditCompanyProfile() {
           </View>
         </Animated.View>
       )}
-      <ScrollView 
+      <Animated.ScrollView
         style={styles.container}
+        contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="always"
         scrollEnabled={!isEditingAddress}
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
-        <Animated.View style={[styles.header, { 
-          transform: [{ 
-            translateY: scrollY.interpolate({
-              inputRange: [0, HEADER_SCROLL_DISTANCE],
-              outputRange: [0, -HEADER_SCROLL_DISTANCE],
-              extrapolate: 'clamp',
-            }) 
-          }] 
-        }]}>
+        <Animated.View style={[styles.header, headerStyle]}>
           <View style={styles.headerBackground}>
             <TopNavBar />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
                 {(image || profileImage) ? (
-                  <Image
+                  <Animated.Image
                     source={
                       image
                         ? { uri: image }
                         : { uri: profileImage }
                     }
-                    style={styles.profileImage}
+                    style={[styles.profileImage, imageStyle]}
                   />
                 ) : (
                   <View style={styles.placeholderContainer}>
@@ -819,7 +868,7 @@ function EditCompanyProfile() {
           <View style={styles.bottomSpacing} />
         </View>
 
-      </ScrollView>
+      </Animated.ScrollView>
 
     </View>
 
