@@ -15,73 +15,19 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { JobCard, LoadingIndicator } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { getEntrepriseOffres } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
 import showToast from "../utils/showToast";
 import TopNavBar from "../components/TopNavBar";
+import DashboardStats from "../components/DashboardStats";
+import { getEntrepriseOffres, getNombreOffresParEntreprise } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
+import { getNombreCandidaturesAccepteesParEntreprise, getNombreCandidaturesParEntreprise } from "../redux/slices/candidatureEntreprise/candidaturesThunk";
 
-
-const ListHeaderComponent = () => {
-    return (
-        <>
-            {/* Dashboard */}
-            <View style={{ marginTop: 10 }}>
-                <Text style={[styles.text, { paddingBottom: 10 }]}>Dashboard</Text>
-                <View style={{ flexDirection: "row", marginVertical: 10 }}>
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: "#AFECFE",
-                            alignItems: "center",
-                            padding: 50,
-                            borderRadius: 10,
-                        }}
-                    >
-                        <Image
-                            source={remotejobs}
-                            style={{ marginVertical: 10, width: 40, height: 40 }}
-                        />
-                        <Text style={styles.text}>44.5k</Text>
-                        <Text>Remote Job</Text>
-                    </TouchableOpacity>
-                    <View style={{ marginLeft: 20 }}>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: "#BEAFFE",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: 10,
-                                flex: 1,
-                                paddingHorizontal: 50,
-                            }}
-                        >
-                            <Text style={styles.text}>66.8k</Text>
-                            <Text>Full Time</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: "#FFD6AD",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: 10,
-                                marginTop: 10,
-                                flex: 1,
-                            }}
-                        >
-                            <Text style={styles.text}>38.9k</Text>
-                            <Text>Part Time</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-            <Text style={[styles.text, { paddingBottom: 10 }]}>Recent Job List</Text>
-        </>
-    );
-};
 
 const EntrepriseHomeScreen = ({ navigation }) => {
     const tabBarHeight = useBottomTabBarHeight();
     const flatListRef = useRef(null);
     const dispatch = useDispatch();
-    const { entrepriseOffresList, error, isLoading, totalPages } = useSelector((state) => state.entrepriseOffres);
+    const { nombreOffres, entrepriseOffresList, error, isLoading, totalPages } = useSelector((state) => state.entrepriseOffres);
+    const {  nombreCandidaturesAcceptees, nombreCandidatures, } = useSelector((state) => state.entrepCandidatures);
     const { id: entrepriseId } = useSelector((state) => state.auth);
 
     useScrollToTop(flatListRef);
@@ -101,10 +47,23 @@ const EntrepriseHomeScreen = ({ navigation }) => {
                 sortBy: 'PUB_DATE', // Trier par date de publication
                 sortDirection: 'DESC', // Les plus récentes en premier
             }));
+            dispatch(getNombreOffresParEntreprise(entrepriseId));
+            dispatch(getNombreCandidaturesParEntreprise(entrepriseId));
+            dispatch(getNombreCandidaturesAccepteesParEntreprise(entrepriseId));
         }
     }, [entrepriseId, dispatch]);
 
     const recentJobs = entrepriseOffresList?.slice(0, 3) || [];
+
+    const ListHeaderComponent = () => {
+        return (
+            <>
+                {/* Dashboard */}
+                <DashboardStats offresCount={nombreOffres} totalCandidatures={nombreCandidatures} candidaturesAcceptees={nombreCandidaturesAcceptees}/>
+                <Text style={[styles.text, { paddingBottom: 10 }]}>Recent Job List</Text>
+            </>
+        );
+    };
 
     const renderItem = useCallback(({ item }) => (
         <JobCard key={item.id} jobPoste={item} />
