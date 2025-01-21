@@ -5,52 +5,75 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
-import axiosInstance from "../config/axiosConfig";
+import { useDispatch, useSelector } from "react-redux";
 import showToast from "../utils/showToast";
+import { resetAuthState, setTemporaryCredentials } from "../redux/slices/register/registerSlice";
+import { getAllSecteurs, registerEntreprise } from "../redux/slices/register/registerEntrepriseThunk";
+import { MultipleSelectList } from "react-native-dropdown-select-list";
+import LoadingIndicator from "./LoadingIndicator";
+import { useNavigation } from "@react-navigation/native";
 
 const RegisterEntreprise = () => {
+  const navigation = useNavigation();
   const [securePassword, setSecurePassword] = useState(true);
+  const [selected, setSelected] = React.useState("");
+  const dispatch = useDispatch();
+  const { loading, error, success, secteurs, secteursLoading, secteursError } = useSelector((state) => state.register);
   const {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm();
 
+  useEffect(() => {
+    dispatch(getAllSecteurs());
+  }, [dispatch]);
+
+
+  const formattedSecteurs = secteurs ? secteurs.map((secteur) => ({
+    key: secteur.id,
+    value: secteur.nom,
+  })) : [];
+
+  useEffect(() => {
+    if (success) {
+      showToast(
+        "success",
+        "Your account was registered successfully. Login to access your account."
+      );
+      dispatch(resetAuthState()); // Réinitialiser l'état après affichage du toast
+    }
+    if (error) {
+      showToast("error", "Register Error", error);
+      dispatch(resetAuthState()); // Réinitialiser l'état après affichage du toast
+    }
+  }, [success, error, dispatch]);
+
+  useEffect(() => {
+    if (secteursError) {
+      showToast("error", "Register Error", secteursError);
+      console.log(secteursError);
+    }
+  }, [secteursError]);
+
   const submit = async (data) => {
-    const apiRegisterEntreprise = "/api/auth/registerEntreprise";
-    const request = {
-      nom: data.name,
-      adress: {
-        city: data.city,
-        adress: data.adress,
-      },
-      phoneNumber: data.phoneNumber,
-      email: data.email,
-      password: data.password,
-    };
-    console.log(request);
-    axiosInstance
-      .post(apiRegisterEntreprise, request)
-      .then((response) => {
-        console.log("Status Code:", response.status);
-        showToast(
-          "success",
-          "Your account was registered successfully. Login to access your account.",
-        );
-      })
-      .catch((error) => {
-        showToast(
-          "error",
-          "Register Error",
-          "Error during registering your account. Please try again.",
-        );
-        console.log("Status Code:", error.status);
-      });
+    try {
+      await dispatch(registerEntreprise(data)).unwrap(); // Attend que l'action soit réussie
+      showToast(
+        "success",
+        "Your account was registered successfully. Login to access your account."
+      );
+      dispatch(setTemporaryCredentials({ email: data.email, password: data.password })); // Stockez les informations temporaires
+      navigation.navigate("login"); // Naviguez uniquement si l'inscription est réussie
+    } catch (error) {
+      showToast("error", "Erreur d'inscription", error || "Une erreur s'est produite");
+    }
   };
   return (
     <View>
@@ -94,15 +117,15 @@ const RegisterEntreprise = () => {
           />
         )}
         rules={{
-          required: "Veuillez saisir votre nom d'entreprise complet",
+          required: "Veuillez saisir votre ville",
           minLength: {
             value: 2,
-            message: "Votre nom d'entreprise est trop court",
+            message: "Votre ville est trop courte",
           },
         }}
       />
-      {errors?.name && (
-        <Text style={styles.errorText}>{errors.name.message}</Text>
+      {errors?.city && (
+        <Text style={styles.errorText}>{errors.city.message}</Text>
       )}
 
       <Text style={styles.inputTitle}>Adress</Text>
@@ -120,15 +143,15 @@ const RegisterEntreprise = () => {
           />
         )}
         rules={{
-          required: "Veuillez saisir votre nom d'entreprise complet",
+          required: "Veuillez saisir votre adresse d'entreprise complete",
           minLength: {
             value: 2,
-            message: "Votre nom d'entreprise est trop court",
+            message: "Votre adresse d'entreprise est trop court",
           },
         }}
       />
-      {errors?.name && (
-        <Text style={styles.errorText}>{errors.name.message}</Text>
+      {errors?.adress && (
+        <Text style={styles.errorText}>{errors.adress.message}</Text>
       )}
 
       <Text style={styles.inputTitle}>Phone Number</Text>
@@ -137,13 +160,13 @@ const RegisterEntreprise = () => {
         control={control}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
-            placeholder="+2126 55 55 11 22"
+            placeholder="+212 6 55 55 11 22"
             placeholderTextColor={Color.placeholderText}
             value={value}
             style={[styles.textInput, value && { fontWeight: "600" }]}
             onBlur={onBlur}
             onChangeText={onChange}
-            keyboardType="number-pad"
+            keyboardType="phone-pad"
           />
         )}
         rules={{
@@ -163,6 +186,44 @@ const RegisterEntreprise = () => {
           Entrer un numéro de téléphone valide
         </Text>
       )}
+
+      <Text style={styles.inputTitle}>Secteurs d'activités</Text>
+      <Controller
+        name="secteursActivites"
+        control={control}
+        defaultValue={[]}
+        render={({ field: { onChange, value } }) => (
+          <MultipleSelectList
+            setSelected={
+              (val) => {
+                setSelected(val)
+                onChange(val);
+              }}
+            onSelect={() => {
+              setValue("secteursActivites", selected);
+            }}
+            data={formattedSecteurs}
+            save="key"
+            placeholder="Sélectionnez vos secteurs"
+            selectedValues={value}
+            searchPlaceholder="Rechercher..."
+            selected={selected}
+            boxStyles={[styles.list, { borderColor: Color.text, backgroundColor: Color.unselectedbutton }]}
+            dropdownStyles={[styles.list]}
+            checkBoxStyles={styles.checkBox}
+            badgeStyles={styles.badge}
+            labelStyles={{ color: Color.text }}
+          />
+        )}
+        rules={{
+          required: "Veuillez sélectionner au moins un secteur d'activité"
+        }}
+      />
+      {errors?.secteursActivites && (
+        <Text style={styles.errorText}>{errors.secteursActivites.message}</Text>
+      )}
+
+
 
       <Text style={styles.inputTitle}>Email</Text>
       <Controller
@@ -184,7 +245,7 @@ const RegisterEntreprise = () => {
           required: true,
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: "Votre email pas correct",
+            message: "Votre email n'est pas correct",
           },
         }}
       />
@@ -251,6 +312,7 @@ const RegisterEntreprise = () => {
               onChangeText={(text) => {
                 onChange(text); // Mettre à jour la valeur
               }}
+              onSubmitEditing={handleSubmit(submit)}
             />
             <TouchableOpacity
               onPress={() => setSecurePassword(!securePassword)}
@@ -277,8 +339,15 @@ const RegisterEntreprise = () => {
       <TouchableOpacity
         style={styles.submitButton}
         onPress={handleSubmit(submit)}
+        disabled={loading}
       >
-        <Text style={styles.submitText}>SIGN UP</Text>
+        {loading ? (
+          <LoadingIndicator isLoading={loading} />
+        ) : (
+          <Text style={styles.submitText}>
+            SIGN UP
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -321,11 +390,22 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "700",
     fontSize: 14,
+    textAlign: "center"
   },
   errorText: {
     color: "red",
     fontWeight: "700",
     fontSize: 12,
     paddingBottom: 10,
+  },
+  checkBox: {
+    borderColor: Color.secondary,
+
+  },
+  badge: {
+    backgroundColor: Color.selectedbutton,
+  },
+  list: {
+    marginVertical: 10,
   },
 });
