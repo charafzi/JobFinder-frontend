@@ -14,16 +14,19 @@ import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/actions/authAction";
+import { clearTemporaryCredentials } from "../redux/slices/register/registerSlice";
 
-const FormLogin = ({ onLoggedIn }) => {
+const FormLogin = ({ onLoggedIn}) => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
+  const { temporaryCredentials } = useSelector((state) => state.register);
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -38,6 +41,14 @@ const FormLogin = ({ onLoggedIn }) => {
       showToast("error", "Login failed", error);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (temporaryCredentials) {
+      setValue("email", temporaryCredentials.email);
+      setValue("password", temporaryCredentials.password);
+      dispatch(clearTemporaryCredentials());
+    }
+  }, [temporaryCredentials, setValue]);
 
   const handleForgotPassword = () => {
     navigation.navigate("forgotpassword");
@@ -97,6 +108,7 @@ const FormLogin = ({ onLoggedIn }) => {
               onBlur={onBlur}
               onChangeText={onChange}
               style={{ flex: 1 }}
+              onSubmitEditing={handleSubmit(submit)}
             />
             <TouchableOpacity
               onPress={() => setSecurePassword(!securePassword)}
