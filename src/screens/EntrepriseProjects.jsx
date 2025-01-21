@@ -121,7 +121,7 @@ const EntrepriseProjects = () => {
     if (isLoadingMore) {
       return <LoadingIndicator />;
     }
-    return <View style={{ paddingBottom: tabBarHeight }} />;
+    return <View style={{ paddingBottom: tabBarHeight + 30, marginBottom: tabBarHeight }} />;
   }, [tabBarHeight, isLoadingMore]);
 
   return (
