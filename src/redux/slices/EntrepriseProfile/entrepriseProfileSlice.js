@@ -1,10 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { 
+import {
   fetchEntrepriseByEmail,
   updateEntreprise,
   uploadProfilePicture,
   getProfilePicture,
-  fetchSecteursActivites
+  fetchSecteursActivite,
+  updateEntrepriseSecteurs
 } from './entrepriseProfileThunks';
 
 const initialState = {
@@ -12,10 +13,11 @@ const initialState = {
   error: null,
   entreprise: null,
   about: '',
-  secteurActivites: [],
-  adresse: null,
+  adress: null,
   profilePicture: null,
-  secteursActivites: []
+  secteursActivites: [],
+  loadingSecteursActivites: false,
+  errorSecteursActivites: null
 };
 
 const entrepriseProfileSlice = createSlice({
@@ -40,8 +42,7 @@ const entrepriseProfileSlice = createSlice({
         state.loading = false;
         state.entreprise = action.payload;
         state.about = action.payload.about || '';
-        state.secteurActivites = action.payload.secteurActivites || [];
-        state.adresse = action.payload.adresse || null;
+        state.adress = action.payload.adress || null;
       })
       .addCase(fetchEntrepriseByEmail.rejected, (state, action) => {
         state.loading = false;
@@ -57,8 +58,7 @@ const entrepriseProfileSlice = createSlice({
         state.loading = false;
         state.entreprise = action.payload;
         state.about = action.payload.about || '';
-        state.secteurActivites = action.payload.secteurActivites || [];
-        state.adresse = action.payload.adresse || null;
+        state.adress = action.payload.adress || null;
       })
       .addCase(updateEntreprise.rejected, (state, action) => {
         state.loading = false;
@@ -72,7 +72,9 @@ const entrepriseProfileSlice = createSlice({
       })
       .addCase(uploadProfilePicture.fulfilled, (state, action) => {
         state.loading = false;
-        state.profilePicture = action.payload;
+        if (state.entreprise) {
+          state.entreprise.profilePicture = action.payload;
+        }
       })
       .addCase(uploadProfilePicture.rejected, (state, action) => {
         state.loading = false;
@@ -94,15 +96,29 @@ const entrepriseProfileSlice = createSlice({
       })
 
       // Fetch Secteurs d'Activité
-      .addCase(fetchSecteursActivites.pending, (state) => {
+      .addCase(fetchSecteursActivite.pending, (state) => {
+        state.loadingSecteursActivites = true;
+        state.errorSecteursActivites = null;
+      })
+      .addCase(fetchSecteursActivite.fulfilled, (state, action) => {
+        state.loadingSecteursActivites = false;
+        state.secteursActivites = action.payload;
+      })
+      .addCase(fetchSecteursActivite.rejected, (state, action) => {
+        state.loadingSecteursActivites = false;
+        state.errorSecteursActivites = action.error.message;
+      })
+
+      // Update Secteurs
+      .addCase(updateEntrepriseSecteurs.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSecteursActivites.fulfilled, (state, action) => {
+      .addCase(updateEntrepriseSecteurs.fulfilled, (state, action) => {
         state.loading = false;
-        state.secteursActivites = action.payload;
+        state.entreprise = action.payload;
       })
-      .addCase(fetchSecteursActivites.rejected, (state, action) => {
+      .addCase(updateEntrepriseSecteurs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });
