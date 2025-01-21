@@ -9,9 +9,11 @@ import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
 import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSlice';
 import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice';
 import { entrepriseProfileReducer } from './slices/EntrepriseProfile';
+import registerEntreprise  from "./slices/register/registerSlice";
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
+  register: registerEntreprise,
   forgotPassword: forgotPasswordReducer,
   checkEmail: checkEmailReducer,
   resetPassword: resetPasswordReducer,
