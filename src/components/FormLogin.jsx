@@ -85,12 +85,12 @@ const FormLogin = () => {
           required: true,
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: "Votre email pas correct",
+            message: "Email entered is invalid",
           },
         }}
       />
       {errors?.email?.type === "required" && (
-        <Text style={styles.errorText}>Veuillez saisir votre email</Text>
+        <Text style={styles.errorText}>Please enter your email</Text>
       )}
       {errors?.email?.type === "pattern" && (
         <Text style={styles.errorText}>{errors?.email?.message}</Text>
@@ -124,10 +124,10 @@ const FormLogin = () => {
           </View>
         )}
         rules={{
-          required: "Veuillez saisir votre mot de passe",
+          required: "Please enter your password",
           minLength: {
             value: 6,
-            message: "Le mot de passe doit contenir au moins 6 caractères",
+            message: "Password must be at least 6 characters long",
           },
         }}
       />
@@ -210,6 +210,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 10,
     height: 60, // Fixed height
+    maxHeight : 60,
+    minWidth : 300,
     justifyContent: "center", // Center content vertically
   },
   loginText: {

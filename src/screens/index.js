@@ -16,3 +16,4 @@ export {default as Filter} from './FilterScreen';
 export {default as Applications} from './CandidatApplicationsScreen';
 export {default as ApplicationDetails} from './ApplicationDetailsScreen'
 export {default as ApplicationApply} from './ApplicationApplyScreen'
+export {default as Notifications} from './NotificationsScreen'

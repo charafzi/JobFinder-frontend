@@ -5,6 +5,8 @@ import notifee, {
 } from '@notifee/react-native';
 import {Platform} from "react-native";
 import {Color} from "../constants/Color";
+import {store} from '../redux/store'
+import {incrementReadCount} from "../redux/slices/notifications/notificationsSlice";
 
 export const requestUserPermission = async () => {
   // Permission Firebase
@@ -61,6 +63,7 @@ export const displayNotification = async (remoteMessage) => {
           type: AndroidStyle.BIGTEXT,
           text: remoteMessage.notification?.body
         },
+
       },
     });
 
@@ -95,6 +98,8 @@ export const setupNotifications = () => {
   const unsubscribe = messaging().onMessage(async remoteMessage => {
     console.log('Foreground message received:', remoteMessage);
     await displayNotification(remoteMessage);  // Display notification in foreground
+    console.log('Dispatching incrementReadCount');
+    store.dispatch(incrementReadCount());
   });
 
   // Handle background messages
@@ -102,6 +107,7 @@ export const setupNotifications = () => {
     console.log('Background message received:', remoteMessage);
     // No need to call displayNotification here as the system will automatically
     // create the notification in the background
+    store.dispatch(incrementReadCount()); // Log before dispatch
     return Promise.resolve();
   });
 
@@ -109,6 +115,10 @@ export const setupNotifications = () => {
   notifee.onForegroundEvent(({ type, detail }) => {
     console.log('Notification Event Type:', type);
     console.log('Notification Detail:', detail);
+    if (type === 'press') {
+      // Handle notification press event
+      // You might want to navigate to a specific screen here
+    }
   });
 
   return unsubscribe;
@@ -116,6 +126,7 @@ export const setupNotifications = () => {
 
 export async function testLocalNotification() {
   try {
+
     const channelId = await notifee.createChannel({
       id: 'test',
       name: 'Test Channel',

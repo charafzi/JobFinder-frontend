@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import { Provider } from 'react-redux';
+import {Provider} from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import MainNavigator from './src/navigator/MainNavigator';
 import Toast from "react-native-toast-message";
@@ -8,7 +8,8 @@ import {
   requestUserPermission,
   getFCMToken,
   setupNotifications,
-  testLocalNotification, initializeNotificationChannels
+  testLocalNotification,
+  initializeNotificationChannels
 } from './src/services/notificationService';
 
 export default function App() {
@@ -22,16 +23,14 @@ export default function App() {
     };
 
     const unsubscribe = initNotifications();
+    testLocalNotification(); // This will now handle both displaying and storing the notification
 
-    testLocalNotification();
     return () => {
       if (typeof unsubscribe === 'function') {
-        unsubscribe(); // Cleanup the listener when the component unmounts
+        unsubscribe();
       }
     };
   }, []);
-
-
 
   return (
     <Provider store={store}>

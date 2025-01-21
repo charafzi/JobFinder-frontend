@@ -1,18 +1,17 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import {
-    CheckEmail,
-    ForgotPassword,
-    JobPreview,
-    Login,
-    LogoScreen,
-    NewPassword,
-    Register,
-    ResetSuccessfully,
-    Welcome,
-    Map, Search, Filter,
-    EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
+  CheckEmail,
+  ForgotPassword,
+  JobPreview,
+  Login,
+  LogoScreen,
+  NewPassword,
+  Register,
+  ResetSuccessfully,
+  Welcome,
   Map, Search, Filter,
+  EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications, Notifications,
 } from "../screens";
 import { TabNavigator } from ".";
 import CompanyProfile from "../screens/CompanyProfile";
@@ -51,6 +50,7 @@ const StackNavigator = () => {
         <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
         <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
         <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
+        <Stack.Screen name={"notifications"} component={Notifications}></Stack.Screen>
     </Stack.Navigator>
   );
 };

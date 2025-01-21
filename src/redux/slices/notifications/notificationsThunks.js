@@ -20,3 +20,54 @@ export const registerFCMToken = createAsyncThunk(
 		}
 	}
 );
+
+export const getNotifications= createAsyncThunk(
+	'notifications/getNotifications',
+	async ({ userId, page, size }, { rejectWithValue })=>{
+		try {
+			const response = await axiosInstance.get('/api/notifications', {
+				params: { userId, page, size}
+			});
+			return response.data;
+		}catch (error) {
+			return rejectWithValue(error.response?.data?.message || 'Error while retrieving notifications by user id.');
+		}
+	}
+);
+
+export const markNotificationSeen= createAsyncThunk(
+	'notifications/markAsSeen',
+	async (notificationId, { rejectWithValue })=>{
+		try {
+			const response = await axiosInstance.put('/api/notifications/'+notificationId+'/seen',);
+			return response.data;
+		}catch (error) {
+			return rejectWithValue(error.response?.data?.message || 'Error while marking notification as seen.');
+		}
+	}
+);
+
+
+export const deleteNotification= createAsyncThunk(
+	'notifications/deleteNotification',
+	async (notificationId, { rejectWithValue })=>{
+		try {
+			const response = await axiosInstance.delete('/api/notifications/'+notificationId);
+			return response.data;
+		}catch (error) {
+			return rejectWithValue(error.response?.data?.message || 'Error while deleting notification.');
+		}
+	}
+);
+
+export const getUnreadNotificationsCount = createAsyncThunk(
+    'notifications/getUnreadCount',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get('/api/notifications/'+userId+'/unread-count');
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Error while getting unread notifications count.');
+        }
+    }
+);
