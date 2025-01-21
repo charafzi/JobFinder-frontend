@@ -166,9 +166,7 @@ const EntrepriseCandidates = ({ route }) => {
               keyExtractor={(item) => item.candidat.id.toString()}
               ListEmptyComponent={renderEmpty}
               onEndReached={handleLoadMore}
-              onScroll={(event) => {
-                currentScrollPosition.current = event.nativeEvent.contentOffset.y;
-              }}
+              onScroll={handleScroll}
               onEndReachedThreshold={0.75}
               initialNumToRender={5}
               refreshControl={
