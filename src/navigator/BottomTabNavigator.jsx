@@ -108,12 +108,12 @@ const CandidatTabNavigation = () =>{
 
 
 const BottomTabNavigation = () => {
-    const { isCandidat} = useSelector((state) => state.auth);
-    if(isCandidat){
-        return <CandidatTabNavigation></CandidatTabNavigation>;
-    }else{
-        return <EntrepriseTabNavigation></EntrepriseTabNavigation>;
-    }
+	const { isCandidat} = useSelector((state) => state.auth);
+	if(isCandidat){
+		return <CandidatTabNavigation></CandidatTabNavigation>;
+	}else{
+		return <EntrepriseTabNavigation></EntrepriseTabNavigation>;
+	}
 };
 
 export default BottomTabNavigation;
