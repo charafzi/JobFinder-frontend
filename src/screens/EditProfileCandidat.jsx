@@ -3,21 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
+  Dimensions,
   TextInput,
-  ScrollView,
+  Keyboard,
+  Alert,
   SafeAreaView,
   StatusBar,
-  Alert,
   Animated,
-  Platform,
   Modal,
-  Dimensions,
   ActivityIndicator,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Keyboard
+  KeyboardAvoidingView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -45,17 +45,28 @@ import {
   deleteCompetence,
   updateAbout,
   uploadProfilePicture,
-  getProfilePicture
+  getProfilePicture,
+  createAbout
 } from '../redux/slices/candidat/candidatProfileThunks';
 
 const { width } = Dimensions.get('window');
-const HEADER_MAX_HEIGHT = 390;
+const HEADER_MAX_HEIGHT = 350;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 const EditProfileCandidat = ({ route }) => {
+  const scrollViewRef = useRef(null);
+  const scrollY = new Animated.Value(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Auth and navigation
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { email, id: candidatId, firstName: authFirstName, lastName: authLastName } = useSelector((state) => state.auth);
+  
+  // Profile data from Redux
   const {
     loading,
     error,
@@ -63,52 +74,42 @@ const EditProfileCandidat = ({ route }) => {
     experiences: reduxExperiences,
     langues: reduxLangues,
     competences: reduxCompetences,
-    about
+    about: reduxAbout
   } = useSelector((state) => {
     console.log('Current Profile State:', state.candidatProfile);
-    console.log('About in Redux state:', state.candidatProfile.about);
     return state.candidatProfile;
   });
 
-  const { candidatId, firstName: authFirstName, lastName: authLastName, email } = useSelector((state) => {
-    console.log('Full Auth State:', state.auth);
-    console.log('Auth ID:', state.auth.id);
-    console.log('Auth ID Type:', typeof state.auth.id);
-    console.log('Auth Candidat:', state.auth.candidat);
-    return {
-      candidatId: state.auth.candidat?.id || state.auth.id,
-      firstName: state.auth.candidat?.firstName || '',
-      lastName: state.auth.candidat?.lastName || '',
-      email: state.auth.email || ''
-    };
-  });
-
-  console.log('Email:', email);
-
-  const scrollY = useRef(new Animated.Value(0)).current;
+  // Profile image state
   const [image, setImage] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
+
+  // Form data states
   const [editFormData, setEditFormData] = useState({
     firstName: authFirstName,
     lastName: authLastName,
-    address: '',
-    about: ''
+    address: ''
   });
 
+  // About state
   const [aboutText, setAboutText] = useState('');
 
+  // Skills state
+  const [skills, setSkills] = useState([]);
+  const [newSkill, setNewSkill] = useState('');
+
+  // Formation states
   const [formations, setFormations] = useState([]);
-  const initialFormationState = {
+  const [newFormation, setNewFormation] = useState({
     nomEcole: '',
     niveauEtude: '',
     dateDebut: '',
-    dateFin: '',
-  };
-  const [newFormation, setNewFormation] = useState(initialFormationState);
+    dateFin: ''
+  });
   const [editingFormation, setEditingFormation] = useState(null);
-  const [showFormationModal, setShowFormationModal] = useState(false);
 
+  // Experience states
   const [experiences, setExperiences] = useState([]);
   const [newExperience, setNewExperience] = useState({
     poste: '',
@@ -116,22 +117,57 @@ const EditProfileCandidat = ({ route }) => {
     dateFin: ''
   });
   const [editingExperience, setEditingExperience] = useState(null);
-  const [showExperienceModal, setShowExperienceModal] = useState(false);
 
-  const [skills, setSkills] = useState([]);
-  const [newSkill, setNewSkill] = useState('');
-
+  // Language states
   const [languages, setLanguages] = useState([]);
-  const [editingLanguage, setEditingLanguage] = useState(null);
-  const [newLanguage, setNewLanguage] = useState({ 
-    nomLangue: '', 
+  const [newLanguage, setNewLanguage] = useState({
+    nomLangue: '',
     niveau: 'DEBUTANT'
   });
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const languageLevels = ["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"];
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [formationToDelete, setFormationToDelete] = useState(null);
+  // Modal states
+  const [showFormationModal, setShowFormationModal] = useState(false);
+  const [showExperienceModal, setShowExperienceModal] = useState(false);
+  const [showLangueModal, setShowLangueModal] = useState(false);
+  const [showCompetenceModal, setShowCompetenceModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+
+  const handleModalClose = () => {
+    setShowFormationModal(false);
+    setShowExperienceModal(false);
+    setShowLangueModal(false);
+    setShowCompetenceModal(false);
+    setShowDeleteModal(false);
+    setItemToDelete(null);
+  };
+
+  useEffect(() => {
+    const keyboardWillShow = Platform.OS === 'ios' 
+      ? Keyboard.addListener('keyboardWillShow', (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+          setKeyboardVisible(true);
+        })
+      : Keyboard.addListener('keyboardDidShow', (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+          setKeyboardVisible(true);
+        });
+
+    const keyboardWillHide = Platform.OS === 'ios'
+      ? Keyboard.addListener('keyboardWillHide', () => {
+          setKeyboardHeight(0);
+          setKeyboardVisible(false);
+        })
+      : Keyboard.addListener('keyboardDidHide', () => {
+          setKeyboardHeight(0);
+          setKeyboardVisible(false);
+        });
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   useEffect(() => {
     console.log('EditProfileCandidat - CandidatId:', candidatId);
@@ -149,12 +185,11 @@ const EditProfileCandidat = ({ route }) => {
   }, [candidatId, dispatch]);
 
   useEffect(() => {
-    console.log('About effect triggered. Current about:', about);
-    if (about && Array.isArray(about) && about.length > 0) {
-      console.log('Setting aboutText with:', about[0].description);
-      setAboutText(about[0].description || '');
+    console.log('About effect triggered. Current about:', aboutText);
+    if (aboutText) {
+      console.log('Setting aboutText with:', aboutText);
     }
-  }, [about]);
+  }, [aboutText]);
 
   useEffect(() => {
     if (reduxFormations) {
@@ -215,23 +250,27 @@ const EditProfileCandidat = ({ route }) => {
   }, [authFirstName, authLastName]);
 
   useEffect(() => {
+    if (reduxAbout && Array.isArray(reduxAbout) && reduxAbout.length > 0) {
+      setAboutText(reduxAbout[0].description || '');
+    }
+  }, [reduxAbout]);
+
+  useEffect(() => {
     const loadProfilePicture = async () => {
-      if (email) {
+      if (candidatId) {
         try {
-          const imageUri = await dispatch(getProfilePicture(email)).unwrap();
-          console.log('Loaded profile picture URI:', imageUri);
-          if (imageUri) {
-            setImage(imageUri);
+          const result = await dispatch(getProfilePicture(candidatId)).unwrap();
+          if (result) {
+            setImage(result);
           }
         } catch (error) {
-          console.error('Error loading profile picture:', error);
-          setImage(null);
+          console.error('Error loading profile picture in edit:', error);
         }
       }
     };
 
     loadProfilePicture();
-  }, [email, dispatch]);
+  }, [candidatId, dispatch]);
 
   const pickImage = async () => {
     try {
@@ -239,35 +278,27 @@ const EditProfileCandidat = ({ route }) => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.2, // Réduire encore plus la qualité
-        maxWidth: 300, // Réduire la taille maximale
-        maxHeight: 300,
+        quality: 1,
       });
 
       if (!result.canceled) {
-        try {
-          await dispatch(uploadProfilePicture({
-            email,
-            imageUri: result.assets[0].uri
-          })).unwrap();
-          
-          // Recharger l'image après l'upload réussi
-          const newImageUri = await dispatch(getProfilePicture(email)).unwrap();
-          if (newImageUri) {
-            setImage(newImageUri);
-          }
-        } catch (error) {
-          console.error('Error uploading profile picture:', error);
-          if (error.response?.data === "Maximum upload size exceeded") {
-            Alert.alert('Erreur', 'L\'image est trop grande. Veuillez choisir une image plus petite.');
-          } else {
-            Alert.alert('Erreur', 'Impossible de mettre à jour la photo de profil');
-          }
+        const selectedImage = result.assets[0];
+        
+        // Upload the new image
+        await dispatch(uploadProfilePicture({
+          candidatId: candidatId,
+          uri: selectedImage.uri
+        })).unwrap();
+        
+        // Reload the image after successful upload
+        const newImageUri = await dispatch(getProfilePicture(candidatId)).unwrap();
+        if (newImageUri) {
+          setImage(newImageUri);
         }
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner une image');
+      console.error('Error picking/uploading image:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors du chargement de l\'image');
     }
   };
 
@@ -398,8 +429,7 @@ const EditProfileCandidat = ({ route }) => {
       
       // Reset form and close modal
       setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
-      setShowLanguageModal(false);
-      setEditingLanguage(null);
+      setShowLangueModal(false);
     } catch (error) {
       console.error('Error adding language:', error);
       Alert.alert('Erreur', error.message || 'Impossible d\'ajouter la langue. Veuillez réessayer.');
@@ -429,6 +459,20 @@ const EditProfileCandidat = ({ route }) => {
         return;
       }
 
+      // Validate all required fields
+      if (!newFormation.nomEcole.trim() || !newFormation.niveauEtude.trim() || 
+          !newFormation.dateDebut.trim() || !newFormation.dateFin.trim()) {
+        Alert.alert('Erreur', 'Tous les champs sont obligatoires');
+        return;
+      }
+
+      // Validate date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(newFormation.dateDebut) || !dateRegex.test(newFormation.dateFin)) {
+        Alert.alert('Erreur', 'Format de date invalide. Utilisez le format AAAA-MM-JJ');
+        return;
+      }
+
       const formationData = {
         nomEcole: newFormation.nomEcole.trim(),
         niveauEtude: newFormation.niveauEtude.trim(),
@@ -437,40 +481,92 @@ const EditProfileCandidat = ({ route }) => {
         candidatId: Number(candidatId)
       };
 
-      console.log('handleFormationSubmit - starting with:', {
-        editingFormation,
-        formationData
-      });
-
       if (editingFormation) {
-        console.log('Updating formation with ID:', editingFormation.id);
         await dispatch(updateFormation({
           formationId: editingFormation.id,
           formationData: formationData
         })).unwrap();
-        console.log('Formation updated successfully');
       } else {
-        console.log('Creating new formation');
         await dispatch(createFormation(formationData)).unwrap();
-        console.log('Formation created successfully');
       }
 
-      // Refresh formations list
       await dispatch(fetchFormations(candidatId));
 
-      // Reset form and close modal
       setNewFormation({
         nomEcole: '',
         niveauEtude: '',
         dateDebut: '',
         dateFin: ''
       });
-      handleCloseModal();
+      setShowFormationModal(false);
+      setEditingFormation(null);
+
+      // Show success message
+      Alert.alert('Succès', editingFormation ? 'Formation modifiée avec succès' : 'Formation ajoutée avec succès');
     } catch (error) {
       console.error('Error submitting formation:', error);
       Alert.alert(
         'Erreur',
         error.message || 'Une erreur est survenue lors de la soumission de la formation'
+      );
+    }
+  };
+
+  const handleExperienceSubmit = async () => {
+    try {
+      if (!candidatId) {
+        console.error('CandidatId is missing');
+        Alert.alert('Erreur', 'ID du candidat manquant');
+        return;
+      }
+
+      // Validate all required fields
+      if (!newExperience.poste.trim() || !newExperience.dateDebut.trim() || 
+          !newExperience.dateFin.trim()) {
+        Alert.alert('Erreur', 'Tous les champs sont obligatoires');
+        return;
+      }
+
+      // Validate date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(newExperience.dateDebut) || !dateRegex.test(newExperience.dateFin)) {
+        Alert.alert('Erreur', 'Format de date invalide. Utilisez le format AAAA-MM-JJ');
+        return;
+      }
+
+      const experienceData = {
+        poste: newExperience.poste.trim(),
+        dateDebut: newExperience.dateDebut.trim(),
+        dateFin: newExperience.dateFin.trim(),
+        candidatId: Number(candidatId)
+      };
+
+      if (editingExperience && editingExperience.id) {
+        await dispatch(updateExperience({
+          experienceId: editingExperience.id,
+          experienceData: experienceData
+        })).unwrap();
+      } else {
+        await dispatch(createExperience(experienceData)).unwrap();
+      }
+
+      await dispatch(fetchExperiences(candidatId));
+
+      setNewExperience({
+        poste: '',
+        dateDebut: '',
+        dateFin: ''
+      });
+      setEditingExperience(null);
+      setShowExperienceModal(false);
+
+      // Show success message
+      Alert.alert('Succès', editingExperience ? 'Expérience modifiée avec succès' : 'Expérience ajoutée avec succès');
+    } catch (error) {
+      console.error('Error submitting experience:', error);
+      Alert.alert(
+        'Erreur',
+        error.message || 'Une erreur est survenue lors de la soumission de l\'expérience'
       );
     }
   };
@@ -481,8 +577,8 @@ const EditProfileCandidat = ({ route }) => {
     // Mapper les champs pour correspondre au format du formulaire
     const formationToEdit = {
       id: formation.id,
-      nomEcole: formation.ecole || formation.nomEcole || '',
-      niveauEtude: formation.titre || formation.niveauEtude || '',
+      titre: formation.titre || '',
+      ecole: formation.ecole || '',
       dateDebut: formation.dateDebut || '',
       dateFin: formation.dateFin || ''
     };
@@ -494,8 +590,8 @@ const EditProfileCandidat = ({ route }) => {
     
     // Mettre à jour le formulaire avec les valeurs existantes
     setNewFormation({
-      nomEcole: formationToEdit.nomEcole,
-      niveauEtude: formationToEdit.niveauEtude,
+      nomEcole: formationToEdit.ecole,
+      niveauEtude: formationToEdit.titre,
       dateDebut: formationToEdit.dateDebut,
       dateFin: formationToEdit.dateFin
     });
@@ -504,29 +600,23 @@ const EditProfileCandidat = ({ route }) => {
     setShowFormationModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowFormationModal(false);
-    setEditingFormation(null);
-    setNewFormation(initialFormationState);
-  };
-
   const handleDeleteFormation = (formation) => {
-    setFormationToDelete(formation);
-    setShowDeleteConfirm(true);
+    setItemToDelete(formation);
+    setShowDeleteModal(true);
   };
 
   const confirmDeleteFormation = async () => {
     try {
-      if (formationToDelete?.id) {
-        console.log('Deleting formation:', formationToDelete.id);
-        await dispatch(deleteFormation(formationToDelete.id)).unwrap();
+      if (itemToDelete?.id) {
+        console.log('Deleting formation:', itemToDelete.id);
+        await dispatch(deleteFormation(itemToDelete.id)).unwrap();
         console.log('Formation deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting formation:', error);
     } finally {
-      setShowDeleteConfirm(false);
-      setFormationToDelete(null);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     }
   };
 
@@ -632,239 +722,12 @@ const EditProfileCandidat = ({ route }) => {
     );
   };
 
-  const handleExperienceSubmit = async () => {
-    try {
-      if (!candidatId) {
-        console.error('CandidatId is missing');
-        Alert.alert('Erreur', 'ID du candidat manquant');
-        return;
-      }
-
-      const experienceData = {
-        poste: newExperience.poste.trim(),
-        dateDebut: newExperience.dateDebut.trim(),
-        dateFin: newExperience.dateFin.trim(),
-        candidatId: Number(candidatId)
-      };
-
-      console.log('handleExperienceSubmit - starting with:', {
-        editingExperience,
-        experienceData
-      });
-
-      if (editingExperience && editingExperience.id) {
-        console.log('Updating experience with ID:', editingExperience.id);
-        await dispatch(updateExperience({
-          experienceId: editingExperience.id,
-          experienceData: experienceData
-        })).unwrap();
-        console.log('Experience updated successfully');
-      } else {
-        console.log('Creating new experience');
-        await dispatch(createExperience(experienceData)).unwrap();
-        console.log('Experience created successfully');
-      }
-
-      // Refresh experiences list
-      await dispatch(fetchExperiences(candidatId));
-
-      // Reset form and close modal
-      setNewExperience({
-        poste: '',
-        dateDebut: '',
-        dateFin: ''
-      });
-      setEditingExperience(null);
-      setShowExperienceModal(false);
-    } catch (error) {
-      console.error('Error submitting experience:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de la soumission de l\'expérience'
-      );
-    }
-  };
-
-  const handleEditExperience = (experience) => {
-    setEditingExperience(experience);
-    setNewExperience({
-      id: experience.id,
-      poste: experience.poste,
-      dateDebut: experience.dateDebut,
-      dateFin: experience.dateFin
-    });
-    setShowExperienceModal(true);
-  };
-
-  const handleDeleteExperience = async (experienceId) => {
-    try {
-      if (!candidatId) {
-        console.error('CandidatId is missing');
-        Alert.alert('Erreur', 'ID du candidat manquant');
-        return;
-      }
-
-      await dispatch(deleteExperience(experienceId)).unwrap();
-      await dispatch(fetchExperiences(candidatId));
-    } catch (error) {
-      console.error('Error deleting experience:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression de l\'expérience');
-    }
-  };
-
-  const renderFormationCard = (formation) => {
-    const displayData = {
-      nomEcole: formation.ecole || formation.nomEcole,
-      niveauEtude: formation.titre || formation.niveauEtude,
-      dateDebut: formation.dateDebut,
-      dateFin: formation.dateFin,
-      id: formation.id
-    };
-
-    return (
-      <View key={displayData.id} style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.formationIcon]}>
-          <MaterialCommunityIcons name="school" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{displayData.nomEcole}</Text>
-            <View style={styles.cardActions}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.editButton]}
-                onPress={() => handleEditFormation(formation)}
-              >
-                <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.deleteButton]}
-                onPress={() => handleDeleteFormation(formation)}
-              >
-                <MaterialCommunityIcons name="delete" size={20} color="#FF0000" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.cardDivider} />
-          <View style={styles.cardDetails}>
-            <Text style={styles.detailText}>Niveau: {displayData.niveauEtude}</Text>
-            <Text style={styles.detailText}>
-              Période: {new Date(displayData.dateDebut).toLocaleDateString()} - {new Date(displayData.dateFin).toLocaleDateString()}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderExperienceCard = (experience) => {
-    return (
-      <View style={styles.itemContainer}>
-        <View style={styles.itemContent}>
-          <View style={styles.itemHeader}>
-            <View style={styles.itemTitleContainer}>
-              <Text style={styles.itemTitle}>{experience.titre}</Text>
-              <Text style={styles.itemSubtitle}>{experience.entreprise}</Text>
-            </View>
-            <View style={styles.itemActions}>
-              <TouchableOpacity onPress={() => {
-                setNewExperience(experience);
-                setEditingExperience(experience);
-                setShowExperienceModal(true);
-              }}>
-                <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDeleteExperience(experience.id)}>
-                <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.itemDivider} />
-          <View style={styles.itemDetails}>
-            <View style={styles.dateContainer}>
-              <MaterialCommunityIcons name="calendar-range" size={16} color="#666" />
-              <Text style={styles.dateText}>{experience.dateDebut} - {experience.dateFin || 'Présent'}</Text>
-            </View>
-            {experience.description && (
-              <Text style={styles.itemDescription}>{experience.description}</Text>
-            )}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderAboutCard = () => {
-    console.log('Rendering about card. Current state:', {
-      loading: loading.about,
-      error: error.about,
-      about,
-      aboutText,
-      isEditingAbout
-    });
-
-    // Récupérer l'ID de l'about depuis le tableau
-    const aboutId = about && Array.isArray(about) && about.length > 0 ? about[0].id : null;
-
-    return (
-      <View style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
-          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>À propos de moi</Text>
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => setIsEditingAbout(!isEditingAbout)}
-            >
-              <MaterialCommunityIcons 
-                name={isEditingAbout ? "check" : "pencil"} 
-                size={20} 
-                color="#3A317B" 
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardDivider} />
-          {loading.about ? (
-            <ActivityIndicator size="small" color="#3A317B" />
-          ) : error.about ? (
-            <Text style={styles.errorText}>Erreur: {error.about}</Text>
-          ) : isEditingAbout ? (
-            <TextInput
-              style={[styles.aboutInput, { minHeight: 100 }]}
-              multiline
-              value={aboutText}
-              onChangeText={setAboutText}
-              placeholder="Parlez de vous..."
-              placeholderTextColor="#666"
-              onBlur={() => {
-                if (aboutId && aboutText.trim()) {
-                  console.log('Updating about with:', { aboutId, description: aboutText, candidatId });
-                  dispatch(updateAbout({
-                    aboutId,
-                    description: aboutText.trim(),
-                    candidatId
-                  }));
-                  setIsEditingAbout(false);
-                }
-              }}
-            />
-          ) : (
-            <Text style={styles.aboutText}>
-              {aboutText || ""}
-            </Text>
-          )}
-        </View>
-      </View>
-    );
-  };
-
   const FormationModal = () => {
     const [errors, setErrors] = useState({});
     
     const validateForm = () => {
       const newErrors = {};
-      if (!newFormation.nomEcole) newErrors.nomEcole = "Le nom de l'école est requis";
+      if (!newFormation.nomEcole) newErrors.nomEcole = "L'école est requise";
       if (!newFormation.niveauEtude) newErrors.niveauEtude = "Le niveau d'étude est requis";
       if (!newFormation.dateDebut) newErrors.dateDebut = "La date de début est requise";
       if (!newFormation.dateFin) newErrors.dateFin = "La date de fin est requise";
@@ -881,10 +744,10 @@ const EditProfileCandidat = ({ route }) => {
 
     return (
       <Modal
+        visible={showFormationModal}
         animationType="slide"
         transparent={true}
-        visible={showFormationModal}
-        onRequestClose={handleCloseModal}
+        onRequestClose={() => setShowFormationModal(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -894,14 +757,18 @@ const EditProfileCandidat = ({ route }) => {
               </Text>
               <TouchableOpacity 
                 style={styles.closeButton}
-                onPress={handleCloseModal}
+                onPress={() => {
+                  setShowFormationModal(false);
+                  setEditingFormation(null);
+                  setNewFormation({ nomEcole: '', niveauEtude: '', dateDebut: '', dateFin: '' });
+                }}
               >
                 <MaterialCommunityIcons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Nom de l'école *</Text>
+              <Text style={styles.label}>Ecole *</Text>
               <TextInput
                 style={[styles.input, errors.nomEcole && styles.inputError]}
                 placeholder="Ex: ESTEM"
@@ -915,7 +782,7 @@ const EditProfileCandidat = ({ route }) => {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Niveau d'études *</Text>
+              <Text style={styles.label}>Niveau d'étude *</Text>
               <TextInput
                 style={[styles.input, errors.niveauEtude && styles.inputError]}
                 placeholder="Ex: BAC_PLUS_5"
@@ -986,16 +853,16 @@ const EditProfileCandidat = ({ route }) => {
 
     const handleSubmit = () => {
       if (validateForm()) {
-        handleLanguageSubmit();
+        addLanguage();
       }
     };
 
     return (
       <Modal
-        visible={showLanguageModal}
+        visible={showLangueModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowLanguageModal(false)}
+        onRequestClose={() => setShowLangueModal(false)}
       >
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -1004,7 +871,7 @@ const EditProfileCandidat = ({ route }) => {
           <TouchableOpacity
             style={styles.modalContainer}
             activeOpacity={1}
-            onPress={() => setShowLanguageModal(false)}
+            onPress={() => setShowLangueModal(false)}
           >
             <TouchableOpacity 
               activeOpacity={1} 
@@ -1013,13 +880,12 @@ const EditProfileCandidat = ({ route }) => {
             >
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingLanguage ? 'Modifier la langue' : 'Ajouter une langue'}
+                  Ajouter une langue
                 </Text>
                 <TouchableOpacity 
                   style={styles.closeButton}
                   onPress={() => {
-                    setShowLanguageModal(false);
-                    setEditingLanguage(null);
+                    setShowLangueModal(false);
                     setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
                   }}
                 >
@@ -1079,7 +945,7 @@ const EditProfileCandidat = ({ route }) => {
                   onPress={handleSubmit}
                 >
                   <Text style={styles.buttonText}>
-                    {editingLanguage ? 'Modifier' : 'Ajouter'}
+                    Ajouter
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1090,60 +956,15 @@ const EditProfileCandidat = ({ route }) => {
     );
   };
 
-  const handleLanguageSubmit = async () => {
-    try {
-      if (!candidatId) {
-        console.error('CandidatId is missing');
-        Alert.alert('Erreur', 'ID du candidat manquant');
-        return;
-      }
-
-      const languageData = {
-        nomLangue: newLanguage.nomLangue.trim(),
-        niveau: newLanguage.niveau,
-        candidatId: Number(candidatId)
-      };
-
-      console.log('Submitting language:', languageData);
-
-      if (editingLanguage && editingLanguage.id) {
-        console.log('Updating language with ID:', editingLanguage.id);
-        await dispatch(updateLangue({
-          langueId: editingLanguage.id,
-          langueData: languageData
-        })).unwrap();
-        console.log('Language updated successfully');
-      } else {
-        console.log('Creating new language');
-        await dispatch(createLangue(languageData)).unwrap();
-        console.log('Language created successfully');
-      }
-
-      // Refresh languages list
-      await dispatch(fetchLangues(candidatId));
-
-      // Reset form and close modal
-      setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
-      setShowLanguageModal(false);
-      setEditingLanguage(null);
-    } catch (error) {
-      console.error('Error submitting language:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de la soumission de la langue'
-      );
-    }
-  };
-
   const renderDeleteConfirmationModal = () => {
     return (
       <Modal
         animationType="fade"
         transparent={true}
-        visible={showDeleteConfirm}
+        visible={showDeleteModal}
         onRequestClose={() => {
-          setShowDeleteConfirm(false);
-          setFormationToDelete(null);
+          setShowDeleteModal(false);
+          setItemToDelete(null);
         }}
       >
         <View style={styles.modalContainer}>
@@ -1151,16 +972,16 @@ const EditProfileCandidat = ({ route }) => {
             <Text style={styles.modalTitle}>Confirmer la suppression</Text>
             <Text style={styles.modalText}>
               Êtes-vous sûr de vouloir supprimer cette formation ?
-              {formationToDelete && (
-                `\n${formationToDelete.nomEcole} - ${formationToDelete.niveauEtude}`
+              {itemToDelete && (
+                `\n${itemToDelete.ecole} - ${itemToDelete.titre}`
               )}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => {
-                  setShowDeleteConfirm(false);
-                  setFormationToDelete(null);
+                  setShowDeleteModal(false);
+                  setItemToDelete(null);
                 }}
               >
                 <Text style={styles.buttonText}>Annuler</Text>
@@ -1186,9 +1007,8 @@ const EditProfileCandidat = ({ route }) => {
           <TouchableOpacity 
             style={styles.addButton}
             onPress={() => {
-              setEditingLanguage(null);
               setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
-              setShowLanguageModal(true);
+              setShowLangueModal(true);
             }}
           >
             <MaterialCommunityIcons name="plus" size={24} color="#fff" />
@@ -1203,8 +1023,7 @@ const EditProfileCandidat = ({ route }) => {
             <View style={styles.itemActions}>
               <TouchableOpacity onPress={() => {
                 setNewLanguage(language);
-                setEditingLanguage(language);
-                setShowLanguageModal(true);
+                setShowLangueModal(true);
               }}>
                 <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
               </TouchableOpacity>
@@ -1220,25 +1039,142 @@ const EditProfileCandidat = ({ route }) => {
 
   const renderProfileImage = () => {
     return (
-      <TouchableOpacity onPress={handleAvatarPress} style={styles.avatarContainer}>
-        {image ? (
-          <Image
-            source={{ uri: image }}
-            style={styles.avatar}
-            onError={(e) => {
-              console.log('Error loading image:', e.nativeEvent.error);
-              setImage(null);
-            }}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.placeholderAvatar]}>
-            <MaterialCommunityIcons name="account" size={40} color="#fff" />
+      <View style={styles.profileImageContainer}>
+        <TouchableOpacity onPress={handleAvatarPress} style={styles.avatarContainer}>
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              style={styles.avatar}
+              onError={(e) => {
+                console.log('Error loading image:', e.nativeEvent.error);
+                setImage(null);
+              }}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.placeholderAvatar]}>
+              <MaterialCommunityIcons name="account" size={40} color="#fff" />
+            </View>
+          )}
+          <View style={styles.editAvatarButton}>
+            <MaterialCommunityIcons name="camera" size={20} color="#fff" />
           </View>
-        )}
-        <View style={styles.editAvatarButton}>
-          <MaterialCommunityIcons name="camera" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.profileName}>{authFirstName} {authLastName}</Text>
+        <Text style={styles.profileEmail}>{email}</Text>
+      </View>
+    );
+  };
+
+  const handleAboutUpdate = async () => {
+    try {
+      if (!candidatId) {
+        showCustomAlert('error', 'ID du candidat manquant');
+        return;
+      }
+
+      // Get the current about data
+      const aboutResponse = await dispatch(fetchAbout(candidatId)).unwrap();
+      console.log('Current about data:', aboutResponse);
+
+      if (!aboutResponse || !aboutResponse[0]) {
+        // Create new about if none exists
+        console.log('No about exists, creating new one');
+        await dispatch(createAbout({
+          description: aboutText.trim(),
+          candidatId: candidatId
+        })).unwrap();
+      } else {
+        // Update existing about
+        console.log('Updating existing about');
+        await dispatch(updateAbout({
+          aboutId: aboutResponse[0].id,
+          description: aboutText.trim(),
+          candidatId: candidatId
+        })).unwrap();
+      }
+
+      setIsEditingAbout(false);
+      showCustomAlert('success', 'Votre description a été mise à jour avec succès');
+      
+      // Refresh the about data
+      dispatch(fetchAbout(candidatId));
+    } catch (error) {
+      console.error('Error updating about:', error);
+      showCustomAlert('error', 'Erreur lors de la mise à jour de votre description');
+    }
+  };
+
+  const renderAboutCard = () => {
+    return (
+      <View style={styles.cardContainer}>
+        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
+          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
         </View>
-      </TouchableOpacity>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>À propos</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                if (isEditingAbout) {
+                  handleAboutUpdate();
+                } else {
+                  setIsEditingAbout(true);
+                }
+              }}
+            >
+              <MaterialCommunityIcons 
+                name={isEditingAbout ? "check" : "pencil"} 
+                size={24} 
+                color="#3A317B" 
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardDivider} />
+          {isEditingAbout ? (
+            <TextInput
+              style={styles.aboutInput}
+              multiline
+              value={aboutText}
+              onChangeText={setAboutText}
+              placeholder="Parlez-nous de vous..."
+              textAlignVertical="top"
+              numberOfLines={4}
+            />
+          ) : (
+            <Text style={styles.aboutText}>
+              {aboutText || "Aucune description ajoutée"}
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref) => {
+    return (
+      <TextInput
+        ref={ref}
+        value={value}
+        onChangeText={onChangeText}
+        style={[styles.input, props.style]}
+        autoCapitalize="none"
+        autoCorrect={false}
+        blurOnSubmit={false}
+        {...props}
+      />
+    );
+  });
+
+  const showCustomAlert = (type, message) => {
+    Alert.alert(
+      type === 'success' ? 'Succès' : 'Erreur',
+      message,
+      [{ text: 'OK', style: type === 'success' ? 'default' : 'destructive' }],
+      {
+        cancelable: true,
+        titleStyle: { color: type === 'success' ? '#4CAF50' : '#f44336' },
+        messageStyle: { color: '#333333' },
+      }
     );
   };
 
@@ -1277,26 +1213,23 @@ const EditProfileCandidat = ({ route }) => {
 
             {isEditingProfile ? (
               <View style={styles.editProfileForm}>
-                <TextInput
-                  style={styles.editInput}
-                  defaultValue={authFirstName}
+                <CustomTextInput
                   placeholder="Prénom"
-                  placeholderTextColor="#999"
+                  value={editFormData.firstName}
                   onChangeText={(text) => setEditFormData({...editFormData, firstName: text})}
+                  onFocus={() => handleTextInputFocus(100)}
                 />
-                <TextInput
-                  style={styles.editInput}
-                  defaultValue={authLastName}
+                <CustomTextInput
                   placeholder="Nom"
-                  placeholderTextColor="#999"
+                  value={editFormData.lastName}
                   onChangeText={(text) => setEditFormData({...editFormData, lastName: text})}
+                  onFocus={() => handleTextInputFocus(150)}
                 />
-                <TextInput
-                  style={styles.editInput}
-                  defaultValue="Paris, France"
+                <CustomTextInput
                   placeholder="Adresse"
-                  placeholderTextColor="#999"
+                  value={editFormData.address}
                   onChangeText={(text) => setEditFormData({...editFormData, address: text})}
+                  onFocus={() => handleTextInputFocus(200)}
                 />
               </View>
             ) : (
@@ -1309,211 +1242,231 @@ const EditProfileCandidat = ({ route }) => {
         </View>
       </Animated.View>
 
-      <Animated.ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <View style={styles.spacer} />
+        <Animated.ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={[
+            styles.scrollViewContent,
+            { paddingBottom: keyboardHeight }
+          ]}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+        >
+          <View style={styles.spacer} />
 
-        {/* About Card */}
-        {renderAboutCard()}
+          {/* About Card */}
+          {renderAboutCard()}
 
-        {/* Skills Card */}
-        <View style={styles.cardContainer}>
-          <View style={[styles.cardIconContainer, styles.skillsIcon]}>
-            <MaterialCommunityIcons name="lightbulb-on" size={24} color="#fff" />
+          {/* Skills Card */}
+          <View style={styles.cardContainer}>
+            <View style={[styles.cardIconContainer, styles.skillsIcon]}>
+              <MaterialCommunityIcons name="lightbulb-on" size={24} color="#fff" />
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Compétences</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.skillsContainer}>
+                {skills.map((skill, index) => (
+                  <View key={index} style={styles.skillBadge}>
+                    <Text style={styles.skillText}>{skill}</Text>
+                    <TouchableOpacity onPress={() => removeSkill(index)}>
+                      <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.addSkillContainer}>
+                <CustomTextInput
+                  placeholder="Nouvelle compétence"
+                  value={newSkill}
+                  onChangeText={setNewSkill}
+                  onFocus={() => handleTextInputFocus(300)}
+                />
+                <TouchableOpacity style={styles.addButton} onPress={addSkill}>
+                  <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Compétences</Text>
+
+          {/* Formations Card */}
+          <View style={styles.cardContainer}>
+            <View style={[styles.cardIconContainer, styles.formationsIcon]}>
+              <MaterialCommunityIcons name="school" size={24} color="#fff" />
             </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.skillsContainer}>
-              {skills.map((skill, index) => (
-                <View key={index} style={styles.skillBadge}>
-                  <Text style={styles.skillText}>{skill}</Text>
-                  <TouchableOpacity onPress={() => removeSkill(index)}>
-                    <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-            <View style={styles.addSkillContainer}>
-              <TextInput
-                style={styles.skillInput}
-                value={newSkill}
-                onChangeText={setNewSkill}
-                placeholder="Nouvelle compétence"
-                placeholderTextColor="#666"
-              />
-              <TouchableOpacity style={styles.addButton} onPress={addSkill}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Formations</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.formationsContainer}>
+                {formations.map((formation, index) => (
+                  <View key={formation.id} style={styles.formationCard}>
+                    <View style={styles.formationHeader}>
+                      <Text style={styles.formationTitle}>{formation.titre}</Text>
+                      <View style={styles.actionContainer}>
+                        <TouchableOpacity 
+                          style={[styles.iconButton, styles.editIconButton]}
+                          onPress={() => handleEditFormation(formation)}
+                        >
+                          <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.iconButton, styles.deleteIconButton]}
+                          onPress={() => {
+                            if (formation.id) {
+                              handleDeleteFormation(formation);
+                            }
+                          }}
+                        >
+                          <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={styles.formationSchool}>{formation.ecole}</Text>
+                    <Text style={styles.formationDate}>
+                      {formation.dateDebut} - {formation.dateFin || 'Présent'}
+                    </Text>
+                    <Text style={styles.formationDescription}>{formation.description}</Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => {
+                  setEditingFormation(null);
+                  setShowFormationModal(true);
+                }}
+              >
                 <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
               </TouchableOpacity>
             </View>
           </View>
-        </View>
 
-        {/* Formations Card */}
-        <View style={styles.cardContainer}>
-          <View style={[styles.cardIconContainer, styles.formationsIcon]}>
-            <MaterialCommunityIcons name="school" size={24} color="#fff" />
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Formations</Text>
+          {/* Experiences Card */}
+          <View style={styles.cardContainer}>
+            <View style={[styles.cardIconContainer, styles.experiencesIcon]}>
+              <MaterialCommunityIcons name="briefcase" size={24} color="#fff" />
             </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.formationsContainer}>
-              {formations.map((formation, index) => (
-                <View key={formation.id} style={styles.formationCard}>
-                  <View style={styles.formationHeader}>
-                    <Text style={styles.formationTitle}>{formation.titre}</Text>
-                    <View style={styles.actionContainer}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Expériences</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.experiencesContainer}>
+                {experiences.map((experience, index) => (
+                  <View key={experience.id} style={styles.experienceCard}>
+                    <View style={styles.experienceHeader}>
+                      <Text style={styles.experienceTitle}>{experience.titre}</Text>
+                      <View style={styles.actionContainer}>
+                        <TouchableOpacity 
+                          style={[styles.iconButton, styles.editIconButton]}
+                          onPress={() => {
+                            setNewExperience(experience);
+                            setEditingExperience(experience);
+                            setShowExperienceModal(true);
+                          }}
+                        >
+                          <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.iconButton, styles.deleteIconButton]}
+                          onPress={() => {
+                            if (experience.id) {
+                              handleDeleteExperience(experience.id);
+                            }
+                          }}
+                        >
+                          <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={styles.experienceCompany}>{experience.entreprise}</Text>
+                    <Text style={styles.experienceDate}>
+                      {experience.dateDebut} - {experience.dateFin || 'Présent'}
+                    </Text>
+                    <Text style={styles.experienceDescription}>{experience.description}</Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => {
+                  setEditingExperience(null);
+                  setShowExperienceModal(true);
+                }}
+              >
+                <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Languages Card */}
+          <View style={styles.cardContainer}>
+            <View style={[styles.cardIconContainer, styles.languageIcon]}>
+              <MaterialCommunityIcons name="translate" size={24} color="#fff" />
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Langues</Text>
+              </View>
+              <View style={styles.cardDivider} />
+              <View style={styles.languagesContainer}>
+                {languages.map((language, index) => (
+                  <View key={index} style={styles.languageItem}>
+                    <Text style={styles.languageName}>{language.nomLangue || 'Non spécifié'}</Text>
+                    <View style={styles.levelBadge}>
+                      <Text style={styles.levelText}>{language.niveau}</Text>
                       <TouchableOpacity 
-                        style={[styles.iconButton, styles.editIconButton]}
-                        onPress={() => handleEditFormation(formation)}
-                      >
-                        <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.iconButton, styles.deleteIconButton]}
+                        style={styles.deleteButton} 
                         onPress={() => {
-                          if (formation.id) {
-                            dispatch(deleteFormation(formation.id));
+                          console.log('Removing language:', language);
+                          if (language.id) {
+                            removeLanguage(language.id);
                           }
                         }}
                       >
-                        <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                        <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
                       </TouchableOpacity>
                     </View>
                   </View>
-                  <Text style={styles.formationSchool}>{formation.ecole}</Text>
-                  <Text style={styles.formationDate}>
-                    {formation.dateDebut} - {formation.dateFin || 'Présent'}
-                  </Text>
-                  <Text style={styles.formationDescription}>{formation.description}</Text>
-                </View>
-              ))}
+                ))}
+              </View>
+              <TouchableOpacity 
+                style={styles.addButton} 
+                onPress={() => {
+                  setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+                  setShowLangueModal(true);
+                }}
+              >
+                <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => {
-                setEditingFormation(null);
-                setShowFormationModal(true);
-              }}
-            >
-              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-            </TouchableOpacity>
           </View>
-        </View>
+        </Animated.ScrollView>
 
-        {/* Experiences Card */}
-        <View style={styles.cardContainer}>
-          <View style={[styles.cardIconContainer, styles.experiencesIcon]}>
-            <MaterialCommunityIcons name="briefcase" size={24} color="#fff" />
+        {/* Loading indicator */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3A317B" />
           </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Expériences</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.experiencesContainer}>
-              {experiences.map((experience, index) => (
-                <View key={experience.id} style={styles.experienceCard}>
-                  <View style={styles.experienceHeader}>
-                    <Text style={styles.experienceTitle}>{experience.titre}</Text>
-                    <View style={styles.actionContainer}>
-                      <TouchableOpacity 
-                        style={[styles.iconButton, styles.editIconButton]}
-                        onPress={() => {
-                          setNewExperience(experience);
-                          setEditingExperience(experience);
-                          setShowExperienceModal(true);
-                        }}
-                      >
-                        <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.iconButton, styles.deleteIconButton]}
-                        onPress={() => {
-                          if (experience.id) {
-                            dispatch(deleteExperience(experience.id));
-                          }
-                        }}
-                      >
-                        <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <Text style={styles.experienceCompany}>{experience.entreprise}</Text>
-                  <Text style={styles.experienceDate}>
-                    {experience.dateDebut} - {experience.dateFin || 'Présent'}
-                  </Text>
-                  <Text style={styles.experienceDescription}>{experience.description}</Text>
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => {
-                setEditingExperience(null);
-                setShowExperienceModal(true);
-              }}
-            >
-              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        )}
 
-        {/* Languages Card */}
-        <View style={styles.cardContainer}>
-          <View style={[styles.cardIconContainer, styles.languageIcon]}>
-            <MaterialCommunityIcons name="translate" size={24} color="#fff" />
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Langues</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.languagesContainer}>
-              {languages.map((language, index) => (
-                <View key={index} style={styles.languageItem}>
-                  <Text style={styles.languageName}>{language.nomLangue || 'Non spécifié'}</Text>
-                  <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>{language.niveau}</Text>
-                    <TouchableOpacity 
-                      style={styles.deleteButton} 
-                      onPress={() => {
-                        console.log('Removing language:', language);
-                        if (language.id) {
-                          removeLanguage(language.id);
-                        }
-                      }}
-                    >
-                      <MaterialCommunityIcons name="close-circle" size={16} color="#666" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity 
-              style={styles.addButton} 
-              onPress={() => setShowLanguageModal(true)}
-            >
-              <MaterialCommunityIcons name="plus" size={24} color="#3A317B" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.ScrollView>
+        {/* Modals */}
+        {ExperienceModal()}
+        {FormationModal()}
+        {LanguageModal()}
+        {renderDeleteConfirmationModal()}
+      </KeyboardAvoidingView>
 
-      <FormationModal />
-      <ExperienceModal />
-      <LanguageModal />
-      {renderDeleteConfirmationModal()}
       <View style={styles.bottomTabContainer}>
         <BottomTabNavigation />
       </View>
@@ -1572,54 +1525,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   profileImageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
     marginBottom: 20,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#fff',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#3A317B',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  placeholderIcon: {
-    opacity: 0.5,
-  },
-  nameText: {
-    fontSize: 24,
+  profileName: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    color: '#333',
+    marginTop: 10,
+    marginBottom: 4,
+    textAlign: 'center',
   },
-  addressText: {
+  profileEmail: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  aboutInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 100,
+    textAlignVertical: 'top',
     fontSize: 16,
-    color: '#fff',
-    opacity: 0.9,
+    color: '#333',
+    backgroundColor: '#fff',
+  },
+  aboutText: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 24,
+    padding: 12,
   },
   spacer: {
     height: 20,
@@ -1685,12 +1622,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F0F0F7',
     marginVertical: 12,
-  },
-  aboutInput: {
-    fontSize: 14,
-    color: '#666',
-    textAlignVertical: 'top',
-    minHeight: 100,
   },
   skillsContainer: {
     flexDirection: 'row',
@@ -2017,6 +1948,22 @@ const styles = StyleSheet.create({
   placeholderAvatar: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
 });
 

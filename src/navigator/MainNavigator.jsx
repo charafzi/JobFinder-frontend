@@ -19,6 +19,7 @@ import CandidatProfile from '../screens/CandidatProfile';
 import UploadCV from '../screens/UploadCV';
 import UploadCVSuccess from '../screens/UploadCVSuccess';
 import EditProfileCandidat from '../screens/EditProfileCandidat';
+import EditCompanyProfile from '../screens/EditCompanyProfile';
 import { useSelector } from "react-redux";
 
 const Stack = createNativeStackNavigator();
@@ -38,16 +39,17 @@ const StackNavigator = () => {
       <Stack.Screen name="newPassword" component={NewPassword} />
       <Stack.Screen name="resetSuccessfully" component={ResetSuccessfully} />
       <Stack.Screen name="jobPreview" component={JobPreview} />
-      <Stack.Screen name="applications" component={Applications}></Stack.Screen>
-      <Stack.Screen name="applicationDetails" component={ApplicationDetails}></Stack.Screen>
-      <Stack.Screen name="applicationApply" component={ApplicationApply}></Stack.Screen>
+      <Stack.Screen name="applications" component={Applications} />
+      <Stack.Screen name="applicationDetails" component={ApplicationDetails} />
+      <Stack.Screen name="applicationApply" component={ApplicationApply} />
       <Stack.Screen name="UploadCV" component={UploadCV} />
       <Stack.Screen name="UploadCVSuccess" component={UploadCVSuccess} />
       <Stack.Screen name="EditProfileCandidat" component={EditProfileCandidat} />
-      <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
-      <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
-      <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
-      <Stack.Screen name={"Filter"} component={Filter}></Stack.Screen>
+      <Stack.Screen name="EditCompanyProfile" component={EditCompanyProfile} />
+      <Stack.Screen name="entreprise" component={EntrepriseHomeScreen} />
+      <Stack.Screen name="company" component={CompanyProfile} />
+      <Stack.Screen name="candidat" component={CandidatProfile} />
+      <Stack.Screen name="Filter" component={Filter} />
     </Stack.Navigator>
   );
 };
