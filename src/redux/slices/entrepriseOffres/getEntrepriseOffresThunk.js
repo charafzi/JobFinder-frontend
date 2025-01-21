@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { API_BASE_URL } from "../../../config/axiosConfig";
+import axiosInstance, { API_BASE_URL } from "../../../config/axiosConfig";
 
 export const getEntrepriseOffres = createAsyncThunk(
     'offres/getEntrepriseOffres',
@@ -52,3 +52,26 @@ export const getEntrepriseOffres = createAsyncThunk(
         }
     }
 );
+
+// Thunk pour récupérer le nombre d'offres d'une entreprise
+export const getNombreOffresParEntreprise = createAsyncThunk(
+    "offres/getNombreOffresParEntreprise",
+    async (entrepriseId, { rejectWithValue }) => {
+      try {
+        if (!entrepriseId) {
+          return rejectWithValue("entrepriseId is required");
+        }
+  
+        const response = await axiosInstance.get(
+          `/api/offre/${entrepriseId}/count`
+        );
+  
+        return response.data; // Le nombre d'offres (un entier)
+      } catch (error) {
+        console.error("Error fetching number of offers:", error);
+        return rejectWithValue(
+          error.response?.data?.message || "Error while fetching number of offers."
+        );
+      }
+    }
+  );
