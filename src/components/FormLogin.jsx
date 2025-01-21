@@ -14,12 +14,14 @@ import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/actions/authAction";
+import {getFCMToken} from "../services/notificationService";
+import {registerFCMToken} from "../redux/slices/notifications/notificationsThunks";
 
 const FormLogin = () => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error ,isCandidat} = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error ,isCandidat,fcmToken,id} = useSelector((state) => state.auth);
 
   const {
     control,
@@ -29,7 +31,21 @@ const FormLogin = () => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigation.navigate('tabNavigator');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'tabNavigator' }],
+        })
+      );
+
+      // Enregistrer le FCM token en arrière-plan
+      getFCMToken().then(token => {
+        if(fcmToken == null && token) {
+          dispatch(registerFCMToken({fcmToken: token, userId: id}));
+        }
+      }).catch(error => {
+        console.log('Error :', error);
+      });
     }
   }, [isLoggedIn]);
 

@@ -6,6 +6,7 @@ import resetPasswordReducer from "./reducers/resetPasswordReducer";
 import offresReducer from './slices/offres/offreSlice';
 import candidaturesReducer from './slices/candidaturesCandidat/candidaturesSlice'
 import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
+import notificationsReducer from "./slices/notifications/notificationsSlice";
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
@@ -14,7 +15,8 @@ const rootReducer = combineReducers({
   resetPassword: resetPasswordReducer,
   offres : offresReducer,
   candidatures : candidaturesReducer,
-  candidatProfile: candidatProfileReducer
+  candidatProfile: candidatProfileReducer,
+  notifications : notificationsReducer
 });
 
 export default rootReducer;

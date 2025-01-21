@@ -22,6 +22,7 @@ const initialState = {
   isCandidat : false,
   error: null,
   token: null,
+  fcmToken : null
 };
 
 const authReducer = (state = initialState, action) => {
