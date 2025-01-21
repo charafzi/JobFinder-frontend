@@ -11,24 +11,33 @@ import Entypo from "@expo/vector-icons/Entypo";
 import {useScrollToTop} from "@react-navigation/native";
 import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
 import showToast from "../utils/showToast";
+import {useAuthCheck} from "../hooks/useAuthCheck";
 
 const SearchScreen = ()=>{
     const dispatch = useDispatch();
-    const { searchOffresList, isLoading, params, last, totalPages,error } = useSelector((state) => state.offres);
+    const { searchOffresList, isLoading, params, last, totalPages, error } = useSelector((state) => state.offres);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
     const [refreshing, setRefreshing] = useState(false);
+    const isLoggedIn = useAuthCheck();
 
     useScrollToTop(flatListRef);
 
+    // Return early if not logged in
+    if (!isLoggedIn) {
+        return null;
+    }
+
     useEffect(() => {
-        // load initial search
-        dispatch(searchOffres({
-            keyword : "",
-            page: 0
-        }));
-    }, []);
+        // Only load initial search if logged in
+        if (isLoggedIn) {
+            dispatch(searchOffres({
+                keyword : "",
+                page: 0
+            }));
+        }
+    }, [isLoggedIn]);
 
     useEffect(() => {
         if (error) {
