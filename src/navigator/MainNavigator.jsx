@@ -11,6 +11,7 @@ import {
   ResetSuccessfully,
   Welcome,
   EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
+  Filter,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
@@ -46,6 +47,7 @@ const StackNavigator = () => {
       <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
       <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
       <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
+      <Stack.Screen name={"Filter"} component={Filter}></Stack.Screen>
     </Stack.Navigator>
   );
 };
