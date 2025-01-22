@@ -49,7 +49,7 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
             </View>
             <View style={styles.detailsContainer}>
                 <View>
-                    <Text style={styles.label}>Contrat Type</Text>
+                    <Text style={styles.label}>Contract Type</Text>
                     <View style={styles.contractTypeBox}>
                         <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
                     </View>

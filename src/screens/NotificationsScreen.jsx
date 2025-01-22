@@ -12,7 +12,6 @@ import {
 import {clearNotifications} from "../redux/slices/notifications/notificationsSlice";
 import TopNavBar from "../components/TopNavBar";
 import NotificationItem from "../components/NotificationItem";
-import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {useScrollToTop} from "@react-navigation/native";
 
 const NotificationsScreen = ({ navigation }) => {
@@ -142,10 +141,6 @@ const NotificationsScreen = ({ navigation }) => {
                 contentContainerStyle={styles.listContainer}
                 ListFooterComponentStyle={styles.footerList}
                 ref={flatListRef}
-                windowSize={5}
-                initialNumToRender={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
                 ListEmptyComponent={renderEmpty}
                 style={styles.flatListStyle}

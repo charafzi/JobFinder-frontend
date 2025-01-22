@@ -139,10 +139,6 @@ const CandidatApplicationsScreen = ()=>{
                 ListFooterComponentStyle={styles.footerList}
                 ListFooterComponent={renderFooter}
                 ref={flatListRef}
-                windowSize={5}
-                initialNumToRender={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
                 ListEmptyComponent={renderEmpty}
             />}

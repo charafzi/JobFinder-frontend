@@ -93,7 +93,9 @@ const ApplicationCard = React.memo( ({application})=>{
 const styles = StyleSheet.create({
     topContainer:{
         display : "flex",
-        flexDirection : "row"
+        flexDirection : "row",
+        marginVertical : 10,
+        justifyContent: "space-between",
     },
     applicationOfferContainer:{
         flexDirection: "row",
@@ -232,18 +234,19 @@ const styles = StyleSheet.create({
         color : Color.background
     },
     companySection:{
-        marginVertical: 20,
-      display: "flex",
+        display: "flex",
         flexDirection: "row",
         justifyContent: "flex-start",
-        alignItems : "center"
+        flex: 1,
     },
     companyDetails:{
         display: "flex",
         flexDirection: "column",
-        marginHorizontal: 20,
+        flex: 1,
+        marginRight: 10,
     },
     companyLogo:{
+        marginRight : 20,
         width: 50,
         height : 50,
         borderRadius : 100,
@@ -269,14 +272,11 @@ const styles = StyleSheet.create({
         color: Color.text,
     },
     statusDetails: {
-        width: '50%',
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        padding : 20
+        maxWidth: '30%',
     },
     status: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        width: "auto",
+        marginLeft: "auto",
     }
 });
 

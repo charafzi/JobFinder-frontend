@@ -24,11 +24,6 @@ const SearchScreen = ()=>{
 
     useScrollToTop(flatListRef);
 
-    // Return early if not logged in
-    if (!isLoggedIn) {
-        return null;
-    }
-
     useEffect(() => {
         // Only load initial search if logged in
         if (isLoggedIn) {
@@ -166,10 +161,6 @@ const SearchScreen = ()=>{
                 ListFooterComponentStyle={styles.footerList}
                 ListFooterComponent={renderFooter}
                 ref={flatListRef}
-                windowSize={5}
-                initialNumToRender={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={50}
                 onScroll={handleScroll}
                 ListEmptyComponent={renderEmpty}
                 refreshControl={

@@ -301,6 +301,19 @@ const ApplicationApplyScreen = ({route, navigation}) => {
                                                     isSelected={selectedCvId === cv.id}
                                                 />
                                             ))}
+                                            {newCv && (
+                                                <View style={styles.cvItemContainer}>
+                                                    <View style={[styles.cvItem, styles.cvItemSelected]}>
+                                                        <DocumentPreview 
+                                                            document={{
+                                                                type: newCv.type,
+                                                                id: 'new'
+                                                            }}
+                                                            isLoading={false}
+                                                        />
+                                                    </View>
+                                                </View>
+                                            )}
                                         </View>
                                     </>
                                 )}
