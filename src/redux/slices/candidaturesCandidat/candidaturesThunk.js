@@ -87,3 +87,19 @@ export const getDocuments = createAsyncThunk(
         }
     }
 );
+
+export const cancelApplication = createAsyncThunk(
+  'candidaturesCandidat/cancelApplication',
+  async ({ email, offreId }, { rejectWithValue }) => {
+    try {
+      console.warn(email)
+      console.warn(offreId)
+      const response = await axiosInstance.delete('/api/candidature/',{email,offreId});
+      console.warn(response.status)
+      console.warn(response.data)
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error at deleting your application.');
+    }
+  }
+);
