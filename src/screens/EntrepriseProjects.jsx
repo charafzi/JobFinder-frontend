@@ -15,6 +15,7 @@ import { useScrollToTop } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import { getEntrepriseOffres } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
 import showToast from "../utils/showToast";
+import TopNavBar from "../components/TopNavBar";
 
 const EntrepriseProjects = () => {
   const tabBarHeight = useBottomTabBarHeight();
@@ -128,7 +129,8 @@ const EntrepriseProjects = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <View style={styles.content}>
-        <Text style={styles.header}>Job List</Text>
+        <TopNavBar></TopNavBar>
+        <Text style={styles.header}>Offre d'emploi</Text>
         {isLoading && !refreshing && !isLoadingMore ? (
           <LoadingIndicator />
         ) : (

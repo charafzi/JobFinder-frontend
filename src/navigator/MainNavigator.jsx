@@ -12,6 +12,8 @@ import {
   Welcome,
   EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications,
   Filter,
+  EntrepriseJobDetailsScreen,
+  EntrepriseCandidates,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
@@ -28,7 +30,7 @@ const StackNavigator = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isLoggedIn ? "tabNavigator" : "login"} >
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isLoggedIn ? "tabNavigator" : "logoscreen"} >
       <Stack.Screen name="tabNavigator" component={TabNavigator} />
       <Stack.Screen name="logoscreen" component={LogoScreen} />
       <Stack.Screen name="welcome" component={Welcome} />
@@ -50,6 +52,8 @@ const StackNavigator = () => {
       <Stack.Screen name="company" component={CompanyProfile} />
       <Stack.Screen name="candidat" component={CandidatProfile} />
       <Stack.Screen name="Filter" component={Filter} />
+      <Stack.Screen name="EntrepriseJobDetails" component={EntrepriseJobDetailsScreen} />
+      <Stack.Screen name="entrepriseCandidates" component={EntrepriseCandidates} />
     </Stack.Navigator>
   );
 };

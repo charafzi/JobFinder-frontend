@@ -71,7 +71,7 @@ const candidaturesSlice = createSlice({
       .addCase(getCandidaturesByOffre.rejected, (state, action) => {
         state.isLoading = false;
         state.error =
-          action.payload ??
+          action.payload ||
           "Error occurred when trying to retrieving candidat applications. Please try again.";
         state.last = true;
       })

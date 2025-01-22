@@ -53,7 +53,7 @@ const CandidateCard = ({ candidate, handleAccept, handleDecline }) => {
   ), [candidate.candidat.firstName, candidate.candidat.lastName]);
 
   return (
-    <TouchableOpacity style={styles.cardContainer} onPress={handleViewProfile}>
+    <TouchableOpacity style={styles.cardContainer} >
       <View style={styles.row}>
         <Image source={{ uri: candidate.candidat.profilePicture }} style={styles.candidateImage} />
         <View style={{ marginLeft: 20, flex: 1, }}>

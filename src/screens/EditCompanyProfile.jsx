@@ -1,25 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
   TouchableOpacity,
+  TextInput,
   Image,
   Platform,
   Dimensions,
+
+  Animated,
   Keyboard,
   Alert,
   ToastAndroid,
   StatusBar,
-  TextInput,
+
 } from 'react-native';
-import Animated, { 
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedScrollHandler,
-  interpolate
-} from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
@@ -90,55 +88,29 @@ const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref
   );
 });
 
-function EditCompanyProfile({ route }) {
+function EditCompanyProfile() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { entrepriseId, name: initialName, about: initialAbout, adress: initialAdress } = route.params || {};
-  const { email } = useSelector((state) => state.auth);
-  const { secteursActivites } = useSelector((state) => state.entrepriseProfile);
+  const { entreprise, secteursActivites } = useSelector((state) => state.entrepriseProfile);
   const [image, setImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   const [formData, setFormData] = useState({
-    name: initialName || '',
-    about: initialAbout || '',
-    adress: initialAdress || {
+
+    about: '',
+    adress: {
       adress: '',
       city: '',
-      latitude: null,
-      longitude: null
-    }
-  });
-  const scrollY = useSharedValue(0);
-
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    scrollY.value = event.contentOffset.y;
-  });
-
-  const headerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{
-        translateY: interpolate(
-          scrollY.value,
-          [0, HEADER_SCROLL_DISTANCE],
-          [0, -HEADER_SCROLL_DISTANCE],
-        ),
-      }],
-    };
-  });
-
-  const imageStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{
-        scale: interpolate(
-          scrollY.value,
-          [0, HEADER_SCROLL_DISTANCE],
-          [1, 0.6],
-        ),
-      }],
-    };
+      latitude: 33.5731104,
+      longitude: -7.5898434
+    },
+    selectedSectors: []
   });
 
   const [isIndustriesExpanded, setIsIndustriesExpanded] = useState(false);
+  const industriesAnimation = useRef(new Animated.Value(0)).current;
+
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
@@ -164,78 +136,48 @@ function EditCompanyProfile({ route }) {
   const [notification, setNotification] = useState({ visible: false, message: '', type: '' });
 
   useEffect(() => {
-    const loadProfileData = async () => {
-      if (entrepriseId) {
-        try {
-          await dispatch(getProfilePicture(entrepriseId));
-        } catch (error) {
-          console.error('Error loading profile picture:', error);
-        }
-      }
-    };
-
-    loadProfileData();
-  }, [entrepriseId, dispatch]);
-
-  useEffect(() => {
-    if (entrepriseId) {
-      const loadProfile = async () => {
-        try {
-          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
-          if (result) {
-            setProfileImage(result);
-            setImage(result);
-          }
-        } catch (error) {
-          console.error('Error loading profile picture:', error);
-        }
-      };
-
-      loadProfile();
+    if (entreprise?.activitySectors) {
+      setSelectedSecteurs(entreprise.activitySectors.map(secteur => secteur.id));
     }
-  }, [entrepriseId, dispatch]);
-
-  useEffect(() => {
-    if (entrepriseId) {
-      const loadEntreprise = async () => {
-        try {
-          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
-          if (result) {
-            setFormData({
-              name: result.name,
-              about: result.about,
-              adress: result.adress
-            });
-          }
-        } catch (error) {
-          console.error('Error loading entreprise data:', error);
-        }
-      };
-
-      loadEntreprise();
-    }
-  }, [entrepriseId, dispatch]);
+  }, [entreprise]);
 
   useEffect(() => {
     dispatch(fetchSecteursActivite());
   }, [dispatch]);
 
   useEffect(() => {
-    if (entrepriseId) {
-      const loadSecteurs = async () => {
-        try {
-          const result = await dispatch(getProfilePicture(entrepriseId)).unwrap();
-          if (result) {
-            setSelectedSecteurs(result.activitySectors.map(secteur => secteur.id));
-          }
-        } catch (error) {
-          console.error('Error loading secteurs:', error);
-        }
-      };
-
-      loadSecteurs();
+    if (entreprise) {
+      setFormData({
+        about: entreprise.about || '',
+        adress: entreprise.adress || {
+          adress: '',
+          city: '',
+          latitude: 33.5731104,
+          longitude: -7.5898434
+        },
+        selectedSectors: entreprise.activitySectors || []
+      });
     }
-  }, [entrepriseId, dispatch]);
+  }, [entreprise]);
+
+  useEffect(() => {
+    const loadProfilePicture = async () => {
+      try {
+        if (!entreprise?.id) return;
+        const result = await dispatch(getProfilePicture(entreprise.id)).unwrap();
+        if (result) {
+          setProfileImage(result);
+          setImage(result);
+        }
+      } catch (error) {
+        console.error('Error loading profile picture:', error);
+      }
+    };
+
+    if (entreprise?.id) {
+      loadProfilePicture();
+    }
+  }, [entreprise?.id, dispatch]);
 
   useEffect(() => {
     if (citySearchText) {
@@ -261,7 +203,7 @@ function EditCompanyProfile({ route }) {
   };
 
   const handleSecteurToggle = (secteurId) => {
-    if (!entrepriseId) {
+    if (!entreprise?.id) {
       console.log('No entreprise ID found');
       return;
     }
@@ -272,9 +214,9 @@ function EditCompanyProfile({ route }) {
         ? prev.filter(id => id !== secteurId)
         : [...prev, secteurId];
       
-      console.log('Updating secteurs for entreprise:', entrepriseId, 'with selection:', newSelection);
+      console.log('Updating secteurs for entreprise:', entreprise.id, 'with selection:', newSelection);
       dispatch(updateEntrepriseSecteurs({
-        entrepriseId: entrepriseId,
+        entrepriseId: entreprise.id,
         secteurIds: newSelection
       })).then(result => {
         if (result.error) {
@@ -291,8 +233,10 @@ function EditCompanyProfile({ route }) {
   const handleSubmit = async () => {
     try {
       const updatedData = {
-        ...formData,
-        activitySectors: selectedSecteurs
+        ...entreprise,
+        about: formData.about,
+        adress: formData.adress,
+        activitySectors: formData.selectedSectors
       };
       await dispatch(updateEntreprise(updatedData)).unwrap();
       navigation.goBack();
@@ -314,7 +258,7 @@ function EditCompanyProfile({ route }) {
         const selectedImage = result.assets[0];
         
         // Vérifier l'ID de l'entreprise
-        const id = entrepriseId;
+        const id = entreprise?.id;
         if (!id) {
           showNotification('ID de l\'entreprise non disponible', 'error');
           return;
@@ -366,7 +310,7 @@ function EditCompanyProfile({ route }) {
     try {
       const query = `${address}, ${city}`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
+        'https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1'
       );
       const data = await response.json();
       
@@ -410,7 +354,7 @@ function EditCompanyProfile({ route }) {
   const getAddressSuggestions = async (city) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(city)}&countrycodes=ma&limit=5`
+        'https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(city)}&countrycodes=ma&limit=5'
       );
       const data = await response.json();
       setAddressSuggestions(data);
@@ -459,7 +403,7 @@ function EditCompanyProfile({ route }) {
 
       // Créer une copie de l'entreprise avec la nouvelle adresse
       const updatedEntreprise = {
-        ...formData,
+        ...entreprise,
         adress: {
           adress: addressData.adress,
           city: addressData.city,
@@ -505,7 +449,7 @@ function EditCompanyProfile({ route }) {
 
   const HeaderInfo = () => (
     <View style={styles.headerInfo}>
-      <Text style={styles.companyName}>{formData.name || 'Nom de l\'entreprise'}</Text>
+      <Text style={styles.companyName}>{entreprise?.name || 'Nom de l\'entreprise'}</Text>
       <View style={styles.infoContainer}>
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="map-marker" size={16} color="#fff" />
@@ -516,7 +460,7 @@ function EditCompanyProfile({ route }) {
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="phone" size={16} color="#fff" />
           <Text style={styles.infoText}>
-            {email || 'Numéro non spécifié'}
+            {entreprise?.phoneNumber || 'Numéro non spécifié'}
           </Text>
         </View>
       </View>
@@ -550,7 +494,7 @@ function EditCompanyProfile({ route }) {
             <TouchableOpacity 
               style={[styles.editButton, styles.cancelButton]}
               onPress={() => {
-                setFormData(prev => ({ ...prev, about: '' }));
+                setFormData(prev => ({ ...prev, about: entreprise?.about || '' }));
                 setIsEditingAbout(false);
               }}
             >
@@ -561,7 +505,7 @@ function EditCompanyProfile({ route }) {
               onPress={async () => {
                 try {
                   const result = await dispatch(updateEntreprise({
-                    ...formData,
+                    ...entreprise,
                     about: formData.about
                   })).unwrap();
                   
@@ -609,9 +553,9 @@ function EditCompanyProfile({ route }) {
         </View>
       ) : (
         <View style={styles.selectedIndustriesContainer}>
-          {selectedSecteurs.map((secteurId) => (
-            <View key={secteurId} style={styles.selectedIndustryTag}>
-              <Text style={styles.selectedIndustryText}>{secteurId}</Text>
+          {entreprise?.activitySectors?.map((secteur) => (
+            <View key={secteur.id} style={styles.selectedIndustryTag}>
+              <Text style={styles.selectedIndustryText}>{secteur.nom}</Text>
             </View>
           ))}
         </View>
@@ -826,28 +770,33 @@ function EditCompanyProfile({ route }) {
           </View>
         </Animated.View>
       )}
-      <Animated.ScrollView
+      <ScrollView 
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="always"
         scrollEnabled={!isEditingAddress}
         showsVerticalScrollIndicator={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
       >
-        <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, { 
+          transform: [{ 
+            translateY: scrollY.interpolate({
+              inputRange: [0, HEADER_SCROLL_DISTANCE],
+              outputRange: [0, -HEADER_SCROLL_DISTANCE],
+              extrapolate: 'clamp',
+            }) 
+          }] 
+        }]}>
           <View style={styles.headerBackground}>
             <TopNavBar />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
                 {(image || profileImage) ? (
-                  <Animated.Image
+                  <Image
                     source={
                       image
                         ? { uri: image }
                         : { uri: profileImage }
                     }
-                    style={[styles.profileImage, imageStyle]}
+                    style={styles.profileImage}
                   />
                 ) : (
                   <View style={styles.placeholderContainer}>
@@ -870,11 +819,9 @@ function EditCompanyProfile({ route }) {
           <AddressCard />
           <View style={styles.bottomSpacing} />
         </View>
-
-      </Animated.ScrollView>
+      </ScrollView>
 
     </View>
-
   );
 }
 
