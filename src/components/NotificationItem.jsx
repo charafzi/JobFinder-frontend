@@ -9,22 +9,35 @@ import Animated, {
 	runOnJS
 } from 'react-native-reanimated';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Color } from '../constants/Color';
+import {Color} from "../constants/Color";
 
-const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
+const SWIPE_THRESHOLD = -75;
+
+const NotificationItem = React.memo(({
+																			 item,
+																			 onDelete,
+																			 onPress,
+																			 onGestureStart,
+																			 onGestureEnd
+																		 }) => {
 	const translateX = useSharedValue(0);
 
 	const panGesture = useAnimatedGestureHandler({
+		onStart: () => {
+			runOnJS(onGestureStart)();
+		},
 		onActive: (event) => {
 			const x = Math.min(0, Math.max(-100, event.translationX));
 			translateX.value = x;
 		},
 		onEnd: (event) => {
-			const shouldMarkAsSeen = translateX.value < -50;
-			if (shouldMarkAsSeen) {
-				runOnJS(onMarkAsSeen)(item);
+			if (translateX.value < SWIPE_THRESHOLD) {
+				translateX.value = withSpring(-100);
+				runOnJS(onDelete)(item.id);
+			} else {
+				translateX.value = withSpring(0);
 			}
-			translateX.value = withSpring(0);
+			runOnJS(onGestureEnd)();
 		},
 	});
 
@@ -32,7 +45,7 @@ const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
 		transform: [{ translateX: translateX.value }],
 	}));
 
-	const rMarkAsSeenStyle = useAnimatedStyle(() => {
+	const rDeleteStyle = useAnimatedStyle(() => {
 		const opacity = Math.min(1, -translateX.value / 50);
 		return {
 			opacity,
@@ -41,11 +54,11 @@ const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
 	});
 
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
+		<GestureHandlerRootView style={styles.container}>
 			<View style={styles.notificationContainer}>
-				<Animated.View style={[styles.markAsSeenButton, rMarkAsSeenStyle]}>
-					<MaterialCommunityIcons name="check-circle" size={24} color="#fff" />
-					<Text style={styles.markAsSeenText}>Mark as seen</Text>
+				<Animated.View style={[styles.deleteButton, rDeleteStyle]}>
+					<MaterialCommunityIcons name="delete" size={24} color="#fff" />
+					<Text style={styles.deleteText}>Delete</Text>
 				</Animated.View>
 
 				<PanGestureHandler onGestureEvent={panGesture}>
@@ -55,7 +68,7 @@ const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
 								styles.notificationItem,
 								!item.seen && { backgroundColor: Color.unSeen }
 							]}
-							onPress={() => onMarkAsSeen(item)}
+							onPress={() => onPress(item)}
 						>
 							<View style={styles.iconContainer}>
 								<MaterialCommunityIcons
@@ -68,12 +81,6 @@ const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
 								<Text style={styles.title}>{item.title}</Text>
 								<Text style={styles.body}>{item.body}</Text>
 							</View>
-							<TouchableOpacity
-								style={styles.deleteButton}
-								onPress={() => onDelete(item.id)}
-							>
-								<Text style={styles.deleteText}>Delete</Text>
-							</TouchableOpacity>
 						</TouchableOpacity>
 					</Animated.View>
 				</PanGestureHandler>
@@ -83,9 +90,12 @@ const NotificationItem = React.memo(({ item, onMarkAsSeen, onDelete }) => {
 });
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+	},
 	notificationContainer: {
 		position: 'relative',
-		backgroundColor: Color.primary,
+		backgroundColor: Color.red,
 	},
 	notificationItem: {
 		flexDirection: 'row',
@@ -102,6 +112,7 @@ const styles = StyleSheet.create({
 	},
 	notificationContent: {
 		flex: 1,
+		marginRight: 10,
 	},
 	title: {
 		fontSize: 16,
@@ -113,22 +124,16 @@ const styles = StyleSheet.create({
 		color: '#666',
 	},
 	deleteButton: {
-		padding: 8,
-	},
-	deleteText: {
-		color: Color.primary,
-		fontWeight: '500',
-	},
-	markAsSeenButton: {
 		position: 'absolute',
 		right: 0,
 		height: '100%',
 		width: 100,
+		backgroundColor: Color.red,
 		justifyContent: 'center',
 		alignItems: 'center',
 		flexDirection: 'row',
 	},
-	markAsSeenText: {
+	deleteText: {
 		color: '#fff',
 		marginLeft: 8,
 		fontWeight: '600',

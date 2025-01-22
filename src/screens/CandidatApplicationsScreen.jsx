@@ -12,13 +12,16 @@ import {useScrollToTop} from "@react-navigation/native";
 import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 import showToast from "../utils/showToast";
 
-const CandidatApplicationsScreen = ()=>{
+const CandidatApplicationsScreen = () => {
     const dispatch = useDispatch();
-    const { candidatures, isLoading, last, totalPages,currentPage,error } = useSelector((state) => state.candidatures);
+    const { candidatures, isLoading, last, totalPages, currentPage, error } = useSelector((state) => state.candidatures);
     const { id } = useSelector((state) => state.auth);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
     useScrollToTop(flatListRef);
 
     const params = {
@@ -27,161 +30,193 @@ const CandidatApplicationsScreen = ()=>{
         size: 3
     };
 
-    useEffect(() => {
-        if (error) {
-            showToast("error", "Login failed", error);
-        }
-    }, [error]);
-
-    const handleLoadMore = async () => {
-        if (!totalPages) return;
-        if (!isLoading && !last && currentPage < totalPages - 1 && !isLoadingMore.current) {
-            try {
-                isLoadingMore.current = true;
-                dispatch(getCandidaturesByUserId({
-                    ...params,
-                    page: currentPage + 1,
-                }));
-            } finally {
-                isLoadingMore.current = false;
-            }
+    const initialLoad = async () => {
+        try {
+            await dispatch(getCandidaturesByUserId({
+                id: params.id,
+                size: params.size,
+                page: params.page
+            }));
+        } finally {
+            setIsInitialLoad(false);
         }
     };
 
-    // this for storing the position of scrolling
-    const handleScroll = (event) => {
-        currentScrollPosition.current = event.nativeEvent.contentOffset.y;
-    };
-
     useEffect(() => {
-        // load initial condidatures
-        dispatch(getCandidaturesByUserId({
-            id : params.id,
-            size : params.size,
-            page : params.page
-        }))
+        if (id) {
+            initialLoad();
+        }
     }, [id]);
 
     useEffect(() => {
-        if(params.page === 0){
-            currentScrollPosition.current=0;
+        if (error) {
+            showToast("error", "Loading applications failed", error);
         }
-    }, [params.page]);
+    }, [error]);
 
-    // save the current position at scrolling list when new data is fetched
+    const handleRefresh = useCallback(async () => {
+        if (isLoading) return;
+
+        setRefreshing(true);
+        try {
+            dispatch(clearCandidatures());
+            await dispatch(getCandidaturesByUserId({
+                id: params.id,
+                size: params.size,
+                page: 0
+            }));
+        } finally {
+            setRefreshing(false);
+        }
+    }, [isLoading, id]);
+
+    const handleLoadMore = useCallback(async () => {
+        if (!totalPages || isLoadingMore.current || isLoading || last || currentPage >= totalPages - 1) {
+            return;
+        }
+
+        try {
+            isLoadingMore.current = true;
+            await dispatch(getCandidaturesByUserId({
+                ...params,
+                page: currentPage + 1,
+            }));
+        } finally {
+            isLoadingMore.current = false;
+        }
+    }, [totalPages, isLoading, last, currentPage, params, id]);
+
+    const handleScroll = useCallback((event) => {
+        currentScrollPosition.current = event.nativeEvent.contentOffset.y;
+    }, []);
+
     useEffect(() => {
-        if (flatListRef.current && currentScrollPosition.current > 0 && params.page > 0) {
+        if (currentPage === 0) {
+            currentScrollPosition.current = 0;
+        }
+    }, [currentPage]);
+
+    useEffect(() => {
+        if (flatListRef.current && currentScrollPosition.current > 0 && currentPage > 0) {
             flatListRef.current.scrollToOffset({
                 offset: currentScrollPosition.current,
                 animated: false
             });
         }
-    }, [params.page]);
+    }, [currentPage]);
 
-    const keyExtractor = React.useCallback((item, index) => `${item.offre.id}-${item.cvDocId}-${index}`, []);
+    const keyExtractor = useCallback((item, index) =>
+      `${item.offre.id}-${item.cvDocId}-${index}`, []);
 
-    const renderItem = React.useCallback(({ item }) => (
-        <ApplicationCard key={item.id} application={item} />
+    const renderItem = useCallback(({ item }) => (
+      <ApplicationCard key={item.id} application={item} />
     ), []);
 
-    const renderFooter = () => {
+    const renderFooter = useCallback(() => {
         if (candidatures.length === 0) return null;
-        return (
-            <View style={styles.footerContainer}>
-                {isLoading ? (
-                    <LoadingIndicator
-                        size={"large"}
-                    ></LoadingIndicator>
-                ) : (
-                    <View style={styles.footerContainer}>
-                        <Entypo
-                            name="box"
-                            size={25}
-                            color={Color.placeholderText}
-                        />
-                        <Text style={styles.noMoreResult}>No more applications</Text>
-                    </View>
-                )}
-            </View>
-        );
-    };
 
-    const renderEmpty = () =>{
-        return(
-            <View style={styles.noMoreResultContainer}>
-                <AntDesign
-                    name="file1"
+        if (isLoading && !isInitialLoad) {
+            return (
+              <View style={styles.footerContainer}>
+                  <LoadingIndicator size="large" />
+              </View>
+            );
+        }
+
+        if (last || currentPage >= totalPages - 1) {
+            return (
+              <View style={styles.footerContainer}>
+                  <Entypo
+                    name="box"
                     size={25}
-                    color={Color.icon3}>
-                </AntDesign>
-                <Text style={styles.noResult}>No Applications Yet</Text>
-                <Text style={styles.noResultDesc}>Start applying to job offers to see your applications here</Text>
-            </View>
-        )
+                    color={Color.placeholderText}
+                  />
+                  <Text style={styles.noMoreResult}>No more applications</Text>
+              </View>
+            );
+        }
+
+        return null;
+    }, [isLoading, isInitialLoad, last, currentPage, totalPages, candidatures.length]);
+
+    const renderEmpty = useCallback(() => (
+      <View style={styles.noMoreResultContainer}>
+          <AntDesign
+            name="file1"
+            size={25}
+            color={Color.icon3}
+          />
+          <Text style={styles.noResult}>No Applications Yet</Text>
+          <Text style={styles.noResultDesc}>
+              Start applying to job offers to see your applications here
+          </Text>
+      </View>
+    ), []);
+
+    if (isInitialLoad && isLoading) {
+        return (
+          <SafeAreaView style={styles.mainContainer}>
+              <TopNavBar />
+              <View style={styles.loadingContainer}>
+                  <LoadingIndicator size="large" />
+              </View>
+          </SafeAreaView>
+        );
     }
 
-    return(
-        <SafeAreaView style={styles.mainContainer}>
-            <TopNavBar></TopNavBar>
-
-            {isLoading &&
-                <View style={styles.loadingContainer}>
-                    <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
-                </View>}
-
-            {!isLoading && <FlatList
-                data={candidatures}
-                contentContainerStyle={styles.flatListContent}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.75}
-                ListFooterComponentStyle={styles.footerList}
-                ListFooterComponent={renderFooter}
-                ref={flatListRef}
-                onScroll={handleScroll}
-                ListEmptyComponent={renderEmpty}
-            />}
-        </SafeAreaView>
-    )
-}
-
+    return (
+      <SafeAreaView style={styles.mainContainer}>
+          <TopNavBar />
+          <FlatList
+            data={candidatures}
+            contentContainerStyle={styles.flatListContent}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponentStyle={styles.footerList}
+            ListFooterComponent={renderFooter}
+            ref={flatListRef}
+            onScroll={handleScroll}
+            ListEmptyComponent={renderEmpty}
+            refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={[Color.spinner]}
+                  tintColor={Color.spinner}
+                />
+            }
+          />
+      </SafeAreaView>
+    );
+};
 
 const styles = StyleSheet.create({
-    mainContainer:{
-        flex : 1
+    mainContainer: {
+        flex: 1
     },
     flatListContent: {
         flexGrow: 1,
     },
-    noResultContainer : {
-        marginVertical: '50%',
+    noMoreResultContainer: {
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
-        marginHorizontal: '50%'
+        justifyContent: "center",
+        marginVertical: '30%'
     },
-    noResult :{
+    noResult: {
         fontSize: 16,
-        fontWeight : "bold",
+        fontWeight: "bold",
         paddingVertical: 10
     },
-    noResultDesc :{
+    noResultDesc: {
         fontSize: 14,
         paddingVertical: 10,
         paddingHorizontal: 50,
         textAlign: "center"
     },
-    noMoreResultContainer:{
-        display: "flex",
-        alignItems: "center",
-        flexDirection: "column",
-        justifyContent: "center",
-        marginVertical : '50%'
-    },
-    noMoreResult:{
+    noMoreResult: {
         fontSize: 12,
         fontWeight: "bold",
         color: Color.placeholderText,
@@ -190,15 +225,16 @@ const styles = StyleSheet.create({
     footerList: {
         paddingBottom: 20
     },
-    loadingContainer:{
-        flex : 1,
-        justifyContent : "center"
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center"
     },
-    footerContainer : {
-        display: "flex",
+    footerContainer: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+        paddingVertical: 20
     }
-})
+});
+
 export default CandidatApplicationsScreen;
