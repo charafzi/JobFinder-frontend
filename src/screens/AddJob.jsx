@@ -206,7 +206,7 @@ const AddJob = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView ref={ref} contentStyle={{ paddingBottom: tabBarHeight }}>
+        <ScrollView ref={ref} contentContainerStyle={{ paddingBottom: tabBarHeight + 50, marginBottom: tabBarHeight }}>
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >

@@ -18,15 +18,13 @@ import {
   ScrollView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabNavigation from '../navigator/BottomTabNavigator';
 import { 
   fetchFormations, 
   fetchExperiences, 
-  deleteExperience, 
-  updateExperience, 
-  createExperience, 
   fetchLangues, 
   fetchCompetences, 
   fetchAbout,
@@ -160,10 +158,10 @@ const CandidatProfile = () => {
   }, [candidatId, dispatch]);
 
   const fetchProfilePicture = useCallback(async () => {
-    if (email) {
+    if (candidatId) {
       try {
         setIsLoadingImage(true);
-        const result = await dispatch(getProfilePicture(email)).unwrap();
+        const result = await dispatch(getProfilePicture(candidatId)).unwrap();
         if (result) {
           // Succès silencieux
         }
@@ -173,7 +171,7 @@ const CandidatProfile = () => {
         setIsLoadingImage(false);
       }
     }
-  }, [email, dispatch]);
+  }, [candidatId, dispatch]);
 
   useEffect(() => {
     fetchProfilePicture();

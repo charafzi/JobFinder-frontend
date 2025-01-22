@@ -85,23 +85,6 @@ export function MyTabBar({ state, descriptors, navigation }) {
                         options={options}
                         icon={icon}
                     />
-                    // <PlatformPressable
-                    //     key={route.key}
-                    //     href={buildHref(route.name, route.params)}
-                    //     accessibilityState={isFocused ? { selected: true } : {}}
-                    //     accessibilityLabel={options.tabBarAccessibilityLabel}
-                    //     testID={options.tabBarButtonTestID}
-                    //     onPress={onPress}
-                    //     onLongPress={onLongPress}
-                    //     style={styles.tabBarItem}
-                    // >
-                    //     {
-                    //         icon[route.name](isFocused ? { size: 25, color: colors.primary } : { size: 25, color: colors.text })
-                    //     }
-                    //     {/* <Text style={{ color: isFocused ? colors.primary : colors.text }}>
-                    //         {label}
-                    //     </Text> */}
-                    // </PlatformPressable>
                 );
             })}
         </View>

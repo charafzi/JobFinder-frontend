@@ -103,7 +103,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
                     keyExtractor={(item) => item.id.toString()}
                     ListHeaderComponent={ListHeaderComponent}
                     ListFooterComponent={
-                        <View style={{ paddingBottom: tabBarHeight }}>
+                        <View style={{ paddingBottom: tabBarHeight + 30, marginBottom: tabBarHeight }}>
                             {totalPages > 1 && (
                                 <TouchableOpacity
                                     style={styles.showMoreButton}

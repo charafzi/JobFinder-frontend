@@ -20,16 +20,17 @@ const EntrepriseJobDetailsScreen = ({ route, navigation }) => {
     };
 
     const circleColors = [
-        Color.secondary, // Orange
-        Color.primary, // Vert
-        Color.spinner, // Bleu
-        Color.accept, // Rose
-        Color.unselectedbutton, // Violet
+        Color.secondary, 
+        Color.primary,
+        Color.spinner,
+        Color.accept,
+        Color.unselectedbutton,
     ];
+
 
     useEffect(() => {
         if (error) {
-            showToast("error", "Login failed", error);
+            showToast("error", "Error retrieving candidatures", error);
         }
     }, [error]);
 
