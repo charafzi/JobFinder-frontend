@@ -16,6 +16,7 @@ const Welcome = ({ navigation }) => {
   const pressHandler = () => {
     navigation.navigate("login");
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />

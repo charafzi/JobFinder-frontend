@@ -21,4 +21,5 @@ export const Color = {
   green : "#7dc37d",
   disabled : '#857fa1',
   unSeen : "#D6CDFE",
+  purple : "#3A317B"
 };
