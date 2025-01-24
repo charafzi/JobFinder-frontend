@@ -20,6 +20,13 @@ const CandidaturesSlice = createSlice({
             state.isLoading= false;
             state.error=null;
         },
+        removeCandidature : (state, action)=>{
+            let index = state.candidatures.find((cand)=> cand.offre.id === action.payload)
+
+            if(index != 1){
+                state.candidatures.splice(index,1);
+            }
+        }
     },
     extraReducers: (builder)=>{
         builder
@@ -74,5 +81,5 @@ const CandidaturesSlice = createSlice({
     }
 })
 
-export const { clearCandidatures} = CandidaturesSlice.actions;
+export const { clearCandidatures,removeCandidature} = CandidaturesSlice.actions;
 export default CandidaturesSlice.reducer;

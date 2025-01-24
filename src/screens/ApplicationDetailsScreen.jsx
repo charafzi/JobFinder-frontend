@@ -12,6 +12,7 @@ import {LoadingIndicator} from "../components";
 import {useDispatch, useSelector} from "react-redux";
 import {cancelApplication} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
 import {useNavigation} from "@react-navigation/native";
+import {removeCandidature} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 
 const DocumentItem = ({ docId, label }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,7 @@ const ApplicationDetailsScreen = ({route}) => {
     const applyDate = useMemo(() => formatDate(route.params.application.dateCandidature), [route.params.application.dateCandidature]);
     const { cvDocId, lettreMotivationDocId, reponse } = route.params.application;
     const [showFullResponse, setShowFullResponse] = useState(false);
-    const {email} = useSelector((state)=>state.auth);
+    const {id} = useSelector((state)=>state.auth);
     const {isLoading,error} = useSelector(state => state.candidatures);
     const dispatch = useDispatch();
     const navigation = useNavigation();
@@ -82,8 +83,10 @@ const ApplicationDetailsScreen = ({route}) => {
     }, [error]);
 
     const handleCancelPress = ()=>{
-        dispatch(cancelApplication({email : email, offreId :route.params.application.offre.id}))
+        dispatch(cancelApplication({userId : id, offreId :route.params.application.offre.id}))
         if(error == null){
+            showToast("success","Application cancelled successfully !")
+            dispatch(removeCandidature(route.params.application.offre.id))
             navigation.goBack();
         }
     }

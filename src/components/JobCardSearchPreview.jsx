@@ -27,62 +27,60 @@ const JobPreviewSearchPreview = React.memo(({ jobPoste }) => {
     console.log("RENDRED ID="+jobPoste.id);
 
     return (
-        <View>
-            <TouchableOpacity style={styles.cardContainer}
-                              onPress={handleJobOfferPress}
-            >
-                <View style={styles.topContainer}>
-                    <View style={styles.row}>
-                        <Image source={{ uri: ENTREPRISE_IMAGE_URL+jobPoste.company.id }} style={styles.entrepriseLogo} />
-                        <View style={{ marginLeft: 20 }}>
-                            <Text style={styles.title}>{jobPoste.position}</Text>
-                            <Text style={styles.subtitle}>
-                                <Text style={styles.companyName}>{jobPoste.company.name}</Text> . {jobPoste.company.adress.adress} . {jobPoste.company.adress.city}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-                <View>
-                    <Text style={styles.requirementTitle}>Requirements :</Text>
-                    <View style={styles.requirementsContainer}>
-                        {requirements}
-                    </View>
-                </View>
-                <View style={styles.detailsContainer}>
-                    <View>
-                        <Text style={styles.label}>Contract Type</Text>
-                        <View style={styles.contractTypeBox}>
-                            <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
-                        </View>
-                    </View>
-                    <View style={styles.dateContainer}>
-                        <View>
-                            <Text style={styles.label}>Publication Date</Text>
-                            <View style={styles.publicationDateBox}>
-                                <Text style={styles.dateText}>{formattedPublicationDate}</Text>
-                            </View>
-                        </View>
-                        <View>
-                            <Text style={styles.label}>Deadline Date</Text>
-                            <View style={styles.deadlineDateBox}>
-                                <Text style={styles.dateText}>{formattedDeadlineDate}</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-                <View style={styles.bottomContainer}>
-                    <Text style={styles.timeAgo}>{jobPoste.timeAgo|| "24 minute ago"}</Text>
-                    <View style={styles.salarySection}>
-                        <Text style={styles.salary}>
-                            {jobPoste.salary} Dh
-                        </Text>
-                        <Text style={styles.month}>
-                            /Mo
-                        </Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        </View>
+      <TouchableOpacity style={styles.cardContainer}
+                        onPress={handleJobOfferPress}
+      >
+          <View style={styles.topContainer}>
+              <View style={styles.row}>
+                  <Image source={{ uri: ENTREPRISE_IMAGE_URL+jobPoste.company.id }} style={styles.entrepriseLogo} />
+                  <View style={{ marginLeft: 20 }}>
+                      <Text style={styles.title}>{jobPoste.position}</Text>
+                      <Text style={styles.subtitle}>
+                          <Text style={styles.companyName}>{jobPoste.company.name}</Text> . {jobPoste.company.adress.adress} . {jobPoste.company.adress.city}
+                      </Text>
+                  </View>
+              </View>
+          </View>
+          <View>
+              <Text style={styles.requirementTitle}>Requirements :</Text>
+              <View style={styles.requirementsContainer}>
+                  {requirements}
+              </View>
+          </View>
+          <View style={styles.detailsContainer}>
+              <View>
+                  <Text style={styles.label}>Contract Type</Text>
+                  <View style={styles.contractTypeBox}>
+                      <Text style={styles.contractTypeText}>{jobPoste.contractType}</Text>
+                  </View>
+              </View>
+              <View style={styles.dateContainer}>
+                  <View>
+                      <Text style={styles.label}>Publication Date</Text>
+                      <View style={styles.publicationDateBox}>
+                          <Text style={styles.dateText}>{formattedPublicationDate}</Text>
+                      </View>
+                  </View>
+                  <View>
+                      <Text style={styles.label}>Deadline Date</Text>
+                      <View style={styles.deadlineDateBox}>
+                          <Text style={styles.dateText}>{formattedDeadlineDate}</Text>
+                      </View>
+                  </View>
+              </View>
+          </View>
+          <View style={styles.bottomContainer}>
+              <Text style={styles.timeAgo}>{jobPoste.timeAgo|| "24 minute ago"}</Text>
+              <View style={styles.salarySection}>
+                  <Text style={styles.salary}>
+                      {jobPoste.salary} Dh
+                  </Text>
+                  <Text style={styles.month}>
+                      /Mo
+                  </Text>
+              </View>
+          </View>
+      </TouchableOpacity>
     );
 }, (prevProps, nextProps) => {
     return prevProps.jobPoste.id === nextProps.jobPoste.id

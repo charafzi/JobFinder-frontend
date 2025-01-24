@@ -284,7 +284,7 @@ const ApplicationApplyScreen = ({route, navigation}) => {
                             
                             <View style={styles.formContainer}>
                                 {isLoadingDocuments ? (
-                                    <Text style={styles.loadingText}>Loading your CVs...</Text>
+                                    <LoadingIndicator isLoading={isLoadingDocuments} size={"small"}></LoadingIndicator>
                                 ) : cvDocuments.length > 0 && (
                                     <>
                                         <Text style={styles.label}>Select an existing CV *</Text>

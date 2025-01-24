@@ -8,7 +8,7 @@ import {LoadingIndicator} from "../components";
 import Entypo from "@expo/vector-icons/Entypo";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import {useScrollToTop} from "@react-navigation/native";
+import {useIsFocused, useScrollToTop} from "@react-navigation/native";
 import {clearCandidatures} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 import showToast from "../utils/showToast";
 
