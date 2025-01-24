@@ -18,8 +18,8 @@ export const Color = {
   primary: "#130160",
   secondary: "#FF9228",
   red : "#fd8686",
-  green : "#7dc37d",
+  git  : "#7dc37d",
   disabled : '#857fa1',
   unSeen : "#D6CDFE",
-  purple : "#3A317B"
+  purple : "#7871b8"
 };

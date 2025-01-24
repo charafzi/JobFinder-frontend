@@ -24,7 +24,6 @@ const NotificationsScreen = ({ navigation }) => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [isScrollEnabled, setIsScrollEnabled] = useState(true);
-
     useScrollToTop(flatListRef);
 
     const params = {
@@ -98,6 +97,7 @@ const NotificationsScreen = ({ navigation }) => {
             await dispatch(markNotificationSeen(notification.id));
             dispatch(getUnreadNotificationsCount(id));
         }
+        navigation.navigate("applications");
     }, [id]);
 
     const renderEmpty = useCallback(() => (
