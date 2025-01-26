@@ -2,18 +2,19 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { Color } from "../constants/Color";
 
-const JobPreviewDescription = ({ titre, jobDescription }) => {
+const JobPreviewDescription = ({ titre, jobDescription, jobPreviewCard }) => {
   return (
     <View>
       <Text style={styles.subtitle}>Description</Text>
       <View style={styles.titleContainer}>
         <Text>{titre || "job title"}</Text>
-        <View style={{ marginVertical: 20 }}>
+        <View style={{ marginTop: 20 }}>
           <Text>
             {jobDescription ||
-              "Today I am opening a job vacancy in the field of UI/UX Designer at an Apple company. To see a job description, please see below."}
+              "Job Description."}
           </Text>
         </View>
+        {jobPreviewCard}
       </View>
     </View>
   );

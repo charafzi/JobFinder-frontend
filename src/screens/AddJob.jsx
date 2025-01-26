@@ -1,6 +1,7 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Keyboard,
+  Modal,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -24,10 +25,14 @@ import {
   LocationMapModal,
 } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
+import { useSelector } from "react-redux";
+import { useHasSavedLocation } from "../hooks/useHasSavedLocation";
+import LocationChoiceModal from "../components/LocationChoiceModal";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
   const ref = useRef(null);
+  const adress = useSelector((state) => state.auth.entreprise);
   useScrollToTop(ref);
   const {
     control,
@@ -160,6 +165,52 @@ const AddJob = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [date, setDate] = useState(dayjs());
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLocationChoiceModal, setShowLocationChoiceModal] = useState(false);
+  const hasSavedLocation = useHasSavedLocation();
+
+  const handleUseSavedLocation = useCallback(() => {
+    if (hasSavedLocation) {
+      setValue("address", adress.adress);
+      setValue("city", adress.city);
+      setValue("longitude", adress.longitude.toString());
+      setValue("latitude", adress.latitude.toString());
+    } else {
+      navigation.navigate("EditCompanyProfile");
+    }
+    setShowLocationChoiceModal(false);
+  }, [adress, setValue, navigation]);
+
+
+  const renderLocationField = useCallback(() => (
+    <Controller
+      control={control}
+      name="longitude"
+      render={({ field: { value: longitudeValue } }) => (
+        <Controller
+          control={control}
+          name="latitude"
+          render={({ field: { value: latitudeValue } }) => (
+            <View style={styles.card}>
+              <View style={styles.fieldHeader}>
+                <Text style={styles.text}>Localisation</Text>
+                <TouchableOpacity onPress={() => setShowLocationChoiceModal(true)}>
+                  <Feather
+                    name={!longitudeValue ? "plus" : "edit-2"}
+                    size={!longitudeValue ? 24 : 20}
+                    color={Color.link}
+                  />
+                </TouchableOpacity>
+              </View>
+              {(!longitudeValue || !latitudeValue) && errors.location && (
+                <Text style={styles.errorText}>{errors.location.message}</Text>
+              )}
+            </View>
+          )}
+        />
+      )}
+    />
+  ), [control, errors.location, setShowLocationChoiceModal]);
+
 
   const handleSetLocation = (location) => {
     setValue('longitude', location.longitude.toString());
@@ -231,7 +282,8 @@ const AddJob = ({ navigation }) => {
             {renderFormField("poste", "Enter poste")}
             {renderFormField("city", "Enter city")}
             {renderFormField("address", "Enter address")}
-            <Controller
+            {renderLocationField()}
+            {/* <Controller
               control={control}
               name="longitude"
               render={({ field: { value: longitudeValue } }) => (
@@ -260,7 +312,7 @@ const AddJob = ({ navigation }) => {
                   )}
                 />
               )}
-            />
+            /> */}
 
             <Controller
               control={control}
@@ -362,6 +414,17 @@ const AddJob = ({ navigation }) => {
         </ScrollView>
       </TouchableWithoutFeedback>
 
+      <LocationChoiceModal
+        visible={showLocationChoiceModal}
+        onRequestClose={() => setShowLocationChoiceModal(false)}
+        onUseSavedLocation={handleUseSavedLocation}
+        onSelectNewLocation={() => {
+          setShowLocationChoiceModal(false);
+          setShowLocationModal(true);
+        }}
+        hasSavedLocation={hasSavedLocation}
+      />
+
       <ExigencesModal
         showModal={showExigencesModal}
         handleCloseModal={useCallback(() => {
@@ -384,6 +447,12 @@ const AddJob = ({ navigation }) => {
         handleCloseModal={() => setShowLocationModal(false)}
         handleSetLocation={handleSetLocation}
         control={control}
+        initialLocation={{
+          latitude: 31.7917, // Latitude du Maroc
+          longitude: -7.0926, // Longitude du Maroc
+          latitudeDelta: 10, // Niveau de zoom
+          longitudeDelta: 10, // Niveau de zoom
+        }}
       />
 
       <ContractTypeModal

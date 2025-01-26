@@ -1,5 +1,5 @@
-import { View, StyleSheet } from 'react-native';
-import { useLinkBuilder} from '@react-navigation/native';
+import { View, StyleSheet, Keyboard } from 'react-native';
+import { useLinkBuilder } from '@react-navigation/native';
 import { Color } from '../constants/Color';
 import TabBarButton from './TabBarButton';
 import { useEffect, useState } from 'react';
@@ -9,12 +9,23 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 export function MyTabBar({ state, descriptors, navigation }) {
     const { buildHref } = useLinkBuilder();
     const [dimensions, setDimensions] = useState({ width: 100, height: 20 });
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     useEffect(() => {
         tabPositionX.value = withSpring(buttonWith * state.index, { duration: 1500 });
     }, [state.index]);
 
     const buttonWith = dimensions.width / state.routes.length;
+
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };
+    }, []);
 
     const onTabBarLayout = (e) => {
         setDimensions({
@@ -29,6 +40,9 @@ export function MyTabBar({ state, descriptors, navigation }) {
         transform: [{ translateX: tabPositionX.value }]
     }))
 
+    if (keyboardVisible) {
+        return null; // Don't render the tab bar when the keyboard is visible
+    }
 
     return (
         <View onLayout={onTabBarLayout} style={styles.tabBar}>

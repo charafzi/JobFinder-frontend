@@ -21,8 +21,8 @@ const JobPreviewHeader = ({ navigation }) => {
       <View style={styles.profileContainer}>
         <Image source={profile} style={styles.profileImage} />
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.title}>{entrepriseName || "Google"}</Text>
-          <Text>{entrepriseVille || "California, USA"}</Text>
+          <Text style={styles.title}>{entrepriseName || "Entreprise Name"}</Text>
+          <Text>{entrepriseVille || "Entreprise Ville"}</Text>
         </View>
       </View>
     </View>
