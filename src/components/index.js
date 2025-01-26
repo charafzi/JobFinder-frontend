@@ -18,5 +18,4 @@ export { default as JobCardSearchPreview } from "./JobCardSearchPreview";
 export { default as EntrepriseHeader } from "./EntrepriseHeader";
 export { default as CandidatCard } from "./CandidatCard";
 export { default as LocationMapModal } from "./LocationMapModal";
-
-
+export { default as LocationChoiceModal } from "../components/LocationChoiceModal";

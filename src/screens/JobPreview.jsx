@@ -4,6 +4,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 import React, { useCallback, useState } from "react";
@@ -15,9 +16,6 @@ import {
   JobPreviewHeader,
   JobPreviewPhotoUploader,
 } from "../components";
-import axios from "axios";
-import { API_BASE_URL } from "../config/axiosConfig"; 
-import showToast from "../utils/showToast"; 
 import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
 import { createEntrepriseOffre } from "../redux/slices/entrepriseOffres/createEntrepriseOffreThunk";
@@ -35,31 +33,33 @@ const JobPreview = ({ route, navigation }) => {
     typeContrat,
     salaire,
     dateLimite,
-    city,
     address,
+    city,
     longitude,
     latitude,
+    question,
   } = route.params || {};
 
   const onSubmit = async () => {
-      const payload = {
-        title: titre, 
-        description: description,
-        position: poste, 
-        requirements: exigences || [], 
-        contractType: typeContrat, 
-        salary: parseFloat(salaire), 
-        deadlineDate: dayjs(dateLimite).format("YYYY-MM-DDTHH:mm:ss"), 
-        companyId: companyId, 
-        adress: {
-          city: city, 
-          adress: address,
-          longitude: parseFloat(longitude),
-          latitude: parseFloat(latitude),
-        },
-      };
+    const payload = {
+      title: titre,
+      description: description,
+      position: poste,
+      requirements: exigences || [],
+      contractType: typeContrat,
+      salary: parseFloat(salaire),
+      deadlineDate: dayjs(dateLimite).format("YYYY-MM-DDTHH:mm:ss"),
+      companyId: companyId,
+      adress: {
+        city: city,
+        adress: address,
+        longitude: parseFloat(longitude),
+        latitude: parseFloat(latitude),
+      },
+      question: question,
+    };
 
-      dispatch(createEntrepriseOffre(payload))
+    dispatch(createEntrepriseOffre(payload))
       .unwrap()
       .then(() => {
         navigation.navigate("tabNavigator", { screen: "home" });
@@ -82,20 +82,13 @@ const JobPreview = ({ route, navigation }) => {
           <JobPreviewDescription
             titre={titre}
             jobDescription={description}
-          />
-          <JobPreviewCard jobPoste={poste} />
-          <JobPreviewPhotoUploader
-            visible={showAddPhotos}
-            onClose={useCallback(() => {
-              setShowAddPhotos(false);
-            }, [setShowAddPhotos])}
+            jobPreviewCard={
+              <JobPreviewCard jobPoste={poste} />
+            }
           />
         </View>
       </ScrollView>
       <JobPreviewFooter
-        onPhotoPress={useCallback(() => {
-          setShowAddPhotos(true);
-        }, [setShowAddPhotos])}
         onSubmit={onSubmit}
       />
     </SafeAreaView>
