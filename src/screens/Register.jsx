@@ -1,6 +1,7 @@
 import {
   Keyboard,
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -21,9 +22,8 @@ const Register = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View>
+        <ScrollView>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Create an Account</Text>
             <View style={styles.userType}>
@@ -66,7 +66,7 @@ const Register = ({ navigation }) => {
               <Text style={styles.loginLinkText}>Sign in</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
     </SafeAreaView>
   );
@@ -80,6 +80,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Color.background,
+    paddingVertical: StatusBar.currentHeight / 2,
+    paddingHorizontal: 30,
   },
   headerContainer: {
     marginBottom: 30,

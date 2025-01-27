@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -16,10 +16,14 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
-import BottomTabNavigation from '../navigator/BottomTabNavigator';
+import { useSelector, useDispatch } from 'react-redux';
+import { 
+  fetchEntrepriseByEmail,
+  getProfilePicture 
+} from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
 
 const { width } = Dimensions.get('window');
-const HEADER_MAX_HEIGHT = 250;
+const HEADER_MAX_HEIGHT = 350;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -35,7 +39,73 @@ const TopNavBar = ({ opacity }) => {
 };
 
 const CompanyProfile = () => {
+  const dispatch = useDispatch();
+  const { email } = useSelector((state) => state.auth);
+  const { entreprise, loading, error } = useSelector((state) => state.entrepriseProfile);
+  const [profileImage, setProfileImage] = useState(null);
+
+  const loadProfilePicture = async () => {
+    try {
+      if (!entreprise?.id) {
+        return;
+      }
+      const result = await dispatch(getProfilePicture(entreprise.id));
+      if (result.payload) {
+        setProfileImage(result.payload);
+      }
+    } catch (error) {
+      console.error('Error loading profile picture:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (email) {
+      dispatch(fetchEntrepriseByEmail(email));
+    }
+  }, [dispatch, email]);
+
+  useEffect(() => {
+    if (entreprise?.id) {
+      loadProfilePicture();
+    }
+  }, [entreprise?.id]);
+
+  useEffect(() => {
+    if (entreprise?.id) {
+      const interval = setInterval(() => {
+        loadProfilePicture();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [entreprise?.id]);
+
+  useEffect(() => {
+    if (entreprise) {
+      console.log('Entreprise data received:', {
+        name: entreprise.name,
+        about: entreprise.about,
+        activitySectors: entreprise.activitySectors,
+        adress: entreprise.adress
+      });
+    }
+    if (error) {
+      console.log('Error fetching entreprise:', error);
+    }
+  }, [entreprise, error]);
+
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [expandedSections, setExpandedSections] = useState({
+    about: false,
+    industries: false,
+    address: false
+  });
+
+  const rotationValues = {
+    about: useRef(new Animated.Value(0)).current,
+    industries: useRef(new Animated.Value(0)).current,
+    address: useRef(new Animated.Value(0)).current
+  };
+
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
@@ -66,9 +136,36 @@ const CompanyProfile = () => {
     extrapolate: 'clamp',
   });
 
+  const navigation = useNavigation();
+
+  const handleEditProfile = () => {
+    navigation.navigate('EditCompanyProfile');
+  };
+
+  const toggleSection = (sectionName) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }));
+
+    Animated.spring(rotationValues[sectionName], {
+      toValue: expandedSections[sectionName] ? 0 : 1,
+      useNativeDriver: true,
+      tension: 125,
+      friction: 8
+    }).start();
+  };
+
+  const getRotation = (sectionName) => {
+    return rotationValues[sectionName].interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '45deg']
+    });
+  };
+
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <StatusBar backgroundColor="#38354c" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" />
       
       <Animated.View 
         style={[
@@ -92,19 +189,34 @@ const CompanyProfile = () => {
           >
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
               <Image
-                source={require('../../assets/google.png')}
+                source={profileImage ? { uri: profileImage } : require('../../assets/google.png')}
                 style={styles.logo}
               />
             </Animated.View>
-            <Animated.Text style={[styles.companyName, { opacity: headerOpacity }]}>
-              Google
-            </Animated.Text>
-            <Animated.Text style={[styles.location, { opacity: headerOpacity }]}>
-              12, StreetFight Building, California, US
-            </Animated.Text>
-            <Animated.Text style={[styles.followers, { opacity: headerOpacity }]}>
-              120k Follower
-            </Animated.Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.companyName}>{entreprise?.name || 'Company Name'}</Text>
+              <Text style={styles.location}>
+                <MaterialCommunityIcons name="map-marker" size={16} color="#fff" />
+                {' '}{entreprise?.adress?.adress || 'Adresse'}, {entreprise?.adress?.city || 'Ville'}
+              </Text>
+              <Text style={styles.location}>
+                <MaterialCommunityIcons name="phone" size={16} color="#fff" />
+                {' '}{entreprise?.phoneNumber || 'Non spécifié'}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={handleEditProfile}
+            >
+              <MaterialCommunityIcons 
+                name="pencil" 
+                size={24} 
+                color="#3A317B" 
+              />
+              <Text style={styles.editButtonText}>
+                Modifier le profil
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         </View>
       </Animated.View>
@@ -119,82 +231,133 @@ const CompanyProfile = () => {
         scrollEventThrottle={16}
       >
         {/* About Section */}
-        <View style={styles.section}>
+        <TouchableOpacity 
+          style={styles.section}
+          onPress={() => toggleSection('about')}
+          activeOpacity={0.7}
+        >
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitle}>
               <MaterialCommunityIcons name="information-outline" size={24} color="#FF6B6B" style={styles.sectionIcon} />
               <Text style={styles.sectionTitleText}>About</Text>
             </View>
-            <TouchableOpacity>
-              <Feather name="edit" size={20} color="#FF6B6B" />
-            </TouchableOpacity>
+            <Animated.View 
+              style={[
+                styles.expandButton,
+                { transform: [{ rotate: getRotation('about') }] }
+              ]}
+            >
+              <Icon 
+                name="add"
+                size={24} 
+                color="#FF9228"
+              />
+            </Animated.View>
           </View>
-          <Text style={styles.sectionContent}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lectus id commodo egestas metus interdum dolor.
-          </Text>
-        </View>
+          {expandedSections.about && (
+            <Text style={styles.sectionContent}>
+              {entreprise?.about || 'Aucune description disponible'}
+            </Text>
+          )}
+        </TouchableOpacity>
 
         {/* Industries Section */}
-        <View style={styles.section}>
+        <TouchableOpacity 
+          style={styles.section}
+          onPress={() => toggleSection('industries')}
+          activeOpacity={0.7}
+        >
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitle}>
               <MaterialCommunityIcons name="office-building" size={24} color="#FF8C42" style={styles.sectionIcon} />
-              <Text style={styles.sectionTitleText}>Industries</Text>
+              <Text style={styles.sectionTitleText}>Secteurs d'activités</Text>
             </View>
-            <TouchableOpacity>
-              <Icon name="add" size={24} color="#FF8C42" />
-            </TouchableOpacity>
+            <Animated.View 
+              style={[
+                styles.expandButton,
+                { transform: [{ rotate: getRotation('industries') }] }
+              ]}
+            >
+              <Icon 
+                name="add"
+                size={24} 
+                color="#FF9228"
+              />
+            </Animated.View>
           </View>
-          <View style={styles.tags}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Information Technology</Text>
+          {expandedSections.industries && (
+            <View style={styles.tags}>
+              {entreprise?.activitySectors && entreprise.activitySectors.length > 0 ? (
+                entreprise.activitySectors.map((sector, index) => (
+                  <View key={sector.id} style={styles.tag}>
+                    <Text style={styles.tagText}>{sector.nom}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>Aucun secteur d'activité spécifié</Text>
+              )}
             </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Advertising</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Cloud Computing</Text>
-            </View>
-          </View>
-        </View>
+          )}
+        </TouchableOpacity>
 
         {/* Address Section */}
-        <View style={styles.section}>
+        <TouchableOpacity 
+          style={styles.section}
+          onPress={() => toggleSection('address')}
+          activeOpacity={0.7}
+        >
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitle}>
               <Icon name="place" size={24} color="#FF6B6B" style={styles.sectionIcon} />
               <Text style={styles.sectionTitleText}>Address</Text>
             </View>
-            <TouchableOpacity>
-              <Feather name="edit" size={20} color="#FF6B6B" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.addressText}>California</Text>
-          <Text style={styles.addressSubText}>12, StreetFight Building, California US</Text>
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              initialRegion={{
-                latitude: 33.706515226499995,
-                longitude: 7.353300889739835,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }}
+            <Animated.View 
+              style={[
+                styles.expandButton,
+                { transform: [{ rotate: getRotation('address') }] }
+              ]}
             >
-              <Marker
-                coordinate={{
-                  latitude: 33.706515226499995,
-                  longitude: 7.353300889739835,
-                }}
+              <Icon 
+                name="add"
+                size={24} 
+                color="#FF9228"
               />
-            </MapView>
+            </Animated.View>
           </View>
-        </View>
+          {expandedSections.address && entreprise?.adress && (
+            <>
+              <Text style={styles.addressText}>
+                {entreprise.adress.city}
+              </Text>
+              <Text style={styles.addressSubText}>
+                {entreprise.adress.adress}
+              </Text>
+              <TouchableOpacity 
+                style={styles.mapContainer}
+                onPress={() => console.log('Map pressed')}
+              >
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: entreprise.adress.latitude,
+                    longitude: entreprise.adress.longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  }}
+                >
+                  <Marker
+                    coordinate={{
+                      latitude: entreprise.adress.latitude,
+                      longitude: entreprise.adress.longitude,
+                    }}
+                  />
+                </MapView>
+              </TouchableOpacity>
+            </>
+          )}
+        </TouchableOpacity>
         <View style={styles.bottomSpacing} />
       </Animated.ScrollView>
-      <View style={styles.bottomTabContainer}>
-        <BottomTabNavigation />
-      </View>
     </SafeAreaView>
   );
 };
@@ -206,6 +369,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: '100%',
+    height: HEADER_MAX_HEIGHT,
     position: 'absolute',
     top: 0,
     left: 0,
@@ -279,18 +443,18 @@ const styles = StyleSheet.create({
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 12,
-    gap: 10,
+    marginTop: 16,
+    gap: 8,
   },
   tag: {
-    backgroundColor: '#F6F6F6',
+    backgroundColor: '#FFF5EC',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 50,
   },
   tagText: {
-    color: '#666',
-    fontSize: 13,
+    color: '#FF9228',
+    fontSize: 14,
     fontWeight: '500',
   },
   addressText: {
@@ -324,23 +488,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 100,
+    height: 100,
+    borderRadius: 75,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    marginBottom: 16,
+    marginBottom: 15,
+    elevation: 5,
+    overflow: 'hidden',
   },
   logo: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
+    width: '100%',
+    height: '100%',
+    borderRadius: 75,
+    resizeMode: 'cover',
   },
   companyName: {
     fontSize: 24,
@@ -352,10 +514,12 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 14,
     color: '#fff',
-    opacity: 0.9,
-    textAlign: 'center',
-    marginBottom: 6,
-    paddingHorizontal: 20,
+    marginBottom: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    alignItems: 'center',
   },
   followers: {
     fontSize: 14,
@@ -363,6 +527,34 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     textAlign: 'center',
   },
+  expandButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFF5EC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 16,
+  },
+  editButtonText: {
+    color: '#3A317B',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  }
 });
 
 export default CompanyProfile;

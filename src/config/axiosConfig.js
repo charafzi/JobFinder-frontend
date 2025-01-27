@@ -3,8 +3,7 @@ import { Platform } from "react-native";
 import store from "../redux/store";
 import {logout} from "../redux/actions/authAction";
 
-const isAndroid = Platform.OS === "android";
-const localhost = isAndroid ? "192.168.1.2" : "localhost";
+const localhost = "192.168.1.11";
 
 export const API_BASE_URL = `http://${localhost}:8091`;
 export const WEBSOCKETIO_URL = `http://${localhost}:8092`;
@@ -19,6 +18,10 @@ const axiosInstance = axios.create({
   IMAGES: {
     ENTREPRISE: ENTREPRISE_IMAGE_URL,
     USER: CANDIDAT_IMAGE_URL
+  },
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 });
 

@@ -8,29 +8,33 @@ import {
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
-import {CommonActions, useNavigation} from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { Color } from "../constants/Color";
 import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/actions/authAction";
+import { clearTemporaryCredentials } from "../redux/slices/register/registerSlice";
 import {getFCMToken} from "../services/notificationService";
 import {registerFCMToken} from "../redux/slices/notifications/notificationsThunks";
 
-const FormLogin = () => {
+const FormLogin = ({ onLoggedIn}) => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error ,isCandidat,fcmToken,id} = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
+  const { temporaryCredentials } = useSelector((state) => state.register);
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm();
 
   useEffect(() => {
     if (isLoggedIn) {
+      onLoggedIn();
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -54,6 +58,14 @@ const FormLogin = () => {
       showToast("error", "Login failed", error);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (temporaryCredentials) {
+      setValue("email", temporaryCredentials.email);
+      setValue("password", temporaryCredentials.password);
+      dispatch(clearTemporaryCredentials());
+    }
+  }, [temporaryCredentials, setValue]);
 
   const handleForgotPassword = () => {
     navigation.navigate("forgotpassword");
@@ -79,6 +91,7 @@ const FormLogin = () => {
             onChangeText={onChange}
             keyboardType="email-address"
             autoComplete="email"
+            autoCapitalize="none"
           />
         )}
         rules={{
@@ -106,11 +119,13 @@ const FormLogin = () => {
               placeholder="Enter Password"
               placeholderTextColor={Color.placeholderText}
               autoComplete="new-password"
+              autoCapitalize="none"
               secureTextEntry={securePassword}
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               style={{ flex: 1 }}
+              onSubmitEditing={handleSubmit(submit)}
             />
             <TouchableOpacity
               onPress={() => setSecurePassword(!securePassword)}

@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput } from "react-native";
 import { Color } from "../constants/Color";
+import React from "react";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    Image,
+    StyleSheet,
+    ImageBackground,
+    Dimensions,
+    TextInput
+} from "react-native";
+import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,16 +24,16 @@ import { getUnreadNotificationsCount } from "../redux/slices/notifications/notif
 
 const NAVBAR_THEMES = {
     purple: {
-        colors: ["#38354c", "#3A317B"],
+        colors: ['#3A317B', '#2D2665'],
         start: { x: 0, y: 0 },
-        end: { x: 1, y: 1 },
+        end: { x: 1, y: 0 },
         titleColor: "#fff",
         iconColor: Color.icon
     },
     default: {
         colors: [Color.background, Color.background],
         start: { x: 0, y: 0 },
-        end: { x: 1, y: 1 },
+        end: { x: 1, y: 0 },
         titleColor: Color.text,
         iconColor: Color.text
     },
@@ -43,6 +55,7 @@ const TopNavBar = React.memo(({
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
 
+    const handleBackPress = () => {
 
     useEffect(() => {
         if (id && showNotification) {
@@ -52,7 +65,6 @@ const TopNavBar = React.memo(({
 
     const handleBackPress = () => {
         if (onBackPress) {
-            // If custom onBackPress is provided, use it
             onBackPress();
         } else {
             navigation.goBack();
@@ -127,6 +139,20 @@ const TopNavBar = React.memo(({
                 </View>
             </View>
         </LinearGradient>
+                   {showProfile && (
+                       <TouchableOpacity onPress={onProfilePress}>
+                           <Image
+                               source={{
+                                   uri: isCandidat ? CANDIDAT_IMAGE_URL+id: ENTREPRISE_IMAGE_URL+id,
+                               }}
+                               style={styles.profilePic}
+                           />
+                       </TouchableOpacity>
+                   )}
+               </View>
+           </View>
+       </LinearGradient>
+
     );
 });
 
@@ -163,8 +189,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
     },
-    icon: {
+    iconButton: {
         padding: 4,
+    },
+    profileButton: {
+        padding: 4,
+        marginLeft: 8,
     },
     profilePic: {
         width: 40,

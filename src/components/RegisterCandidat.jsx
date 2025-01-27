@@ -5,15 +5,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../constants/Color";
-import axiosInstance from "../config/axiosConfig";
 import showToast from "../utils/showToast";
+import { registerCandidat } from "../redux/slices/register/registerCandidatThunk";
+import { useDispatch, useSelector } from "react-redux";
+import { resetAuthState, setTemporaryCredentials } from "../redux/slices/register/registerSlice";
+import { useNavigation } from "@react-navigation/native";
+import LoadingIndicator from "./LoadingIndicator";
 
 const RegisterCandidat = () => {
+  const navigation = useNavigation();
   const [securePassword, setSecurePassword] = useState(true);
+  const dispatch = useDispatch();
+  const { loading, error, success } = useSelector((state) => state.register);
   const {
     control,
     handleSubmit,
@@ -21,25 +28,37 @@ const RegisterCandidat = () => {
     formState: { errors },
   } = useForm();
 
+  useEffect(() => {
+    if (success) {
+      showToast(
+        "success",
+        "Your account was registered successfully. Login to access your account."
+      );
+      dispatch(resetAuthState()); // Réinitialiser l'état après affichage du toast
+    }
+    if (error) {
+      showToast("error", "Register Error", error);
+      dispatch(resetAuthState()); // Réinitialiser l'état après affichage du toast
+    }
+  }, [success, error, dispatch]);
+
   const submit = async (data) => {
-    const apiRegisterCandidat = "/api/auth/registerCandidat";
-    console.log(data);
-    axiosInstance
-      .post(apiRegisterCandidat, data)
-      .then((response) => {
-        console.log("Status Code:", response.status);
-        showToast(
-          "success",
-          "Your account was registered successfully. Login to access your account.",
-        );
-      })
-      .catch((error) => {
-        showToast(
-          "error",
-          "Register Error",
-          "Error during registering your account. Please try again.",
-        );
-      });
+    try {
+      await dispatch(registerCandidat(data)).unwrap(); // Utilisez .unwrap() pour gérer les erreurs
+      showToast(
+        "success",
+        "Your account was registered successfully. Login to access your account."
+      );
+      dispatch(setTemporaryCredentials({ email: data.email, password: data.password })); // Stockez les informations temporaires
+      navigation.navigate("login"); // Naviguez uniquement si l'inscription est réussie
+    } catch (error) {
+      console.error("Erreur lors de l'inscription :", error);
+      showToast(
+        "error",
+        "Register Error",
+        error || "Error during registering your account. Please try again."
+      );
+    }
   };
   return (
     <View>
@@ -103,7 +122,7 @@ const RegisterCandidat = () => {
             style={[styles.textInput, value && { fontWeight: "600" }]}
             onBlur={onBlur}
             onChangeText={onChange}
-            keyboardType="number-pad"
+            keyboardType="phone-pad"
           />
         )}
         rules={{
@@ -138,6 +157,7 @@ const RegisterCandidat = () => {
             onChangeText={onChange}
             keyboardType="email-address"
             autoComplete="email"
+            autoCapitalize="none"
           />
         )}
         rules={{
@@ -211,6 +231,7 @@ const RegisterCandidat = () => {
               onChangeText={(text) => {
                 onChange(text); // Mettre à jour la valeur
               }}
+              onSubmitEditing={handleSubmit(submit)}
             />
             <TouchableOpacity
               onPress={() => setSecurePassword(!securePassword)}
@@ -238,7 +259,13 @@ const RegisterCandidat = () => {
         style={styles.submitButton}
         onPress={handleSubmit(submit)}
       >
-        <Text style={styles.submitText}>SIGN UP</Text>
+        {loading ? (
+          <LoadingIndicator isLoading={loading} />
+        ) : (
+          <Text style={styles.submitText}>
+            SIGN UP
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );

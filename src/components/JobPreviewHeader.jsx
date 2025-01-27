@@ -3,8 +3,12 @@ import React from "react";
 import { profile } from "../../assets";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
+import { useSelector } from "react-redux";
 
-const JobPreviewHeader = ({ navigation, entrepriseName, entrepriseVille }) => {
+
+const JobPreviewHeader = ({ navigation }) => {
+  const { name: entrepriseName } = useSelector((state) => state.auth);
+  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
@@ -17,8 +21,8 @@ const JobPreviewHeader = ({ navigation, entrepriseName, entrepriseVille }) => {
       <View style={styles.profileContainer}>
         <Image source={profile} style={styles.profileImage} />
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.title}>{entrepriseName || "Google"}</Text>
-          <Text>{entrepriseVille || "California, USA"}</Text>
+          <Text style={styles.title}>{entrepriseName || "Entreprise Name"}</Text>
+          <Text>{entrepriseVille || "Entreprise Ville"}</Text>
         </View>
       </View>
     </View>

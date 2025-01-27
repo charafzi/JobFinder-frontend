@@ -6,16 +6,24 @@ import resetPasswordReducer from "./reducers/resetPasswordReducer";
 import offresReducer from './slices/offres/offreSlice';
 import candidaturesReducer from './slices/candidaturesCandidat/candidaturesSlice'
 import candidatProfileReducer from "./slices/candidat/candidatProfileSlice";
+import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSlice';
+import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice';
+import { entrepriseProfileReducer } from './slices/EntrepriseProfile';
+import registerEntreprise  from "./slices/register/registerSlice";
 import notificationsReducer from "./slices/notifications/notificationsSlice";
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
+  register: registerEntreprise,
   forgotPassword: forgotPasswordReducer,
   checkEmail: checkEmailReducer,
   resetPassword: resetPasswordReducer,
-  offres : offresReducer,
-  candidatures : candidaturesReducer,
+  offres: offresReducer,
   candidatProfile: candidatProfileReducer,
+  entrepriseProfile: entrepriseProfileReducer,
+  entrepriseOffres : entrepriseOffresReducer,
+  candidatures : candidaturesReducer,
+  entrepCandidatures: entrepCandidaturesReducer,
   notifications : notificationsReducer
 });
 
