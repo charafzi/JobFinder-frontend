@@ -10,8 +10,16 @@ import {
   Register,
   ResetSuccessfully,
   Welcome,
-  Map, Search, Filter,
-  EntrepriseHomeScreen, ApplicationApply, ApplicationDetails, Applications, Notifications,
+  Map,
+  Search,
+  Filter,
+  EntrepriseHomeScreen,
+  ApplicationApply,
+  ApplicationDetails,
+  Applications,
+  Notifications,
+  EntrepriseJobDetailsScreen,
+  EntrepriseCandidates,
 } from "../screens";
 import TabNavigator from "./BottomTabNavigator";
 import CompanyProfile from "../screens/CompanyProfile";
@@ -45,16 +53,16 @@ const StackNavigator = () => {
         <Stack.Screen name="UploadCV" component={UploadCV} />
         <Stack.Screen name="UploadCVSuccess" component={UploadCVSuccess} />
         <Stack.Screen name="EditProfileCandidat" component={EditProfileCandidat} />
-			<Stack.Screen name="EditCompanyProfile" component={EditCompanyProfile} />
-			<Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
+        <Stack.Screen name="EditCompanyProfile" component={EditCompanyProfile} />
+        <Stack.Screen name={"entreprise"} component={EntrepriseHomeScreen}></Stack.Screen>
         <Stack.Screen name={"company"} component={CompanyProfile}></Stack.Screen>
         <Stack.Screen name={"candidat"} component={CandidatProfile}></Stack.Screen>
         <Stack.Screen name={"notifications"} component={Notifications}></Stack.Screen>
-			<Stack.Screen name="Filter" component={Filter} />
-			<Stack.Screen name="EntrepriseJobDetails" component={EntrepriseJobDetailsScreen} />
-			<Stack.Screen name="entrepriseCandidates" component={EntrepriseCandidates} />
-			<Stack.Screen name={"Map"} component={Map}/>
-			<Stack.Screen name={"Search"} component={Search}></Stack.Screen>
+        <Stack.Screen name="Filter" component={Filter} />
+        <Stack.Screen name="EntrepriseJobDetails" component={EntrepriseJobDetailsScreen} />
+        <Stack.Screen name="entrepriseCandidates" component={EntrepriseCandidates} />
+        <Stack.Screen name={"Map"} component={Map}/>
+        <Stack.Screen name={"Search"} component={Search}></Stack.Screen>
     </Stack.Navigator>
   );
 };

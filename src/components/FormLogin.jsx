@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation} from "@react-navigation/native";
 import { Color } from "../constants/Color";
 import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
@@ -22,7 +22,7 @@ const FormLogin = ({ onLoggedIn}) => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error,fcmToken,id } = useSelector((state) => state.auth);
   const { temporaryCredentials } = useSelector((state) => state.register);
 
   const {
@@ -34,14 +34,6 @@ const FormLogin = ({ onLoggedIn}) => {
 
   useEffect(() => {
     if (isLoggedIn) {
-      onLoggedIn();
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'tabNavigator' }],
-        })
-      );
-
       // Enregistrer le FCM token en arrière-plan
       getFCMToken().then(token => {
         if(fcmToken == null && token) {
@@ -50,6 +42,7 @@ const FormLogin = ({ onLoggedIn}) => {
       }).catch(error => {
         console.log('Error :', error);
       });
+      onLoggedIn();
     }
   }, [isLoggedIn]);
 

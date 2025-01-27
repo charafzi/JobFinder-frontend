@@ -1,16 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet, ImageBackground, Dimensions, TextInput } from "react-native";
-import { Color } from "../constants/Color";
-import React from "react";
+import React, { useEffect } from "react";
 import {
     View,
     Text,
     TouchableOpacity,
     Image,
     StyleSheet,
-    ImageBackground,
-    Dimensions,
-    TextInput
 } from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -54,8 +48,6 @@ const TopNavBar = React.memo(({
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
-
-    const handleBackPress = () => {
 
     useEffect(() => {
         if (id && showNotification) {
@@ -139,20 +131,6 @@ const TopNavBar = React.memo(({
                 </View>
             </View>
         </LinearGradient>
-                   {showProfile && (
-                       <TouchableOpacity onPress={onProfilePress}>
-                           <Image
-                               source={{
-                                   uri: isCandidat ? CANDIDAT_IMAGE_URL+id: ENTREPRISE_IMAGE_URL+id,
-                               }}
-                               style={styles.profilePic}
-                           />
-                       </TouchableOpacity>
-                   )}
-               </View>
-           </View>
-       </LinearGradient>
-
     );
 });
 
@@ -191,6 +169,7 @@ const styles = StyleSheet.create({
     },
     iconButton: {
         padding: 4,
+        position: 'relative',
     },
     profileButton: {
         padding: 4,
@@ -216,12 +195,12 @@ const styles = StyleSheet.create({
     },
     badge: {
         position: 'absolute',
-        right: -6,
-        top: -3,
+        right: -3,
+        top: -2,
         backgroundColor: Color.secondary,
         borderRadius: 10,
-        minWidth: 16,
-        height: 16,
+        minWidth: 18,
+        height: 18,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 4,
@@ -230,10 +209,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 12,
         fontWeight: 'bold',
-    },
-    iconButton: {
-        position: 'relative',
     }
-})
+});
 
 export default TopNavBar;
