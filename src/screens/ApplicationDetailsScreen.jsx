@@ -3,12 +3,16 @@ import TopNavBar from "../components/TopNavBar";
 import JobDetailsCard from "../components/JobDetailsCard";
 import {Color} from "../constants/Color";
 import Status from "../components/Status";
-import React, {useMemo, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import formatDate from "../utils/formatDate";
 import { Ionicons } from '@expo/vector-icons';
 import {API_BASE_URL} from "../config/axiosConfig";
 import showToast from "../utils/showToast";
 import {LoadingIndicator} from "../components";
+import {useDispatch, useSelector} from "react-redux";
+import {cancelApplication} from "../redux/slices/candidaturesCandidat/candidaturesThunk";
+import {useNavigation} from "@react-navigation/native";
+import {removeCandidature} from "../redux/slices/candidaturesCandidat/candidaturesSlice";
 
 const DocumentItem = ({ docId, label }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -63,10 +67,29 @@ const ApplicationDetailsScreen = ({route}) => {
     const applyDate = useMemo(() => formatDate(route.params.application.dateCandidature), [route.params.application.dateCandidature]);
     const { cvDocId, lettreMotivationDocId, reponse } = route.params.application;
     const [showFullResponse, setShowFullResponse] = useState(false);
+    const {id} = useSelector((state)=>state.auth);
+    const {isLoading,error} = useSelector(state => state.candidatures);
+    const dispatch = useDispatch();
+    const navigation = useNavigation();
 
     const toggleResponseView = () => {
         setShowFullResponse(!showFullResponse);
     };
+
+    useEffect(() => {
+        if (error) {
+            showToast("error", "Cancel Failed", error);
+        }
+    }, [error]);
+
+    const handleCancelPress = ()=>{
+        dispatch(cancelApplication({userId : id, offreId :route.params.application.offre.id}))
+        if(error == null){
+            showToast("success","Application cancelled successfully !")
+            dispatch(removeCandidature(route.params.application.offre.id))
+            navigation.goBack();
+        }
+    }
 
     return(
         <SafeAreaView>
@@ -122,6 +145,15 @@ const ApplicationDetailsScreen = ({route}) => {
                                 </View>
                             </View>
                         </View>
+                        {route.params.application.status==='ENVOYEE' &&
+                          <TouchableOpacity
+                            style={styles.cancelButton}
+                            onPress={handleCancelPress}
+                          >
+                              {!isLoading && <Text style={styles.cancelText}>CANCEL APPLICATION</Text>}
+                              <LoadingIndicator isLoading={isLoading} />
+                          </TouchableOpacity>
+                        }
                     </View>
                 </View>
             </ScrollView>
@@ -241,6 +273,22 @@ const styles = StyleSheet.create({
         color: Color.primary,
         fontSize: 12,
         fontWeight: '600',
+    },
+    cancelButton: {
+        backgroundColor: Color.red,
+        marginHorizontal : 50,
+        paddingVertical: 20,
+        borderRadius: 10,
+        height: 60, // Fixed height
+        maxHeight : 60,
+        minWidth : 250,
+        justifyContent: "center",
+    },
+    cancelText: {
+        color: "#ffffff",
+        fontWeight: "700",
+        fontSize: 14,
+        textAlign : "center"
     },
 });
 

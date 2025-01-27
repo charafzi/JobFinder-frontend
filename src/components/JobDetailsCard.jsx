@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
       flex : 1,
   },
   publicationDateBox: {
-      backgroundColor: Color.green,
+      backgroundColor: Color.purple,
       paddingVertical: 5,
       borderRadius: 5,
       padding : 10,

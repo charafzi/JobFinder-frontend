@@ -13,37 +13,37 @@ import {clearSearchOffres} from "../redux/slices/offres/offreSlice";
 import showToast from "../utils/showToast";
 import {useAuthCheck} from "../hooks/useAuthCheck";
 
-const SearchScreen = ()=>{
+const SearchScreen = () => {
     const dispatch = useDispatch();
     const { searchOffresList, isLoading, params, last, totalPages, error } = useSelector((state) => state.offres);
     const currentScrollPosition = useRef(0);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
     const [refreshing, setRefreshing] = useState(false);
-    const isLoggedIn = useAuthCheck();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     useScrollToTop(flatListRef);
 
-    // Return early if not logged in
-    if (!isLoggedIn) {
-        return null;
-    }
-
-    useEffect(() => {
-        // Only load initial search if logged in
-        if (isLoggedIn) {
-            dispatch(searchOffres({
-                keyword : "",
-                page: 0
-            }));
-        }
-    }, [isLoggedIn]);
-
     useEffect(() => {
         if (error) {
-            showToast("error", "Login failed", error);
+            showToast("error", "Search failed", error);
         }
     }, [error]);
+
+    useEffect(() => {
+        initialLoad();
+    }, []);
+
+    const initialLoad = async () => {
+        try {
+            await dispatch(searchOffres({
+                keyword: "",
+                page: 0
+            }));
+        } finally {
+            setIsInitialLoad(false);
+        }
+    };
 
     const handleRefresh = useCallback(async () => {
         if (isLoading) return;
@@ -52,44 +52,41 @@ const SearchScreen = ()=>{
         try {
             dispatch(clearSearchOffres());
             await dispatch(searchOffres({
-                keyword : "",
+                keyword: "",
                 page: 0
             }));
-
         } finally {
             setRefreshing(false);
         }
     }, [isLoading]);
 
-    const handleLoadMore = async () => {
-        if (!totalPages) return;
-
-        if (!isLoading && !last && params.page < totalPages - 1 && !isLoadingMore.current) {
-            try {
-                isLoadingMore.current = true;
-                const nextPage = params.page + 1;
-                await dispatch(searchOffres({
-                    ...params,
-                    page: nextPage
-                }));
-            } finally {
-                isLoadingMore.current = false;
-            }
+    const handleLoadMore = useCallback(async () => {
+        if (!totalPages || isLoadingMore.current || isLoading || last || params.page >= totalPages - 1) {
+            return;
         }
-    };
 
-    // this for storing the position of scrolling
-    const handleScroll = (event) => {
+        try {
+            isLoadingMore.current = true;
+            const nextPage = params.page + 1;
+            await dispatch(searchOffres({
+                ...params,
+                page: nextPage
+            }));
+        } finally {
+            isLoadingMore.current = false;
+        }
+    }, [totalPages, isLoading, last, params, dispatch]);
+
+    const handleScroll = useCallback((event) => {
         currentScrollPosition.current = event.nativeEvent.contentOffset.y;
-    };
+    }, []);
 
     useEffect(() => {
-        if(params.page === 0){
-            currentScrollPosition.current=0;
+        if (params.page === 0) {
+            currentScrollPosition.current = 0;
         }
     }, [params.page]);
 
-    // save the current position at scrolling list when new data is fetched
     useEffect(() => {
         if (flatListRef.current && currentScrollPosition.current > 0 && params.page > 0) {
             flatListRef.current.scrollToOffset({
@@ -99,95 +96,91 @@ const SearchScreen = ()=>{
         }
     }, [params.page]);
 
-    const keyExtractor = React.useCallback((item) => item.id.toString(), []);
+    const keyExtractor = useCallback((item) => item.id.toString(), []);
 
-    const renderItem = React.useCallback(({ item }) => (
-        <JobCardSearchPreview key={item.id} jobPoste={item} />
+    const renderItem = useCallback(({ item }) => (
+      <JobCardSearchPreview key={item.id} jobPoste={item} />
     ), []);
 
-    const renderFooter = () => {
+    const renderFooter = useCallback(() => {
         if (searchOffresList.length === 0) return null;
-        return (
-            <View style={styles.footerContainer}>
-                {isLoading ? (
-                    <LoadingIndicator
-                    size={"large"}
-                    ></LoadingIndicator>
-                ) : (
-                    <View style={styles.footerContainer}>
-                        <Entypo
-                            name="box"
-                            size={25}
-                            color={Color.placeholderText}
-                        />
-                        <Text style={styles.noMoreResult}>No More Job Offers</Text>
-                    </View>
-                )}
-            </View>
-        );
-    };
 
-    const renderEmpty = () =>{
-        return(
-            <View style={styles.noMoreResultContainer}>
-                <Image
-                    style={styles.noResultImage}
-                    source={require('../../assets/no_result.png')}
-                >
-                </Image>
-                <Text style={styles.noResult}>No results found</Text>
-                <Text style={styles.noResultDesc}>The search could not be found, please check spelling or write another word.</Text>
-            </View>
-        )
-    }
+        if (isLoading && !isInitialLoad) {
+            return (
+              <View style={styles.footerContainer}>
+                  <LoadingIndicator size="large" />
+              </View>
+            );
+        }
+
+        if (last || params.page >= totalPages - 1) {
+            return (
+              <View style={styles.footerContainer}>
+                  <Entypo
+                    name="box"
+                    size={25}
+                    color={Color.placeholderText}
+                  />
+                  <Text style={styles.noMoreResult}>No More Job Offers</Text>
+              </View>
+            );
+        }
+
+        return null;
+    }, [isLoading, isInitialLoad, last, params.page, totalPages, searchOffresList.length]);
+
+    const renderEmpty = useCallback(() => (
+      <View style={styles.noMoreResultContainer}>
+          <Image
+            style={styles.noResultImage}
+            source={require('../../assets/no_result.png')}
+          />
+          <Text style={styles.noResult}>No results found</Text>
+          <Text style={styles.noResultDesc}>
+              The search could not be found, please check spelling or write another word.
+          </Text>
+      </View>
+    ), []);
+
 
     return (
-        <View style={styles.mainContainer}>
-            <TopNavBar
-                showBackButton={false}
-                theme={"purple"}
-            ></TopNavBar>
-            <View style={styles.searchBar}>
-                <Search></Search>
-            </View>
-
-            {isLoading &&
-                <View style={styles.loadingContainer}>
-                <LoadingIndicator size={"large"} isLoading={isLoading} ></LoadingIndicator>
-            </View>}
-
-            {!isLoading && <FlatList
-                data={searchOffresList}
-                contentContainerStyle={styles.flatListContent}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.75}
-                ListFooterComponentStyle={styles.footerList}
-                ListFooterComponent={renderFooter}
-                ref={flatListRef}
-                windowSize={5}
-                initialNumToRender={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={50}
-                onScroll={handleScroll}
-                ListEmptyComponent={renderEmpty}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        colors={[Color.spinner]}
-                        tintColor={Color.spinner}
-                    />
-                }
-            />}
-        </View>
-    )
-}
+      <View style={styles.mainContainer}>
+          <TopNavBar showBackButton={false} theme="purple" />
+          <View style={styles.searchBar}>
+              <Search />
+          </View>
+          {isInitialLoad && isLoading &&
+            <View style={styles.loadingContainer}>
+              <LoadingIndicator size="large" />
+          </View>}
+          { (!isInitialLoad || !isLoading) && <FlatList
+            data={searchOffresList}
+            contentContainerStyle={styles.flatListContent}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponentStyle={styles.footerList}
+            ListFooterComponent={renderFooter}
+            ref={flatListRef}
+            onScroll={handleScroll}
+            ListEmptyComponent={renderEmpty}
+            refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={[Color.spinner]}
+                  tintColor={Color.spinner}
+                />
+            }
+          />}
+      </View>
+    );
+};
 
 const styles = StyleSheet.create({
-    mainContainer:{
-      flex : 1
+    mainContainer: {
+        flex: 1
     },
     flatListContent: {
         flexGrow: 1,
@@ -197,47 +190,24 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 20
     },
-    noResultContainer : {
-        marginVertical: '50%',
+    noMoreResultContainer: {
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
-        marginHorizontal: '50%'
+        justifyContent: "center",
+        marginVertical: '30%'
     },
-    noResult :{
+    noResult: {
         fontSize: 16,
-        fontWeight : "bold",
+        fontWeight: "bold",
         paddingVertical: 10
     },
-    noResultDesc :{
+    noResultDesc: {
         fontSize: 14,
         paddingVertical: 10,
         paddingHorizontal: 50,
         textAlign: "center"
     },
-    loadMoreButton: {
-        backgroundColor: Color.primary,
-        paddingVertical: 15,
-        marginVertical: 10,
-        marginHorizontal: 20,
-        borderRadius: 10,
-        alignItems: "center",
-    },
-    loadMoreText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    noMoreResultContainer:{
-      display: "flex",
-      alignItems: "center",
-      flexDirection: "column",
-      justifyContent: "center",
-        marginVertical : '50%'
-    },
-    noMoreResult:{
+    noMoreResult: {
         fontSize: 12,
         fontWeight: "bold",
         color: Color.placeholderText,
@@ -246,16 +216,16 @@ const styles = StyleSheet.create({
     footerList: {
         paddingBottom: 20
     },
-    loadingContainer:{
-        flex : 1,
-        justifyContent : "center"
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center"
     },
-    footerContainer : {
-        display: "flex",
+    footerContainer: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+        paddingVertical: 20
     }
-})
+});
 
 export default SearchScreen;

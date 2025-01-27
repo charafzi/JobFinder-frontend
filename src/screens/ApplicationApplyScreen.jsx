@@ -284,7 +284,7 @@ const ApplicationApplyScreen = ({route, navigation}) => {
                             
                             <View style={styles.formContainer}>
                                 {isLoadingDocuments ? (
-                                    <Text style={styles.loadingText}>Loading your CVs...</Text>
+                                    <LoadingIndicator isLoading={isLoadingDocuments} size={"small"}></LoadingIndicator>
                                 ) : cvDocuments.length > 0 && (
                                     <>
                                         <Text style={styles.label}>Select an existing CV *</Text>
@@ -301,6 +301,19 @@ const ApplicationApplyScreen = ({route, navigation}) => {
                                                     isSelected={selectedCvId === cv.id}
                                                 />
                                             ))}
+                                            {newCv && (
+                                                <View style={styles.cvItemContainer}>
+                                                    <View style={[styles.cvItem, styles.cvItemSelected]}>
+                                                        <DocumentPreview 
+                                                            document={{
+                                                                type: newCv.type,
+                                                                id: 'new'
+                                                            }}
+                                                            isLoading={false}
+                                                        />
+                                                    </View>
+                                                </View>
+                                            )}
                                         </View>
                                     </>
                                 )}

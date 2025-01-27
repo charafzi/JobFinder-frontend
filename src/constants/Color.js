@@ -23,5 +23,7 @@ export const Color = {
   accept: "#4CAF50",
   decline: "#F44336",
   disabled : '#857fa1',
+  unSeen : "#D6CDFE",
+  purple : "#7871b8",
   cardBackground: "#F8F8F9",
 };

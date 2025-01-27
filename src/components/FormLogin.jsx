@@ -8,19 +8,21 @@ import {
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Feather from "@expo/vector-icons/Feather";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation} from "@react-navigation/native";
 import { Color } from "../constants/Color";
 import showToast from "../utils/showToast";
 import LoadingIndicator from "./LoadingIndicator";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/actions/authAction";
 import { clearTemporaryCredentials } from "../redux/slices/register/registerSlice";
+import {getFCMToken} from "../services/notificationService";
+import {registerFCMToken} from "../redux/slices/notifications/notificationsThunks";
 
 const FormLogin = ({ onLoggedIn}) => {
   const [securePassword, setSecurePassword] = useState(true);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { isLoading, isLoggedIn, error } = useSelector((state) => state.auth);
+  const { isLoading, isLoggedIn, error,fcmToken,id } = useSelector((state) => state.auth);
   const { temporaryCredentials } = useSelector((state) => state.register);
 
   const {
@@ -32,6 +34,14 @@ const FormLogin = ({ onLoggedIn}) => {
 
   useEffect(() => {
     if (isLoggedIn) {
+      // Enregistrer le FCM token en arrière-plan
+      getFCMToken().then(token => {
+        if(fcmToken == null && token) {
+          dispatch(registerFCMToken({fcmToken: token, userId: id}));
+        }
+      }).catch(error => {
+        console.log('Error :', error);
+      });
       onLoggedIn();
     }
   }, [isLoggedIn]);
@@ -81,12 +91,12 @@ const FormLogin = ({ onLoggedIn}) => {
           required: true,
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: "Votre email pas correct",
+            message: "Email entered is invalid",
           },
         }}
       />
       {errors?.email?.type === "required" && (
-        <Text style={styles.errorText}>Veuillez saisir votre email</Text>
+        <Text style={styles.errorText}>Please enter your email</Text>
       )}
       {errors?.email?.type === "pattern" && (
         <Text style={styles.errorText}>{errors?.email?.message}</Text>
@@ -122,10 +132,10 @@ const FormLogin = ({ onLoggedIn}) => {
           </View>
         )}
         rules={{
-          required: "Veuillez saisir votre mot de passe",
+          required: "Please enter your password",
           minLength: {
             value: 6,
-            message: "Le mot de passe doit contenir au moins 6 caractères",
+            message: "Password must be at least 6 characters long",
           },
         }}
       />
@@ -208,6 +218,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 10,
     height: 60, // Fixed height
+    maxHeight : 60,
+    minWidth : 300,
     justifyContent: "center", // Center content vertically
   },
   loginText: {

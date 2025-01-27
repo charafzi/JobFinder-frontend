@@ -16,4 +16,5 @@ export {default as CandidateProfile} from './CandidateProfile';
 export {default as Applications} from './CandidatApplicationsScreen';
 export {default as ApplicationDetails} from './ApplicationDetailsScreen'
 export {default as ApplicationApply} from './ApplicationApplyScreen'
+export {default as Notifications} from './NotificationsScreen'
 export {default as EntrepriseJobDetailsScreen} from './EntrepriseJobDetailsScreen'

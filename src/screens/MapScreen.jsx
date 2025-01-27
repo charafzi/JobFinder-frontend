@@ -2,7 +2,7 @@ import { ActivityIndicator, View, Text, Modal, Animated, TouchableWithoutFeedbac
 import MapView, { Marker } from "react-native-maps";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import * as Location from "expo-location";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,10 +13,13 @@ import {addOffreToMap, clearMapOffres} from "../redux/slices/offres/offreSlice";
 import {WEBSOCKETIO_URL} from "../config/axiosConfig";
 import io from 'socket.io-client';
 import TopNavBar from "../components/TopNavBar";
+import {LoadingIndicator} from "../components";
+import {useNavigation} from "@react-navigation/native";
 
 
 const MapScreen = () => {
     const insets = useSafeAreaInsets();
+    const navigation = useNavigation();
     const mapRef = useRef(null);
     const dispatch = useDispatch();
     const { mapOffresList, error } = useSelector((state) => state.offres);
@@ -102,6 +105,7 @@ const MapScreen = () => {
     const handlePressApply = ()=>{
         hideModal();
         //// add navigation here
+        navigation.navigate('applicationApply',{offre : selectedOffre});
     }
 
     const markerPressed = (offre) => {
@@ -210,7 +214,9 @@ const MapScreen = () => {
                     ))}
                 </MapView>
             ) : (
-                <ActivityIndicator style={styles.loader} />
+              <View style={styles.centred}>
+                  <LoadingIndicator size={"large"} isLoading={firstLoading}></LoadingIndicator>
+              </View>
             )}
 
             <Modal
@@ -232,27 +238,48 @@ const MapScreen = () => {
                             >
                                 <View style={styles.modalHandle} />
                                 {selectedOffre && (
-                                    <View style={styles.jobDetails}>
+                                    <View>
                                         <Text style={styles.title}>{selectedOffre.title}</Text>
                                         <Text style={styles.position}>{selectedOffre.position}</Text>
-                                        <Text style={styles.salary}>
-                                            {selectedOffre.salary.toLocaleString()} DH
-                                        </Text>
-                                        <Text style={styles.contractType}>
-                                            {selectedOffre.contractType}
-                                        </Text>
-                                        <Text style={styles.description}>
-                                            {selectedOffre.description}
-                                        </Text>
-                                        <Text style={styles.requirements}>
-                                            Requirements:
-                                        </Text>
-                                        <View style={styles.requirementsContainer}>
-                                            {selectedOffre.requirements.map((requirement, index) => (
-                                                <View key={index} style={styles.requirementBox}>
-                                                    <Text style={styles.requirementText}>{requirement}</Text>
+                                        <View style={styles.section}>
+                                            <Text style={styles.sectionTitle}>Informations</Text>
+                                            <View style={styles.informationsGrid}>
+                                                <View style={styles.infoItem}>
+                                                    <Text style={styles.infoTitle}>Position</Text>
+                                                    <View style={styles.positionBox}>
+                                                        <Text style={styles.position}>{selectedOffre.position}</Text>
+                                                    </View>
                                                 </View>
-                                            ))}
+                                                <View style={styles.infoItem}>
+                                                    <Text style={styles.infoTitle}>Salary</Text>
+                                                    <View style={styles.salaryBox}>
+                                                        <Text style={styles.salary}>{selectedOffre.salary} Dh</Text>
+                                                        <Text style={styles.month}>
+                                                            /Mo
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                <View style={styles.infoItem}>
+                                                    <Text style={styles.infoTitle}>Contract Type</Text>
+                                                    <View style={styles.contractTypeBox}>
+                                                        <Text style={styles.contractTypeText}>{selectedOffre.contractType}</Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </View>
+                                        <View style={styles.section}>
+                                            <Text style={styles.sectionTitle}>Requirements</Text>
+                                            <View style={styles.informationsGrid}>
+                                                <View style={styles.infoItem}>
+                                                    <View style={styles.requirementsContainer}>
+                                                        {selectedOffre.requirements.map((requirement, index) => (
+                                                          <View key={index} style={styles.requirementBox}>
+                                                              <Text style={styles.requirementText}>{requirement}</Text>
+                                                          </View>
+                                                        ))}
+                                                    </View>
+                                                </View>
+                                            </View>
                                         </View>
                                         <TouchableOpacity 
                                             style={styles.button}
@@ -260,7 +287,7 @@ const MapScreen = () => {
                                                 handlePressApply();
                                             }}
                                         >
-                                            <Text style={styles.buttonText}>Apply Now</Text>
+                                            <Text style={styles.buttonText}>VIEW MORE DETAILS</Text>
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -307,37 +334,18 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginBottom: 20,
     },
-    jobDetails: {
-        paddingBottom: 20,
-    },
     title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 10,
-        color: Color.highLightText,
-    },
-    position: {
         fontSize: 18,
-        color: Color.subtitle,
-        marginBottom: 15,
-    },
-    salary: {
-        fontSize: 20,
         fontWeight: 'bold',
-        color: Color.text,
         marginBottom: 10,
+        color : Color.secondary
     },
+
     contractType: {
         fontSize: 16,
         color: Color.highLightText,
         marginBottom: 15,
         fontWeight: "900"
-    },
-    description: {
-        fontSize: 16,
-        color: Color.text,
-        lineHeight: 24,
-        marginBottom: 20,
     },
     button: {
         backgroundColor: Color.selectedbutton,
@@ -363,20 +371,107 @@ const styles = StyleSheet.create({
     requirementsContainer: {
         flexDirection: "row",
         flexWrap: "wrap",
-        marginTop: 10,
+        marginTop: 5,
     },
     requirementBox: {
         backgroundColor: Color.boxBackground,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 5,
-        marginRight: 8,
+        marginRight: 3,
         marginBottom: 8,
         alignSelf: "flex-start",
     },
     requirementText: {
         fontSize: 12,
         color: Color.text,
+    },
+    centred:{
+        display : "flex",
+        justifyContent : "center",
+        alignItems : "center",
+        marginTop : '75%'
+    },
+    section: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    informationsGrid : {
+        display : "flex",
+        flexDirection : "row",
+        justifyContent : "space-evenly",
+    },
+    infoItem: {
+        marginBottom: 20,
+    },
+    infoTitle: {
+        fontSize : 12,
+        fontWeight : "bold",
+        color: Color.text,
+        marginBottom: 5
+    },
+    position: {
+        color: Color.background,
+        fontWeight: "bold",
+        fontSize: 12,
+        textAlign : "center"
+    },
+    positionBox: {
+        minHeight: 30,
+        maxWidth : 200,
+        backgroundColor: Color.primary,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+    },
+    salaryBox : {
+        flexDirection: "row",
+        alignContent : "center",
+        alignSelf: "center",
+        alignItems: "center",
+        justifyContent: "space-evenly",
+        minWidth: 50,
+        height: 30,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5,
+        backgroundColor : Color.boxBackground,
+        gap : 5
+    },
+    salary :{
+        fontSize: 11,
+        fontWeight: "bold",
+        color : Color.text,
+    },
+    contractTypeBox: {
+        minHeight: 30,
+        backgroundColor: Color.secondary,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        marginRight: 5
+    },
+    contractTypeText:{
+        fontSize: 11,
+        fontWeight: "bold",
+        color : Color.background
+    },
+    month :{
+        fontSize: 10,
+        fontWeight: "bold",
+        paddingTop: -10,
+        color :  Color.text,
     },
 });
 

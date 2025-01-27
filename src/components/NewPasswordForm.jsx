@@ -75,10 +75,10 @@ const NewPasswordForm = ({ email }) => {
           </View>
         )}
         rules={{
-          required: "Veuillez saisir votre mot de passe",
+          required: "Please enter your new password",
           minLength: {
             value: 6,
-            message: "Le mot de passe doit contenir au moins 6 caractères",
+            message: "Password must be at least 6 characters long",
           },
         }}
       />
@@ -116,10 +116,10 @@ const NewPasswordForm = ({ email }) => {
           </View>
         )}
         rules={{
-          required: "Veuillez confirmer votre mot de passe",
+          required: "Please confirm your password",
           validate: (value) =>
             value === watch("password") ||
-            "Les mots de passe ne correspondent pas",
+            "Passwords do not match",
         }}
       />
       {errors?.confirmPassword && (
@@ -172,8 +172,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
     paddingVertical: 20,
     borderRadius: 10,
-    height: 60, // Fixed height
     justifyContent: "center", // Center content vertically
+    minWidth : 300,
+    alignItems: "center",
+    marginTop: 10,
+    height: 60, // Fixed height
+    maxHeight : 60,
   },
   submitText: {
     color: "#ffffff",
