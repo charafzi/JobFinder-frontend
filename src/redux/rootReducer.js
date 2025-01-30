@@ -10,6 +10,7 @@ import entrepriseOffresReducer from './slices/entrepriseOffres/entrepriseOffreSl
 import entrepCandidaturesReducer from './slices/candidatureEntreprise/candidatureSlice';
 import { entrepriseProfileReducer } from './slices/EntrepriseProfile';
 import registerEntreprise  from "./slices/register/registerSlice";
+import notificationsReducer from "./slices/notifications/notificationsSlice";
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
@@ -22,8 +23,8 @@ const rootReducer = combineReducers({
   entrepriseProfile: entrepriseProfileReducer,
   entrepriseOffres : entrepriseOffresReducer,
   candidatures : candidaturesReducer,
-  candidatProfile: candidatProfileReducer,
   entrepCandidatures: entrepCandidaturesReducer,
+  notifications : notificationsReducer
 });
 
 export default rootReducer;

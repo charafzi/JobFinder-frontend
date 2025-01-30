@@ -1,22 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
-    View, 
-    Text, 
-    TouchableOpacity, 
-    Image, 
-    StyleSheet, 
-    ImageBackground, 
-    Dimensions, 
-    TextInput
+    View,
+    Text,
+    TouchableOpacity,
+    Image,
+    StyleSheet,
 } from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import {useNavigation} from "@react-navigation/native";
-import {CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
-import {useSelector} from "react-redux";
+import { useNavigation } from "@react-navigation/native";
+import { CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL } from "../config/axiosConfig";
+import { useDispatch, useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { getUnreadNotificationsCount } from "../redux/slices/notifications/notificationsThunks";
 
 const NAVBAR_THEMES = {
     purple: {
@@ -35,21 +33,27 @@ const NAVBAR_THEMES = {
     },
 };
 
-const TopNavBar = ({
-                    title = "",
-                    showBackButton = true,
-                    showWelcome = false,
-                    onBackPress,
-                    showProfile = true,
-                    profilePicUri = "",
-                    showNotification = true,
-                    onNotificationPress = () => {},
-                    theme = "default"
-                   }) => {
-    const {isCandidat, id, email,entreprise} = useSelector((state)=> state.auth);
+const TopNavBar = React.memo(({
+    title = "",
+    showBackButton = true,
+    showWelcome = false,
+    onBackPress,
+    showProfile = true,
+    showNotification = true,
+    theme = "default"
+}) => {
+    const { isCandidat, id, email, entreprise } = useSelector((state) => state.auth);
+    const { unreadCount } = useSelector((state) => state.notifications);
+    const dispatch = useDispatch();
     const insets = useSafeAreaInsets();
     const colorConfig = NAVBAR_THEMES[theme] || NAVBAR_THEMES.default;
     const navigation = useNavigation();
+
+    useEffect(() => {
+        if (id && showNotification) {
+            dispatch(getUnreadNotificationsCount(id));
+        }
+    }, [id, showNotification]);
 
     const handleBackPress = () => {
         if (onBackPress) {
@@ -60,69 +64,75 @@ const TopNavBar = ({
 
     }
 
-    const onProfilePress = () =>{
-        if(isCandidat){
+    const onProfilePress = () => {
+        if (isCandidat) {
             navigation.navigate('candidat');
-        }else{
+        } else {
             navigation.navigate('company');
         }
     }
 
+    const handleNotificationPress = () => {
+        navigation.navigate('notifications');
+    }
+
     return (
-       <LinearGradient
-           colors={colorConfig.colors}
-           start={colorConfig.start}
-           end={colorConfig.end}
-           style={[styles.container,{paddingTop: insets.top}]}
-       >
-           <View style={[styles.navBar] }>
-               {showBackButton && (
-                   <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-                       <AntDesign
-                           name="left"
-                           size={24}
-                           color={colorConfig.iconColor}
-                           style={styles.icon}
-                       />
-                   </TouchableOpacity>
-               )}
-               {showWelcome &&
-                   <View style={styles.headerContainer}>
-                       <Text style={styles.name}>Welcome Back</Text>
-                       <Text style={[styles.name, {color: '#BEAFFE'}]}>{entreprise.name}</Text>
-                       <Text style={styles.name}>!</Text>
-                   </View>
-               }
-               <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
+        <LinearGradient
+            colors={colorConfig.colors}
+            start={colorConfig.start}
+            end={colorConfig.end}
+            style={[styles.container, { paddingTop: insets.top }]}
+        >
+            <View style={[styles.navBar]}>
+                {showBackButton && (
+                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+                        <AntDesign
+                            name="left"
+                            size={24}
+                            color={colorConfig.iconColor}
+                            style={styles.icon}
+                        />
+                    </TouchableOpacity>
+                )}
+                {showWelcome &&
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.name}>Welcome Back</Text>
+                        <Text style={[styles.name, { color: '#BEAFFE' }]}>{entreprise.name}</Text>
+                        <Text style={styles.name}>!</Text>
+                    </View>
+                }
+                <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
 
-               <View style={styles.rightIcons}>
-                   {showNotification && (
-                       <TouchableOpacity onPress={onNotificationPress}>
-                           <Ionicons
-                               name="notifications"
-                               size={24}
-                               color={colorConfig.iconColor}
-                               style={styles.icon}
-                           />
-                       </TouchableOpacity>
-                   )}
+                <View style={styles.rightIcons}>
+                    {showNotification && (
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={handleNotificationPress}
+                        >
+                            <Ionicons name="notifications-outline" size={24} color={colorConfig.iconColor} />
+                            {unreadCount > 0 && (
+                                <View style={styles.badge}>
+                                    <Text style={styles.badgeText}>{unreadCount}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    )}
 
-                   {showProfile && (
-                       <TouchableOpacity onPress={onProfilePress}>
-                           <Image
-                               source={{
-                                   uri: isCandidat ? CANDIDAT_IMAGE_URL+id: ENTREPRISE_IMAGE_URL+id,
-                               }}
-                               style={styles.profilePic}
-                           />
-                       </TouchableOpacity>
-                   )}
-               </View>
-           </View>
-       </LinearGradient>
-
+                    {showProfile && (
+                        <TouchableOpacity onPress={onProfilePress}>
+                            <Image
+                                source={{
+                                    uri: isCandidat ? CANDIDAT_IMAGE_URL + id : ENTREPRISE_IMAGE_URL + id,
+                                }}
+                                style={styles.profilePic}
+                            />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+        </LinearGradient>
     );
-};
+});
 
 const styles = StyleSheet.create({
     container: {
@@ -159,6 +169,7 @@ const styles = StyleSheet.create({
     },
     iconButton: {
         padding: 4,
+        position: 'relative',
     },
     profileButton: {
         padding: 4,
@@ -182,6 +193,23 @@ const styles = StyleSheet.create({
         textAlign: "left",
         color: Color.background,
     },
-})
+    badge: {
+        position: 'absolute',
+        right: -3,
+        top: -2,
+        backgroundColor: Color.secondary,
+        borderRadius: 10,
+        minWidth: 18,
+        height: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    badgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+    }
+});
 
 export default TopNavBar;

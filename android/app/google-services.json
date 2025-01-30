@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371866080276",
+    "project_id": "jobfinder-cde46",
+    "storage_bucket": "jobfinder-cde46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371866080276:android:9eabc35783c1e1a5f48301",
+        "android_client_info": {
+          "package_name": "com.anonymous.jobfinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDayIyio5-39233AOXtvcm5eztP8PkshTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

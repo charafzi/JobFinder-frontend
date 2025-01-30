@@ -20,7 +20,6 @@ export const checkIfAlreadyApplied = createAsyncThunk(
     async ({ userId, offreId }, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.get(API_BASE_URL+'/api/candidature/check/'+userId+'/'+offreId);
-            console.log("------------------------------------------>")
             console.warn(response)
             return response.data;
         } catch (error) {
@@ -87,4 +86,18 @@ export const getDocuments = createAsyncThunk(
             return rejectWithValue(error.message || 'Error retrieving documents.');
         }
     }
+);
+
+export const cancelApplication = createAsyncThunk(
+  'candidaturesCandidat/cancelApplication',
+  async ({ userId, offreId }, { rejectWithValue }) => {
+    try {
+      console.warn(userId)
+      console.warn(offreId)
+      const response = await axiosInstance.delete('/api/candidature/'+userId+'/'+offreId);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error at deleting your application.');
+    }
+  }
 );

@@ -1,5 +1,5 @@
 import {createSlice} from "@reduxjs/toolkit";
-import {applyToOffer, getCandidaturesByUserId} from "./candidaturesThunk";
+import {applyToOffer, cancelApplication, getCandidaturesByUserId} from "./candidaturesThunk";
 
 const initialState = {
     candidatures : [],
@@ -20,6 +20,13 @@ const CandidaturesSlice = createSlice({
             state.isLoading= false;
             state.error=null;
         },
+        removeCandidature : (state, action)=>{
+            let index = state.candidatures.find((cand)=> cand.offre.id === action.payload)
+
+            if(index != 1){
+                state.candidatures.splice(index,1);
+            }
+        }
     },
     extraReducers: (builder)=>{
         builder
@@ -58,8 +65,21 @@ const CandidaturesSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload || 'Error occurred when applying to this application. Please try again.';
             })
+            //cancel application
+          .addCase(cancelApplication.pending,(state)=>{
+              state.isLoading = true;
+              state.error = null;
+          })
+          .addCase(cancelApplication.rejected,(state,action)=>{
+              state.isLoading = false;
+              state.error = action.payload;
+          })
+          .addCase(cancelApplication.fulfilled,(state)=>{
+              state.isLoading = false;
+              state.error = null;
+          })
     }
 })
 
-export const { clearCandidatures} = CandidaturesSlice.actions;
+export const { clearCandidatures,removeCandidature} = CandidaturesSlice.actions;
 export default CandidaturesSlice.reducer;

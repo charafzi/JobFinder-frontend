@@ -24,7 +24,7 @@ const ResetSuccessfully = ({ navigation }) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View>
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Successfully</Text>
+            <Text style={styles.title}>Password Reset Successful</Text>
             <Text style={[styles.subtitle, { lineHeight: 20 }]}>
               Your password has been updated, please change your password
               regularly to avoid this happening
@@ -57,8 +57,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
+    textAlign : "center",
     fontWeight: "700",
-    fontSize: 30,
+    fontSize: 25,
     padding: 20,
     color: Color.text,
   },
@@ -82,7 +83,8 @@ const styles = StyleSheet.create({
   },
   image: {
     alignSelf: "center",
-    padding: 10,
-    margin: 60,
+    width: 110,
+    height: 110,
+    marginBottom: 30,
   },
 });

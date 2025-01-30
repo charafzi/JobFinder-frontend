@@ -56,64 +56,65 @@ const ForgotPassword = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View>
+        <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Forgot Password?</Text>
-            <Text style={[styles.subtitle, { lineHeight: 20 }]}>
-              To reset your password, you need your email or mobile number that
-              can be authenticated
+            <Text style={styles.subtitle}>
+              To reset your password, you need your email or mobile number that can be authenticated
             </Text>
           </View>
           <Image source={forgotpassword} style={styles.image} />
-          <Text style={styles.inputTitle}>Email</Text>
-          <Controller
-            name="email"
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                placeholder="Brandonelouis@gmail.com"
-                placeholderTextColor={Color.placeholderText}
-                value={value}
-                style={[styles.textInput, value && { fontWeight: "600" }]}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-            )}
-            rules={{
-              required: true,
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Votre email pas correct",
-              },
-            }}
-          />
-          {errors?.email?.type === "required" && (
-            <Text style={styles.errorText}>Veuillez saisir votre email</Text>
-          )}
-          {errors?.email?.type === "pattern" && (
-            <Text style={styles.errorText}>{errors?.email?.message}</Text>
-          )}
-
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={handleSubmit(submit)}
-            disabled={isLoading}
-          >
-            <View style={styles.buttonContent}>
-              {!isLoading && (
-                <Text style={styles.resetText}>RESET PASSWORD</Text>
+          <View style={styles.formContainer}>
+            <Text style={styles.inputTitle}>Email</Text>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  placeholder="Brandonelouis@gmail.com"
+                  placeholderTextColor={Color.placeholderText}
+                  value={value}
+                  style={[styles.textInput, value && { fontWeight: "600" }]}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  keyboardType="email-address"
+                  autoComplete="email"
+                />
               )}
-              <LoadingIndicator isLoading={isLoading} />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backLoginButton}
-            onPress={handleBackToLogin}
-          >
-            <Text style={styles.backLoginText}>BACK TO LOGIN</Text>
-          </TouchableOpacity>
+              rules={{
+                required: true,
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email format",
+                },
+              }}
+            />
+            {errors?.email?.type === "required" && (
+              <Text style={styles.errorText}>Please enter your email</Text>
+            )}
+            {errors?.email?.type === "pattern" && (
+              <Text style={styles.errorText}>{errors?.email?.message}</Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleSubmit(submit)}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <LoadingIndicator isLoading={isLoading}/>
+              ) : (
+                <Text style={styles.resetButtonText}>RESET PASSWORD</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackToLogin}
+            >
+              <Text style={styles.backButtonText}>BACK TO LOGIN</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </SafeAreaView>
@@ -129,14 +130,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Color.background,
   },
+  contentContainer: {
+    alignItems: "center",
+    paddingHorizontal: 50,
+    paddingTop: 50,
+  },
   headerContainer: {
-    padding: 20,
+    marginBottom: 30,
     alignItems: "center",
   },
   title: {
+    textAlign: "center",
     fontWeight: "700",
     fontSize: 30,
-    padding: 20,
+    padding: 10,
     color: Color.text,
   },
   subtitle: {
@@ -144,58 +151,67 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     textAlign: "center",
     color: Color.subtitle,
+    marginHorizontal: 40,
+    lineHeight: 18,
+  },
+  image: {
+    width: 110,
+    height: 110,
+    resizeMode: "contain",
+    marginBottom: 30,
+  },
+  formContainer: {
+    width: "100%",
   },
   inputTitle: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "500",
     color: Color.text,
+    marginBottom: 8,
   },
   textInput: {
-    marginVertical: 10,
+    backgroundColor: "#ffffff",
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    paddingVertical: 15,
     borderRadius: 10,
-    height: 50,
+    marginBottom: 15,
+    fontSize: 14,
+    color: Color.text,
   },
   errorText: {
-    color: "red",
+    color: Color.error,
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10,
   },
   resetButton: {
     backgroundColor: Color.selectedbutton,
-    margin: 20,
-    paddingHorizontal: 60,
-    paddingVertical: 20,
+    paddingVertical: 18,
     borderRadius: 10,
-    height: 60, // Fixed height
-    justifyContent: "center", // Center content vertically
-  },
-  resetText: {
-    textAlign: "center",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  backLoginButton: {
-    backgroundColor: Color.unselectedbutton,
-    marginHorizontal: 20,
-    paddingVertical: 20,
-    borderRadius: 10,
-  },
-  backLoginText: {
-    textAlign: "center",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  image: {
-    alignSelf: "center",
-    padding: 10,
-    margin: 60,
-  },
-  buttonContent: {
-    flexDirection: "row",
-    justifyContent: "center",
+    minWidth : 300,
     alignItems: "center",
-    paddingHorizontal: 60,
+    marginTop: 10,
+    height: 60, // Fixed height
+    maxHeight : 60,
+  },
+  resetButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  backButton: {
+    backgroundColor: Color.unselectedbutton,
+    paddingVertical: 18,
+    borderRadius: 10,
+    minWidth : 300,
+    alignItems: "center",
+    marginTop: 10,
+    height: 60, // Fixed height
+    maxHeight : 60,
+  },
+  backButtonText: {
+    color: Color.selectedbutton,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

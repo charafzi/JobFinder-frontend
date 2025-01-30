@@ -23,6 +23,7 @@ const initialState = {
   error: null,
   token: null,
   refreshToken: null,
+  fcmToken : null
 };
 
 const authReducer = (state = initialState, action) => {

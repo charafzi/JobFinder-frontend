@@ -21,13 +21,12 @@ import {
   ContractTypeModal,
   DateModal,
   ExigencesModal,
-  FormField,
+  FormField, LocationChoiceModal,
   LocationMapModal,
 } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useHasSavedLocation } from "../hooks/useHasSavedLocation";
-import LocationChoiceModal from "../components/LocationChoiceModal";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();

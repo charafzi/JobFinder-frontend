@@ -18,7 +18,7 @@ const NewPassword = ({ route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View>
+        <View  style={styles.contentContainer}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>
@@ -40,11 +40,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: Color.background,
   },
+  contentContainer: {
+    alignItems: "center",
+    paddingHorizontal: 50,
+    paddingTop: 50,
+  },
   headerContainer: {
-    marginTop: 70,
-    padding: 20,
+    marginBottom: 30,
     alignItems: "center",
   },
   title: {
@@ -62,7 +67,8 @@ const styles = StyleSheet.create({
   },
   image: {
     alignSelf: "center",
-    margin: 40,
+    padding: 26,
+    marginBottom: 30,
   },
   errorText: {
     color: "red",

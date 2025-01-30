@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import {
   View,
@@ -10,9 +10,7 @@ import {
   Image,
   Platform,
   Dimensions,
-
   Animated,
-  Keyboard,
   Alert,
   ToastAndroid,
   StatusBar,
@@ -944,10 +942,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  saveButtonText: {
-    color: '#3A317B',
-    fontWeight: '600',
-  },
   cardContainer: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -1209,9 +1203,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderWidth: 1,
     borderColor: '#ddd',
-  },
-  saveButton: {
-    backgroundColor: '#3A317B',
   },
   cancelButtonText: {
     color: '#666',

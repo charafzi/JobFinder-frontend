@@ -68,7 +68,7 @@ const CheckEmail = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View>
+        <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Check Your Email</Text>
             <Text style={styles.subtitle}>
@@ -159,8 +159,12 @@ const styles = StyleSheet.create({
     backgroundColor: Color.background,
   },
   headerContainer: {
-    padding: 20,
+    marginBottom: 30,
     alignItems: "center",
+  },
+  contentContainer: {
+    paddingHorizontal: 50,
+    paddingTop: 130,
   },
   title: {
     fontWeight: "700",
@@ -180,8 +184,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 60,
     paddingVertical: 20,
     borderRadius: 10,
+    minWidth : 300,
+    alignItems: "center",
+    marginTop: 10,
     height: 60, // Fixed height
-    justifyContent: "center", // Center content vertically
+    maxHeight : 60,
   },
   confirmCodeText: {
     textAlign: "center",
@@ -194,6 +201,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     paddingVertical: 20,
     borderRadius: 10,
+    minWidth : 300,
+    alignItems: "center",
+    marginTop: 10,
+    height: 60,
+    maxHeight : 60,
   },
   backLoginText: {
     textAlign: "center",
@@ -203,8 +215,8 @@ const styles = StyleSheet.create({
   },
   image: {
     alignSelf: "center",
-    padding: 10,
-    margin: 60,
+    padding: 26,
+    marginBottom: 30,
   },
   reset: {
     flexDirection: "row",
@@ -224,12 +236,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   OTPcontainer: {
-    margin: 10,
-    padding: 20,
+    margin: 20,
   },
   OTPpinCodeContainer: {
     width: 50,
-    height: 60,
+    height: 50,
   },
   OTPpinCodeText: {
     color: Color.link,
