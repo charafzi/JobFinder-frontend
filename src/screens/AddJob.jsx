@@ -21,17 +21,19 @@ import {
   ContractTypeModal,
   DateModal,
   ExigencesModal,
-  FormField, LocationChoiceModal,
+  FormField,
   LocationMapModal,
 } from "../components";
 import { useScrollToTop } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { useHasSavedLocation } from "../hooks/useHasSavedLocation";
+import LocationChoiceModal from "../components/LocationChoiceModal";
+import MapView, { Marker } from 'react-native-maps';
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
   const ref = useRef(null);
-  const adress = useSelector((state) => state.auth.entreprise);
+  const entreprise = useSelector((state) => state.auth.entreprise);
   useScrollToTop(ref);
   const {
     control,
@@ -169,16 +171,15 @@ const AddJob = ({ navigation }) => {
 
   const handleUseSavedLocation = useCallback(() => {
     if (hasSavedLocation) {
-      setValue("address", adress.adress);
-      setValue("city", adress.city);
-      setValue("longitude", adress.longitude.toString());
-      setValue("latitude", adress.latitude.toString());
+      setValue("address", entreprise.adress.adress);
+      setValue("city", entreprise.adress.city);
+      setValue("longitude", entreprise.adress.longitude.toString());
+      setValue("latitude", entreprise.adress.latitude.toString());
     } else {
       navigation.navigate("EditCompanyProfile");
     }
     setShowLocationChoiceModal(false);
-  }, [adress, setValue, navigation]);
-
+  }, [entreprise?.adress, setValue, navigation, hasSavedLocation]);
 
   const renderLocationField = useCallback(() => (
     <Controller
@@ -203,13 +204,36 @@ const AddJob = ({ navigation }) => {
               {(!longitudeValue || !latitudeValue) && errors.location && (
                 <Text style={styles.errorText}>{errors.location.message}</Text>
               )}
+              {longitudeValue && latitudeValue && (
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    region={{
+                      latitude: parseFloat(latitudeValue),
+                      longitude: parseFloat(longitudeValue),
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    <Marker
+                      coordinate={{
+                        latitude: parseFloat(latitudeValue),
+                        longitude: parseFloat(longitudeValue),
+                      }}
+                    />
+                  </MapView>
+                </View>
+              )}
             </View>
           )}
         />
       )}
     />
   ), [control, errors.location, setShowLocationChoiceModal]);
-
 
   const handleSetLocation = (location) => {
     setValue('longitude', location.longitude.toString());
@@ -282,37 +306,6 @@ const AddJob = ({ navigation }) => {
             {renderFormField("city", "Enter city")}
             {renderFormField("address", "Enter address")}
             {renderLocationField()}
-            {/* <Controller
-              control={control}
-              name="longitude"
-              render={({ field: { value: longitudeValue } }) => (
-                <Controller
-                  control={control}
-                  name="latitude"
-                  render={({ field: { value: latitudeValue } }) => (
-                    <View style={styles.card}>
-                      <View style={styles.fieldHeader}>
-                        <Text style={styles.text}>Localisation</Text>
-                        <TouchableOpacity onPress={() => setShowLocationModal(true)}>
-                          <Feather
-                            name={!longitudeValue ? "plus" : "edit-2"}
-                            size={!longitudeValue ? 24 : 20}
-                            color={Color.link}
-                          />
-                        </TouchableOpacity>
-                      </View>
-
-                      {(!longitudeValue || !latitudeValue) && errors.location && (
-                        <Text style={styles.errorText}>
-                          {errors.location.message}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                />
-              )}
-            /> */}
-
             <Controller
               control={control}
               name="exigences"
@@ -551,6 +544,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 12,
     paddingBottom: 10,
+  },
+  mapContainer: {
+    marginTop: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: 150,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
   },
 });
 

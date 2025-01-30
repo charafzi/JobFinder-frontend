@@ -2,16 +2,16 @@ import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 
 export const useHasSavedLocation = () => {
-  const adress = useSelector((state) => state.auth.entreprise);
+  const entreprise = useSelector((state) => state.auth.entreprise);
   
   return useMemo(() => {
-    if (!adress) return false;
-    const { adress, city, longitude, latitude } = adress;
+    if (!entreprise?.adress) return false;
+    const { adress, city, longitude, latitude } = entreprise.adress;
     return Boolean(adress && city && longitude && latitude);
   }, [
-    adress?.adress, 
-    adress?.city, 
-    adress?.longitude, 
-    adress?.latitude
+    entreprise?.adress?.adress, 
+    entreprise?.adress?.city, 
+    entreprise?.adress?.longitude, 
+    entreprise?.adress?.latitude
   ]);
 };

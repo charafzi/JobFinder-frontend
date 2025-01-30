@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import store from "../redux/store";
 import {logout} from "../redux/actions/authAction";
 
-const localhost = "192.168.0.202";
+const localhost = "192.168.1.20";
 
 export const API_BASE_URL = `http://${localhost}:8091`;
 export const WEBSOCKETIO_URL = `http://${localhost}:8092`;

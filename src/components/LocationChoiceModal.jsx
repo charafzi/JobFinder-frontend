@@ -4,52 +4,52 @@ import { Color } from "../constants/Color";
 import Feather from "@expo/vector-icons/Feather";
 
 const LocationChoiceModal = ({
-    visible,
-    onRequestClose,
-    onUseSavedLocation,
-    onSelectNewLocation,
-    hasSavedLocation,
-}) => {
+                                 visible,
+                                 onRequestClose,
+                                 onUseSavedLocation,
+                                 onSelectNewLocation,
+                                 hasSavedLocation,
+                             }) => {
     return (
-        <Modal
-            visible={visible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={onRequestClose}
-        >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                    <Feather
-                        name="map-pin"
-                        size={32}
-                        color={Color.primary}
-                        style={styles.modalIcon}
-                    />
-                    <Text style={styles.modalTitle}>Choisir la source de localisation</Text>
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={onRequestClose}
+      >
+          <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                  <Feather
+                    name="map-pin"
+                    size={32}
+                    color={Color.primary}
+                    style={styles.modalIcon}
+                  />
+                  <Text style={styles.modalTitle}>Choisir la source de localisation</Text>
 
-                    <TouchableOpacity
-                        style={styles.modalButton}
-                        onPress={onUseSavedLocation}
-                    >
-                        <Text style={styles.buttonText}>Utiliser l'adresse de l'entreprise</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={onUseSavedLocation}
+                  >
+                      <Text style={styles.buttonText}>Utiliser l'adresse de l'entreprise</Text>
+                  </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.modalButton2}
-                        onPress={onSelectNewLocation}
-                    >
-                        <Text style={styles.buttonText2}>Choisir une nouvelle adresse</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalButton2}
+                    onPress={onSelectNewLocation}
+                  >
+                      <Text style={styles.buttonText2}>Choisir une nouvelle adresse</Text>
+                  </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.modalCancelButton}
-                        onPress={onRequestClose}
-                    >
-                        <Text style={styles.cancelButtonText}>Annuler</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={onRequestClose}
+                  >
+                      <Text style={styles.cancelButtonText}>Annuler</Text>
+                  </TouchableOpacity>
+              </View>
+          </View>
+      </Modal>
     );
 };
 
@@ -97,7 +97,7 @@ const styles = {
         width: "100%",
         padding: 15,
         borderRadius: 10,
-        backgroundColor: Color.link,
+        backgroundColor: Color.red,
         marginBottom: 5,
         marginTop: 40,
         alignItems: "center",
