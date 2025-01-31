@@ -50,7 +50,7 @@ import {
 } from '../redux/slices/candidat/candidatProfileThunks';
 
 const { width } = Dimensions.get('window');
-const HEADER_MAX_HEIGHT = 350;
+const HEADER_MAX_HEIGHT = 320;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -64,7 +64,8 @@ const EditProfileCandidat = ({ route }) => {
   // Auth and navigation
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { email, id: candidatId, firstName: authFirstName, lastName: authLastName } = useSelector((state) => state.auth);
+  const candidatId = useSelector(state => state.auth.id);
+  const { firstName, lastName, email } = useSelector(state => state.auth.candidat) || {};
   
   // Profile data from Redux
   const {
@@ -87,8 +88,8 @@ const EditProfileCandidat = ({ route }) => {
 
   // Form data states
   const [editFormData, setEditFormData] = useState({
-    firstName: authFirstName,
-    lastName: authLastName,
+    firstName: firstName,
+    lastName: lastName,
     address: ''
   });
 
@@ -132,6 +133,9 @@ const EditProfileCandidat = ({ route }) => {
   const [showCompetenceModal, setShowCompetenceModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: '', message: '' });
 
   const handleModalClose = () => {
     setShowFormationModal(false);
@@ -244,10 +248,10 @@ const EditProfileCandidat = ({ route }) => {
   useEffect(() => {
     setEditFormData(prev => ({
       ...prev,
-      firstName: authFirstName,
-      lastName: authLastName
+      firstName: firstName,
+      lastName: lastName
     }));
-  }, [authFirstName, authLastName]);
+  }, [firstName, lastName]);
 
   useEffect(() => {
     if (reduxAbout && Array.isArray(reduxAbout) && reduxAbout.length > 0) {
@@ -840,119 +844,148 @@ const EditProfileCandidat = ({ route }) => {
   };
 
   const LanguageModal = () => {
-    const [errors, setErrors] = useState({});
-    
-    const validateForm = () => {
-      const newErrors = {};
-      if (!newLanguage.nomLangue.trim()) newErrors.nomLangue = "Le nom de la langue est requis";
-      if (!newLanguage.niveau) newErrors.niveau = "Le niveau est requis";
-      
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = () => {
-      if (validateForm()) {
-        addLanguage();
-      }
-    };
+    const languageLevels = [
+      { label: 'Débutant', value: 'DEBUTANT' },
+      { label: 'Intermédiaire', value: 'INTERMEDIAIRE' },
+      { label: 'Avancé', value: 'AVANCE' },
+      { label: 'Natif', value: 'NATIF' }
+    ];
 
     return (
       <Modal
         visible={showLangueModal}
-        animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowLangueModal(false)}
+        animationType="slide"
+        onRequestClose={handleModalClose}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <TouchableOpacity
-            style={styles.modalContainer}
-            activeOpacity={1}
-            onPress={() => setShowLangueModal(false)}
-          >
-            <TouchableOpacity 
-              activeOpacity={1} 
-              style={styles.modalContent}
-              onPress={e => e.stopPropagation()}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  Ajouter une langue
-                </Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={() => {
-                    setShowLangueModal(false);
-                    setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
-                  }}
-                >
-                  <MaterialCommunityIcons name="close" size={24} color="#666" />
-                </TouchableOpacity>
-              </View>
+        <TouchableWithoutFeedback onPress={handleModalClose}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {newLanguage.id ? 'Modifier la langue' : 'Ajouter une langue'}
+                  </Text>
+                  <TouchableOpacity onPress={handleModalClose}>
+                    <MaterialCommunityIcons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
 
-              <ScrollView style={styles.modalScrollContent}>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Nom de la langue *</Text>
                   <TextInput
-                    style={[styles.input, errors.nomLangue && styles.inputError]}
+                    style={styles.input}
                     placeholder="Ex: Français, Anglais, Espagnol..."
                     value={newLanguage.nomLangue}
-                    onChangeText={(text) => {
-                      setNewLanguage({ ...newLanguage, nomLangue: text });
-                      if (errors.nomLangue) setErrors(prev => ({ ...prev, nomLangue: null }));
-                    }}
+                    onChangeText={(text) => setNewLanguage({ ...newLanguage, nomLangue: text })}
                   />
-                  {errors.nomLangue && <Text style={styles.errorText}>{errors.nomLangue}</Text>}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Niveau *</Text>
                   <View style={styles.levelButtons}>
-                    {["DEBUTANT", "INTERMEDIAIRE", "AVANCE", "EXPERT"].map((niveau) => (
+                    {languageLevels.map((level) => (
                       <TouchableOpacity
-                        key={niveau}
+                        key={level.value}
                         style={[
                           styles.levelButton,
-                          newLanguage.niveau === niveau && styles.selectedLevelButton,
-                          errors.niveau && styles.levelButtonError
+                          newLanguage.niveau === level.value && styles.selectedLevelButton
                         ]}
-                        onPress={() => {
-                          setNewLanguage({ ...newLanguage, niveau });
-                          if (errors.niveau) setErrors(prev => ({ ...prev, niveau: null }));
-                        }}
+                        onPress={() => setNewLanguage({ ...newLanguage, niveau: level.value })}
                       >
-                        <Text
-                          style={[
-                            styles.levelButtonText,
-                            newLanguage.niveau === niveau && styles.selectedLevelButtonText
-                          ]}
-                        >
-                          {niveau}
+                        <Text style={[
+                          styles.levelButtonText,
+                          newLanguage.niveau === level.value && styles.selectedLevelButtonText
+                        ]}>
+                          {level.label}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
-                  {errors.niveau && <Text style={styles.errorText}>{errors.niveau}</Text>}
                 </View>
-              </ScrollView>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={[styles.button, styles.submitButton]}
-                  onPress={handleSubmit}
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={handleLanguageSubmit}
                 >
-                  <Text style={styles.buttonText}>
-                    Ajouter
+                  <Text style={styles.submitButtonText}>
+                    {newLanguage.id ? 'Modifier' : 'Ajouter'}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
+    );
+  };
+
+  const handleLanguageSubmit = async () => {
+    if (!newLanguage.nomLangue.trim()) {
+      showCustomAlert('error', 'Le nom de la langue est requis');
+      return;
+    }
+
+    try {
+      if (newLanguage.id) {
+        // Update existing language
+        await dispatch(updateLangue({
+          id: newLanguage.id,
+          nomLangue: newLanguage.nomLangue.trim(),
+          niveau: newLanguage.niveau,
+          candidatId
+        })).unwrap();
+        showCustomAlert('success', 'Langue modifiée avec succès');
+      } else {
+        // Create new language
+        await dispatch(createLangue({
+          nomLangue: newLanguage.nomLangue.trim(),
+          niveau: newLanguage.niveau,
+          candidatId
+        })).unwrap();
+        showCustomAlert('success', 'Langue ajoutée avec succès');
+      }
+
+      // Reset form and close modal
+      setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
+      setShowLangueModal(false);
+      
+      // Refresh languages list
+      dispatch(fetchLangues(candidatId));
+    } catch (error) {
+      console.error('Error submitting language:', error);
+      showCustomAlert('error', 'Une erreur est survenue lors de l\'enregistrement');
+    }
+  };
+
+  const showCustomAlert = (type, message) => {
+    setAlertConfig({ type, message });
+    setAlertVisible(true);
+    setTimeout(() => {
+      setAlertVisible(false);
+    }, 3000);
+  };
+
+  const CustomAlert = () => {
+    if (!alertVisible) return null;
+
+    const isSuccess = alertConfig.type === 'success';
+    return (
+      <Animated.View style={[
+        styles.alertContainer,
+        {
+          backgroundColor: isSuccess ? '#4CAF50' : '#f44336',
+        }
+      ]}>
+        <View style={styles.alertContent}>
+          <MaterialCommunityIcons
+            name={isSuccess ? 'check-circle' : 'alert-circle'}
+            size={24}
+            color="#fff"
+          />
+          <Text style={styles.alertText}>{alertConfig.message}</Text>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -1059,7 +1092,7 @@ const EditProfileCandidat = ({ route }) => {
             <MaterialCommunityIcons name="camera" size={20} color="#fff" />
           </View>
         </TouchableOpacity>
-        <Text style={styles.profileName}>{authFirstName} {authLastName}</Text>
+        <Text style={styles.profileName}>{firstName} {lastName}</Text>
         <Text style={styles.profileEmail}>{email}</Text>
       </View>
     );
@@ -1150,32 +1183,15 @@ const EditProfileCandidat = ({ route }) => {
     );
   };
 
-  const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref) => {
-    return (
-      <TextInput
-        ref={ref}
-        value={value}
-        onChangeText={onChangeText}
-        style={[styles.input, props.style]}
-        autoCapitalize="none"
-        autoCorrect={false}
-        blurOnSubmit={false}
-        {...props}
-      />
-    );
-  });
-
-  const showCustomAlert = (type, message) => {
-    Alert.alert(
-      type === 'success' ? 'Succès' : 'Erreur',
-      message,
-      [{ text: 'OK', style: type === 'success' ? 'default' : 'destructive' }],
-      {
-        cancelable: true,
-        titleStyle: { color: type === 'success' ? '#4CAF50' : '#f44336' },
-        messageStyle: { color: '#333333' },
-      }
-    );
+  const handleTextInputFocus = (offset = 0) => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current.scrollTo({
+          y: offset,
+          animated: true
+        });
+      }, 100);
+    }
   };
 
   return (
@@ -1213,19 +1229,19 @@ const EditProfileCandidat = ({ route }) => {
 
             {isEditingProfile ? (
               <View style={styles.editProfileForm}>
-                <CustomTextInput
+                <TextInput
                   placeholder="Prénom"
                   value={editFormData.firstName}
                   onChangeText={(text) => setEditFormData({...editFormData, firstName: text})}
                   onFocus={() => handleTextInputFocus(100)}
                 />
-                <CustomTextInput
+                <TextInput
                   placeholder="Nom"
                   value={editFormData.lastName}
                   onChangeText={(text) => setEditFormData({...editFormData, lastName: text})}
                   onFocus={() => handleTextInputFocus(150)}
                 />
-                <CustomTextInput
+                <TextInput
                   placeholder="Adresse"
                   value={editFormData.address}
                   onChangeText={(text) => setEditFormData({...editFormData, address: text})}
@@ -1234,7 +1250,7 @@ const EditProfileCandidat = ({ route }) => {
               </View>
             ) : (
               <>
-                <Text style={styles.nameText}>{authFirstName} {authLastName}</Text>
+                <Text style={styles.emailText}>{email}</Text>
                 <Text style={styles.addressText}>{editFormData.address || ""}</Text>
               </>
             )}
@@ -1284,7 +1300,8 @@ const EditProfileCandidat = ({ route }) => {
                 ))}
               </View>
               <View style={styles.addSkillContainer}>
-                <CustomTextInput
+                <TextInput
+                  style={styles.skillInput}
                   placeholder="Nouvelle compétence"
                   value={newSkill}
                   onChangeText={setNewSkill}
@@ -1410,7 +1427,7 @@ const EditProfileCandidat = ({ route }) => {
           </View>
 
           {/* Languages Card */}
-          <View style={styles.cardContainer}>
+          <View style={[styles.cardContainer, styles.lastCardContainer]}>
             <View style={[styles.cardIconContainer, styles.languageIcon]}>
               <MaterialCommunityIcons name="translate" size={24} color="#fff" />
             </View>
@@ -1470,6 +1487,7 @@ const EditProfileCandidat = ({ route }) => {
       <View style={styles.bottomTabContainer}>
         <BottomTabNavigation />
       </View>
+      <CustomAlert />
     </SafeAreaView>
   );
 };
@@ -1531,14 +1549,21 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginTop: 10,
     marginBottom: 4,
     textAlign: 'center',
   },
-  profileEmail: {
-    fontSize: 14,
+  emailText: {
+    fontSize: 16,
     color: '#666',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  profileEmail: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.9,
     textAlign: 'center',
   },
   aboutInput: {
@@ -1572,13 +1597,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 16,
+    marginHorizontal: 16,
     marginBottom: 16,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    overflow: 'hidden',
+    shadowRadius: 4,
+  },
+  lastCardContainer: {
+    marginBottom: 100,
   },
   cardIconContainer: {
     width: 50,
@@ -1655,7 +1683,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 8,
     paddingHorizontal: 12,
-    color: '#333',
+    marginRight: 8,
+    backgroundColor: '#fff',
   },
   addButton: {
     width: 40,
@@ -1964,6 +1993,136 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  alertContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 16,
+    elevation: 4,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  alertContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  alertText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 12,
+    flex: 1,
+  },
+  dropdownContainer: {
+    marginBottom: 16,
+  },
+  dropdownLabel: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+  },
+  levelDropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  levelOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  levelOptionSelected: {
+    backgroundColor: '#3A317B',
+  },
+  levelOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  levelOptionTextSelected: {
+    color: '#fff',
+  },
+  modalContainer: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  levelButtons: {
+    flexDirection: 'column',
+  },
+  levelButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#fff',
+  },
+  selectedLevelButton: {
+    backgroundColor: '#3A317B',
+    borderColor: '#3A317B',
+  },
+  levelButtonText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  selectedLevelButtonText: {
+    color: '#fff',
+  },
+  submitButton: {
+    backgroundColor: '#3A317B',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
