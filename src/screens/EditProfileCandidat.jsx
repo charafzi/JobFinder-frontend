@@ -9,15 +9,15 @@ import {
   Platform,
   Dimensions,
   TextInput,
-  Keyboard,
-  Alert,
+  Modal,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  ActivityIndicator,
   SafeAreaView,
   StatusBar,
   Animated,
-  Modal,
-  ActivityIndicator,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView
+  Switch,
+  Keyboard
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -48,6 +48,7 @@ import {
   getProfilePicture,
   createAbout
 } from '../redux/slices/candidat/candidatProfileThunks';
+import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 320;
@@ -55,6 +56,8 @@ const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 const EditProfileCandidat = ({ route }) => {
+  const { candidatId } = route.params;
+  const dispatch = useDispatch();
   const scrollViewRef = useRef(null);
   const scrollY = new Animated.Value(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -63,8 +66,6 @@ const EditProfileCandidat = ({ route }) => {
 
   // Auth and navigation
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const candidatId = useSelector(state => state.auth.id);
   const { firstName, lastName, email } = useSelector(state => state.auth.candidat) || {};
   
   // Profile data from Redux
@@ -131,19 +132,12 @@ const EditProfileCandidat = ({ route }) => {
   const [showExperienceModal, setShowExperienceModal] = useState(false);
   const [showLangueModal, setShowLangueModal] = useState(false);
   const [showCompetenceModal, setShowCompetenceModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
-
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertConfig, setAlertConfig] = useState({ type: '', message: '' });
 
   const handleModalClose = () => {
     setShowFormationModal(false);
     setShowExperienceModal(false);
     setShowLangueModal(false);
     setShowCompetenceModal(false);
-    setShowDeleteModal(false);
-    setItemToDelete(null);
   };
 
   useEffect(() => {
@@ -200,10 +194,11 @@ const EditProfileCandidat = ({ route }) => {
       console.log('Updating formations:', reduxFormations);
       const mappedFormations = reduxFormations.map(f => ({
         id: f.id,
-        titre: f.niveauEtude || 'Sans titre',
-        ecole: f.nomEcole || '',
+        nomEcole: f.nomEcole || 'Sans titre',
+        niveauEtude: f.niveauEtude || '',
         dateDebut: f.dateDebut || '',
         dateFin: f.dateFin || '',
+        enCours: f.enCours || false,
         description: f.description || ''
       }));
       setFormations(mappedFormations);
@@ -215,7 +210,7 @@ const EditProfileCandidat = ({ route }) => {
       console.log('Updating experiences:', reduxExperiences);
       const mappedExperiences = reduxExperiences.map(e => ({
         id: e.id,
-        titre: e.poste || 'Sans titre',
+        poste: e.poste || 'Sans titre',
         entreprise: e.entreprise || '',
         dateDebut: e.dateDebut || '',
         dateFin: e.dateFin || '',
@@ -261,20 +256,30 @@ const EditProfileCandidat = ({ route }) => {
 
   useEffect(() => {
     const loadProfilePicture = async () => {
-      if (candidatId) {
+      if (candidatId && !image) {
         try {
           const result = await dispatch(getProfilePicture(candidatId)).unwrap();
           if (result) {
             setImage(result);
           }
         } catch (error) {
-          console.error('Error loading profile picture in edit:', error);
+          console.error('Error loading profile picture:', error);
+          Toast.show({
+            type: 'error',
+            position: 'top',
+            text1: 'Erreur',
+            text2: 'Erreur lors du chargement de l\'image de profil',
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+          });
         }
       }
     };
 
     loadProfilePicture();
-  }, [candidatId, dispatch]);
+  }, [candidatId]);
 
   const pickImage = async () => {
     try {
@@ -282,27 +287,92 @@ const EditProfileCandidat = ({ route }) => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 1,
+        quality: 0.5, // Qualité à 50% - bon compromis entre taille et qualité
+        allowsMultipleSelection: false,
       });
 
-      if (!result.canceled) {
-        const selectedImage = result.assets[0];
-        
-        // Upload the new image
-        await dispatch(uploadProfilePicture({
-          candidatId: candidatId,
-          uri: selectedImage.uri
-        })).unwrap();
-        
-        // Reload the image after successful upload
-        const newImageUri = await dispatch(getProfilePicture(candidatId)).unwrap();
-        if (newImageUri) {
-          setImage(newImageUri);
+      if (!result.canceled && result.assets[0]) {
+        setIsLoading(true);
+        try {
+          if (!candidatId) {
+            Toast.show({
+              type: 'error',
+              position: 'top',
+              text1: 'Erreur',
+              text2: 'ID du candidat non disponible',
+              visibilityTime: 3000,
+              autoHide: true,
+              topOffset: 30,
+              bottomOffset: 40,
+            });
+            return;
+          }
+
+          const selectedImage = result.assets[0];
+
+          // Créer le FormData
+          const formData = new FormData();
+          formData.append('file', {
+            uri: selectedImage.uri,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+          });
+
+          // Upload the new image
+          await dispatch(uploadProfilePicture({
+            candidatId: Number(candidatId),
+            formData: formData
+          })).unwrap();
+
+          // Reload the image after successful upload
+          const newImageUri = await dispatch(getProfilePicture(candidatId)).unwrap();
+          if (newImageUri) {
+            setImage(newImageUri);
+          }
+
+          Toast.show({
+            type: 'success',
+            position: 'top',
+            text1: 'Photo de profil mise à jour avec succès',
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+          });
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          let errorMessage = 'Une erreur est survenue lors du chargement de l\'image';
+          
+          if (uploadError.message?.includes('Maximum upload size exceeded')) {
+            errorMessage = 'L\'image est trop grande. La taille maximale est de 10MB.';
+          }
+          
+          Toast.show({
+            type: 'error',
+            position: 'top',
+            text1: 'Erreur',
+            text2: errorMessage,
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+          });
+        } finally {
+          setIsLoading(false);
         }
       }
     } catch (error) {
-      console.error('Error picking/uploading image:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors du chargement de l\'image');
+      console.error('Error picking image:', error);
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Une erreur est survenue lors de la sélection de l\'image',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
@@ -404,17 +474,44 @@ const EditProfileCandidat = ({ route }) => {
   const addLanguage = async () => {
     try {
       if (!newLanguage.nomLangue.trim()) {
-        Alert.alert('Erreur', 'Le nom de la langue est requis');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Le nom de la langue est requis',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
       if (!newLanguage.niveau) {
-        Alert.alert('Erreur', 'Le niveau est requis');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Le niveau est requis',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
       if (!candidatId || isNaN(candidatId)) {
         console.error('Invalid candidatId:', candidatId);
-        Alert.alert('Erreur', 'ID du candidat invalide ou manquant');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'ID du candidat invalide ou manquant',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
@@ -436,7 +533,16 @@ const EditProfileCandidat = ({ route }) => {
       setShowLangueModal(false);
     } catch (error) {
       console.error('Error adding language:', error);
-      Alert.alert('Erreur', error.message || 'Impossible d\'ajouter la langue. Veuillez réessayer.');
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: error.message || 'Impossible d\'ajouter la langue. Veuillez réessayer.',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
@@ -451,29 +557,85 @@ const EditProfileCandidat = ({ route }) => {
       console.log('Language removed successfully');
     } catch (error) {
       console.error('Error removing language:', error);
-      Alert.alert('Erreur', 'Impossible de supprimer la langue. Veuillez réessayer.');
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Impossible de supprimer la langue. Veuillez réessayer.',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
   const handleFormationSubmit = async () => {
     try {
       if (!candidatId) {
-        console.error('CandidatId is missing');
-        Alert.alert('Erreur', 'ID du candidat manquant');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'ID du candidat manquant',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
       // Validate all required fields
       if (!newFormation.nomEcole.trim() || !newFormation.niveauEtude.trim() || 
           !newFormation.dateDebut.trim() || !newFormation.dateFin.trim()) {
-        Alert.alert('Erreur', 'Tous les champs sont obligatoires');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Tous les champs sont obligatoires',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
       // Validate date format
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(newFormation.dateDebut) || !dateRegex.test(newFormation.dateFin)) {
-        Alert.alert('Erreur', 'Format de date invalide. Utilisez le format AAAA-MM-JJ');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Format de date invalide. Utilisez le format AAAA-MM-JJ',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+        return;
+      }
+
+      // Validate dates
+      const validateDates = (dateDebut, dateFin) => {
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        return debut < fin; // Changé de <= à < pour une comparaison stricte
+      };
+
+      if (!validateDates(newFormation.dateDebut, newFormation.dateFin)) {
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'La date de fin doit être strictement supérieure à la date de début',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
@@ -506,35 +668,97 @@ const EditProfileCandidat = ({ route }) => {
       setEditingFormation(null);
 
       // Show success message
-      Alert.alert('Succès', editingFormation ? 'Formation modifiée avec succès' : 'Formation ajoutée avec succès');
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Succès',
+        text2: editingFormation ? 'Formation modifiée avec succès' : 'Formation ajoutée avec succès',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     } catch (error) {
       console.error('Error submitting formation:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de la soumission de la formation'
-      );
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: error.message || 'Une erreur est survenue lors de la soumission de la formation',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
   const handleExperienceSubmit = async () => {
     try {
       if (!candidatId) {
-        console.error('CandidatId is missing');
-        Alert.alert('Erreur', 'ID du candidat manquant');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'ID du candidat manquant',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
       // Validate all required fields
       if (!newExperience.poste.trim() || !newExperience.dateDebut.trim() || 
           !newExperience.dateFin.trim()) {
-        Alert.alert('Erreur', 'Tous les champs sont obligatoires');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Tous les champs sont obligatoires',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
       // Validate date format
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(newExperience.dateDebut) || !dateRegex.test(newExperience.dateFin)) {
-        Alert.alert('Erreur', 'Format de date invalide. Utilisez le format AAAA-MM-JJ');
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'Format de date invalide. Utilisez le format AAAA-MM-JJ',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+        return;
+      }
+
+      // Validate dates
+      const validateDates = (dateDebut, dateFin) => {
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        return debut < fin; // Changé de <= à < pour une comparaison stricte
+      };
+
+      if (!validateDates(newExperience.dateDebut, newExperience.dateFin)) {
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'La date de fin doit être strictement supérieure à la date de début',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
         return;
       }
 
@@ -565,13 +789,28 @@ const EditProfileCandidat = ({ route }) => {
       setShowExperienceModal(false);
 
       // Show success message
-      Alert.alert('Succès', editingExperience ? 'Expérience modifiée avec succès' : 'Expérience ajoutée avec succès');
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Succès',
+        text2: editingExperience ? 'Expérience modifiée avec succès' : 'Expérience ajoutée avec succès',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     } catch (error) {
       console.error('Error submitting experience:', error);
-      Alert.alert(
-        'Erreur',
-        error.message || 'Une erreur est survenue lors de la soumission de l\'expérience'
-      );
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: error.message || 'Une erreur est survenue lors de la soumission de l\'expérience',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
@@ -581,8 +820,8 @@ const EditProfileCandidat = ({ route }) => {
     // Mapper les champs pour correspondre au format du formulaire
     const formationToEdit = {
       id: formation.id,
-      titre: formation.titre || '',
-      ecole: formation.ecole || '',
+      nomEcole: formation.nomEcole || '',
+      niveauEtude: formation.niveauEtude || '',
       dateDebut: formation.dateDebut || '',
       dateFin: formation.dateFin || ''
     };
@@ -594,8 +833,8 @@ const EditProfileCandidat = ({ route }) => {
     
     // Mettre à jour le formulaire avec les valeurs existantes
     setNewFormation({
-      nomEcole: formationToEdit.ecole,
-      niveauEtude: formationToEdit.titre,
+      nomEcole: formationToEdit.nomEcole,
+      niveauEtude: formationToEdit.niveauEtude,
       dateDebut: formationToEdit.dateDebut,
       dateFin: formationToEdit.dateFin
     });
@@ -604,23 +843,24 @@ const EditProfileCandidat = ({ route }) => {
     setShowFormationModal(true);
   };
 
-  const handleDeleteFormation = (formation) => {
-    setItemToDelete(formation);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteFormation = async () => {
+  const handleDeleteFormation = async (formationId) => {
     try {
-      if (itemToDelete?.id) {
-        console.log('Deleting formation:', itemToDelete.id);
-        await dispatch(deleteFormation(itemToDelete.id)).unwrap();
-        console.log('Formation deleted successfully');
-      }
+      await dispatch(deleteFormation(formationId)).unwrap();
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Formation supprimée avec succès',
+        visibilityTime: 2000,
+      });
     } catch (error) {
-      console.error('Error deleting formation:', error);
-    } finally {
-      setShowDeleteModal(false);
-      setItemToDelete(null);
+      console.error('Erreur lors de la suppression de la formation:', error);
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur lors de la suppression',
+        text2: error.message,
+        visibilityTime: 3000,
+      });
     }
   };
 
@@ -650,78 +890,89 @@ const EditProfileCandidat = ({ route }) => {
         transparent={true}
         onRequestClose={() => setShowExperienceModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingExperience ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => {
-                  setShowExperienceModal(false);
-                  setEditingExperience(null);
-                  setNewExperience({ poste: '', dateDebut: '', dateFin: '' });
-                }}
-              >
-                <MaterialCommunityIcons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback onPress={() => setShowExperienceModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>
+                        {editingExperience ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.closeButton}
+                        onPress={() => {
+                          setShowExperienceModal(false);
+                          setEditingExperience(null);
+                          setNewExperience({ poste: '', dateDebut: '', dateFin: '' });
+                        }}
+                      >
+                        <MaterialCommunityIcons name="close" size={24} color="#666" />
+                      </TouchableOpacity>
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Poste *</Text>
-              <TextInput
-                style={[styles.input, errors.poste && styles.inputError]}
-                placeholder="Ex: Développeur Java"
-                value={newExperience.poste}
-                onChangeText={(text) => {
-                  setNewExperience(prev => ({ ...prev, poste: text }));
-                  if (errors.poste) setErrors(prev => ({ ...prev, poste: null }));
-                }}
-              />
-              {errors.poste && <Text style={styles.errorText}>{errors.poste}</Text>}
-            </View>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputTitle}>Poste *</Text>
+                      <TextInput
+                        style={[styles.input, errors.poste && styles.inputError]}
+                        placeholder="Ex: Développeur Full Stack"
+                        placeholderTextColor="#AAA6B9"
+                        value={newExperience.poste}
+                        onChangeText={(text) => {
+                          setNewExperience(prev => ({ ...prev, poste: text }));
+                          if (errors.poste) setErrors(prev => ({ ...prev, poste: null }));
+                        }}
+                      />
+                      {errors.poste && <Text style={styles.errorText}>{errors.poste}</Text>}
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Date de début *</Text>
-              <TextInput
-                style={[styles.input, errors.dateDebut && styles.inputError]}
-                placeholder="AAAA-MM-JJ (Ex: 2020-09-01)"
-                value={newExperience.dateDebut}
-                onChangeText={(text) => {
-                  setNewExperience(prev => ({ ...prev, dateDebut: text }));
-                  if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
-                }}
-              />
-              {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
-            </View>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputTitle}>Date de début *</Text>
+                      <TextInput
+                        style={[styles.input, errors.dateDebut && styles.inputError]}
+                        placeholder="AAAA-MM-JJ"
+                        placeholderTextColor="#AAA6B9"
+                        value={newExperience.dateDebut}
+                        onChangeText={(text) => {
+                          setNewExperience(prev => ({ ...prev, dateDebut: text }));
+                          if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
+                        }}
+                      />
+                      {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Date de fin *</Text>
-              <TextInput
-                style={[styles.input, errors.dateFin && styles.inputError]}
-                placeholder="AAAA-MM-JJ (Ex: 2023-06-30)"
-                value={newExperience.dateFin}
-                onChangeText={(text) => {
-                  setNewExperience(prev => ({ ...prev, dateFin: text }));
-                  if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
-                }}
-              />
-              {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
-            </View>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputTitle}>Date de fin *</Text>
+                      <TextInput
+                        style={[styles.input, errors.dateFin && styles.inputError]}
+                        placeholder="AAAA-MM-JJ"
+                        placeholderTextColor="#AAA6B9"
+                        value={newExperience.dateFin}
+                        onChangeText={(text) => {
+                          setNewExperience(prev => ({ ...prev, dateFin: text }));
+                          if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
+                        }}
+                      />
+                      {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
+                    </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.submitButton]}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.buttonText}>
-                  {editingExperience ? 'Modifier' : 'Ajouter'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                    <View style={styles.modalButtons}>
+                      <TouchableOpacity
+                        style={[styles.button, styles.submitButton]}
+                        onPress={handleSubmit}
+                      >
+                        <Text style={styles.buttonText}>
+                          {editingExperience ? 'Modifier' : 'Ajouter'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   };
@@ -735,7 +986,7 @@ const EditProfileCandidat = ({ route }) => {
       if (!newFormation.niveauEtude) newErrors.niveauEtude = "Le niveau d'étude est requis";
       if (!newFormation.dateDebut) newErrors.dateDebut = "La date de début est requise";
       if (!newFormation.dateFin) newErrors.dateFin = "La date de fin est requise";
-      
+
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     };
@@ -753,92 +1004,113 @@ const EditProfileCandidat = ({ route }) => {
         transparent={true}
         onRequestClose={() => setShowFormationModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingFormation ? 'Modifier la formation' : 'Ajouter une formation'}
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => {
-                  setShowFormationModal(false);
-                  setEditingFormation(null);
-                  setNewFormation({ nomEcole: '', niveauEtude: '', dateDebut: '', dateFin: '' });
-                }}
-              >
-                <MaterialCommunityIcons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback onPress={() => setShowFormationModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>
+                        {editingFormation ? 'Modifier la formation' : 'Ajouter une formation'}
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.closeButton}
+                        onPress={() => {
+                          setShowFormationModal(false);
+                          setEditingFormation(null);
+                          setNewFormation({ nomEcole: '', niveauEtude: '', dateDebut: '', dateFin: '' });
+                        }}
+                      >
+                        <MaterialCommunityIcons name="close" size={24} color="#666" />
+                      </TouchableOpacity>
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Ecole *</Text>
-              <TextInput
-                style={[styles.input, errors.nomEcole && styles.inputError]}
-                placeholder="Ex: ESTEM"
-                value={newFormation.nomEcole}
-                onChangeText={(text) => {
-                  setNewFormation(prev => ({ ...prev, nomEcole: text }));
-                  if (errors.nomEcole) setErrors(prev => ({ ...prev, nomEcole: null }));
-                }}
-              />
-              {errors.nomEcole && <Text style={styles.errorText}>{errors.nomEcole}</Text>}
-            </View>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.inputTitle}>Ecole *</Text>
+                      <TextInput
+                        style={[styles.input, errors.nomEcole && styles.inputError]}
+                        placeholder="Ex: ESTEM, EMSI, ENSA..."
+                        placeholderTextColor="#AAA6B9"
+                        value={editingFormation ? editingFormation.nomEcole : newFormation.nomEcole}
+                        onChangeText={(text) => {
+                          if (editingFormation) {
+                            setEditingFormation({...editingFormation, nomEcole: text});
+                          }
+                          setNewFormation(prev => ({ ...prev, nomEcole: text }));
+                          if (errors.nomEcole) setErrors(prev => ({ ...prev, nomEcole: null }));
+                        }}
+                      />
+                      {errors.nomEcole && <Text style={styles.errorText}>{errors.nomEcole}</Text>}
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Niveau d'étude *</Text>
-              <TextInput
-                style={[styles.input, errors.niveauEtude && styles.inputError]}
-                placeholder="Ex: BAC_PLUS_5"
-                value={newFormation.niveauEtude}
-                onChangeText={(text) => {
-                  setNewFormation(prev => ({ ...prev, niveauEtude: text }));
-                  if (errors.niveauEtude) setErrors(prev => ({ ...prev, niveauEtude: null }));
-                }}
-              />
-              {errors.niveauEtude && <Text style={styles.errorText}>{errors.niveauEtude}</Text>}
-            </View>
+                    <View style={[styles.formGroup, { marginTop: 1 }]}>
+                      <Text style={styles.inputTitle}>Niveau d'étude *</Text>
+                      <TextInput
+                        style={[styles.input, errors.niveauEtude && styles.inputError]}
+                        placeholder="Ex: BAC+5, Master, Licence..."
+                        placeholderTextColor="#AAA6B9"
+                        value={editingFormation ? editingFormation.niveauEtude : newFormation.niveauEtude}
+                        onChangeText={(text) => {
+                          if (editingFormation) {
+                            setEditingFormation({...editingFormation, niveauEtude: text});
+                          }
+                          setNewFormation(prev => ({ ...prev, niveauEtude: text }));
+                          if (errors.niveauEtude) setErrors(prev => ({ ...prev, niveauEtude: null }));
+                        }}
+                      />
+                      {errors.niveauEtude && <Text style={styles.errorText}>{errors.niveauEtude}</Text>}
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Date de début *</Text>
-              <TextInput
-                style={[styles.input, errors.dateDebut && styles.inputError]}
-                placeholder="AAAA-MM-JJ (Ex: 2020-09-01)"
-                value={newFormation.dateDebut}
-                onChangeText={(text) => {
-                  setNewFormation(prev => ({ ...prev, dateDebut: text }));
-                  if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
-                }}
-              />
-              {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
-            </View>
+                    <View style={[styles.formGroup, { marginTop: 1 }]}>
+                      <Text style={styles.inputTitle}>Date de début *</Text>
+                      <TextInput
+                        style={[styles.input, errors.dateDebut && styles.inputError]}
+                        placeholder="AAAA-MM-JJ"
+                        placeholderTextColor="#AAA6B9"
+                        value={newFormation.dateDebut}
+                        onChangeText={(text) => {
+                          setNewFormation(prev => ({ ...prev, dateDebut: text }));
+                          if (errors.dateDebut) setErrors(prev => ({ ...prev, dateDebut: null }));
+                        }}
+                      />
+                      {errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
+                    </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Date de fin *</Text>
-              <TextInput
-                style={[styles.input, errors.dateFin && styles.inputError]}
-                placeholder="AAAA-MM-JJ (Ex: 2024-06-30)"
-                value={newFormation.dateFin}
-                onChangeText={(text) => {
-                  setNewFormation(prev => ({ ...prev, dateFin: text }));
-                  if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
-                }}
-              />
-              {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
-            </View>
+                    <View style={[styles.formGroup, { marginTop: 1 }]}>
+                      <Text style={styles.inputTitle}>Date de fin *</Text>
+                      <TextInput
+                        style={[styles.input, errors.dateFin && styles.inputError]}
+                        placeholder="AAAA-MM-JJ"
+                        placeholderTextColor="#AAA6B9"
+                        value={newFormation.dateFin}
+                        onChangeText={(text) => {
+                          setNewFormation(prev => ({ ...prev, dateFin: text }));
+                          if (errors.dateFin) setErrors(prev => ({ ...prev, dateFin: null }));
+                        }}
+                      />
+                      {errors.dateFin && <Text style={styles.errorText}>{errors.dateFin}</Text>}
+                    </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.submitButton]}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.buttonText}>
-                  {editingFormation ? 'Modifier' : 'Ajouter'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                    <View style={styles.modalButtons}>
+                      <TouchableOpacity
+                        style={[styles.button, styles.submitButton]}
+                        onPress={handleSubmit}
+                      >
+                        <Text style={styles.buttonText}>
+                          {editingFormation ? 'Modifier' : 'Ajouter'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Ajouter de l'espace supplémentaire en bas */}
+                    <View style={{ height: 100 }} />
+                  </View>
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   };
@@ -861,58 +1133,61 @@ const EditProfileCandidat = ({ route }) => {
         <TouchableWithoutFeedback onPress={handleModalClose}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
-                    {newLanguage.id ? 'Modifier la langue' : 'Ajouter une langue'}
-                  </Text>
-                  <TouchableOpacity onPress={handleModalClose}>
-                    <MaterialCommunityIcons name="close" size={24} color="#333" />
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>
+                      {newLanguage.id ? 'Modifier la langue' : 'Ajouter une langue'}
+                    </Text>
+                    <TouchableOpacity onPress={handleModalClose}>
+                      <MaterialCommunityIcons name="close" size={24} color="#333" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.inputTitle}>Nom de la langue *</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ex: Français, Anglais, Espagnol..."
+                      placeholderTextColor="#AAA6B9"
+                      value={newLanguage.nomLangue}
+                      onChangeText={(text) => setNewLanguage({ ...newLanguage, nomLangue: text })}
+                    />
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.inputTitle}>Niveau *</Text>
+                    <View style={styles.levelButtons}>
+                      {languageLevels.map((level) => (
+                        <TouchableOpacity
+                          key={level.value}
+                          style={[
+                            styles.levelButton,
+                            newLanguage.niveau === level.value && styles.selectedLevelButton
+                          ]}
+                          onPress={() => setNewLanguage({ ...newLanguage, niveau: level.value })}
+                        >
+                          <Text style={[
+                            styles.levelButtonText,
+                            newLanguage.niveau === level.value && styles.selectedLevelButtonText
+                          ]}>
+                            {level.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={addLanguage}
+                  >
+                    <Text style={styles.submitButtonText}>
+                      {newLanguage.id ? 'Modifier' : 'Ajouter'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Nom de la langue *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ex: Français, Anglais, Espagnol..."
-                    value={newLanguage.nomLangue}
-                    onChangeText={(text) => setNewLanguage({ ...newLanguage, nomLangue: text })}
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Niveau *</Text>
-                  <View style={styles.levelButtons}>
-                    {languageLevels.map((level) => (
-                      <TouchableOpacity
-                        key={level.value}
-                        style={[
-                          styles.levelButton,
-                          newLanguage.niveau === level.value && styles.selectedLevelButton
-                        ]}
-                        onPress={() => setNewLanguage({ ...newLanguage, niveau: level.value })}
-                      >
-                        <Text style={[
-                          styles.levelButtonText,
-                          newLanguage.niveau === level.value && styles.selectedLevelButtonText
-                        ]}>
-                          {level.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={handleLanguageSubmit}
-                >
-                  <Text style={styles.submitButtonText}>
-                    {newLanguage.id ? 'Modifier' : 'Ajouter'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -922,7 +1197,16 @@ const EditProfileCandidat = ({ route }) => {
 
   const handleLanguageSubmit = async () => {
     if (!newLanguage.nomLangue.trim()) {
-      showCustomAlert('error', 'Le nom de la langue est requis');
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Le nom de la langue est requis',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
       return;
     }
 
@@ -935,7 +1219,16 @@ const EditProfileCandidat = ({ route }) => {
           niveau: newLanguage.niveau,
           candidatId
         })).unwrap();
-        showCustomAlert('success', 'Langue modifiée avec succès');
+        Toast.show({
+          type: 'success',
+          position: 'top',
+          text1: 'Succès',
+          text2: 'Langue modifiée avec succès',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
       } else {
         // Create new language
         await dispatch(createLangue({
@@ -943,93 +1236,213 @@ const EditProfileCandidat = ({ route }) => {
           niveau: newLanguage.niveau,
           candidatId
         })).unwrap();
-        showCustomAlert('success', 'Langue ajoutée avec succès');
+        Toast.show({
+          type: 'success',
+          position: 'top',
+          text1: 'Succès',
+          text2: 'Langue ajoutée avec succès',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
       }
 
       // Reset form and close modal
       setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
       setShowLangueModal(false);
       
-      // Refresh languages list
+      // Refresh the languages list
       dispatch(fetchLangues(candidatId));
     } catch (error) {
       console.error('Error submitting language:', error);
-      showCustomAlert('error', 'Une erreur est survenue lors de l\'enregistrement');
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Une erreur est survenue lors de l\'enregistrement',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
     }
   };
 
   const showCustomAlert = (type, message) => {
-    setAlertConfig({ type, message });
-    setAlertVisible(true);
-    setTimeout(() => {
-      setAlertVisible(false);
-    }, 3000);
+    if (type === 'success') {
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: message,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: message,
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+    }
   };
 
-  const CustomAlert = () => {
-    if (!alertVisible) return null;
+  const handleAboutUpdate = async () => {
+    try {
+      if (!candidatId) {
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Erreur',
+          text2: 'ID du candidat manquant',
+          visibilityTime: 3000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+        return;
+      }
 
-    const isSuccess = alertConfig.type === 'success';
+      // Get the current about data
+      const aboutResponse = await dispatch(fetchAbout(candidatId)).unwrap();
+      console.log('Current about data:', aboutResponse);
+
+      if (!aboutResponse || !aboutResponse[0]) {
+        // Create new about if none exists
+        console.log('No about exists, creating new one');
+        await dispatch(createAbout({
+          description: aboutText.trim(),
+          candidatId: candidatId
+        })).unwrap();
+      } else {
+        // Update existing about
+        console.log('Updating existing about');
+        await dispatch(updateAbout({
+          aboutId: aboutResponse[0].id,
+          description: aboutText.trim(),
+          candidatId: candidatId
+        })).unwrap();
+      }
+
+      setIsEditingAbout(false);
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Succès',
+        text2: 'Votre description a été mise à jour avec succès',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+      
+      // Refresh the about data
+      dispatch(fetchAbout(candidatId));
+    } catch (error) {
+      console.error('Error updating about:', error);
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Erreur lors de la mise à jour de votre description',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+    }
+  };
+
+  const renderAboutCard = () => {
     return (
-      <Animated.View style={[
-        styles.alertContainer,
-        {
-          backgroundColor: isSuccess ? '#4CAF50' : '#f44336',
-        }
-      ]}>
-        <View style={styles.alertContent}>
-          <MaterialCommunityIcons
-            name={isSuccess ? 'check-circle' : 'alert-circle'}
-            size={24}
-            color="#fff"
-          />
-          <Text style={styles.alertText}>{alertConfig.message}</Text>
+      <View style={styles.cardContainer}>
+        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
+          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
         </View>
-      </Animated.View>
-    );
-  };
-
-  const renderDeleteConfirmationModal = () => {
-    return (
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDeleteModal}
-        onRequestClose={() => {
-          setShowDeleteModal(false);
-          setItemToDelete(null);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { padding: 20 }]}>
-            <Text style={styles.modalTitle}>Confirmer la suppression</Text>
-            <Text style={styles.modalText}>
-              Êtes-vous sûr de vouloir supprimer cette formation ?
-              {itemToDelete && (
-                `\n${itemToDelete.ecole} - ${itemToDelete.titre}`
-              )}
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowDeleteModal(false);
-                  setItemToDelete(null);
-                }}
-              >
-                <Text style={styles.buttonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={confirmDeleteFormation}
-              >
-                <Text style={[styles.buttonText, { color: '#fff' }]}>Supprimer</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>À propos</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                if (isEditingAbout) {
+                  handleAboutUpdate();
+                } else {
+                  setIsEditingAbout(true);
+                }
+              }}
+            >
+              <MaterialCommunityIcons 
+                name={isEditingAbout ? "check" : "pencil"} 
+                size={24} 
+                color="#3A317B" 
+              />
+            </TouchableOpacity>
           </View>
+          <View style={styles.cardDivider} />
+          {isEditingAbout ? (
+            <TextInput
+              style={styles.textInputContainer}
+              multiline
+              value={aboutText}
+              onChangeText={setAboutText}
+              placeholder="Parlez-nous de vous..."
+              textAlignVertical="top"
+              numberOfLines={4}
+            />
+          ) : (
+            <Text style={styles.aboutText}>
+              {aboutText || "Aucune description ajoutée"}
+            </Text>
+          )}
         </View>
-      </Modal>
+      </View>
     );
+  };
+
+  const handleTextInputFocus = (offset = 0) => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current.scrollTo({
+          y: offset,
+          animated: true
+        });
+      }, 100);
+    }
+  };
+
+  const handleDeleteExperience = async (experienceId) => {
+    try {
+      await dispatch(deleteExperience(experienceId)).unwrap();
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Succès',
+        text2: 'Expérience supprimée avec succès',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+      dispatch(fetchExperiences(candidatId));
+    } catch (error) {
+      console.error('Error deleting experience:', error);
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Erreur',
+        text2: 'Erreur lors de la suppression de l\'expérience',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
+    }
   };
 
   const renderLanguages = () => {
@@ -1096,102 +1509,6 @@ const EditProfileCandidat = ({ route }) => {
         <Text style={styles.profileEmail}>{email}</Text>
       </View>
     );
-  };
-
-  const handleAboutUpdate = async () => {
-    try {
-      if (!candidatId) {
-        showCustomAlert('error', 'ID du candidat manquant');
-        return;
-      }
-
-      // Get the current about data
-      const aboutResponse = await dispatch(fetchAbout(candidatId)).unwrap();
-      console.log('Current about data:', aboutResponse);
-
-      if (!aboutResponse || !aboutResponse[0]) {
-        // Create new about if none exists
-        console.log('No about exists, creating new one');
-        await dispatch(createAbout({
-          description: aboutText.trim(),
-          candidatId: candidatId
-        })).unwrap();
-      } else {
-        // Update existing about
-        console.log('Updating existing about');
-        await dispatch(updateAbout({
-          aboutId: aboutResponse[0].id,
-          description: aboutText.trim(),
-          candidatId: candidatId
-        })).unwrap();
-      }
-
-      setIsEditingAbout(false);
-      showCustomAlert('success', 'Votre description a été mise à jour avec succès');
-      
-      // Refresh the about data
-      dispatch(fetchAbout(candidatId));
-    } catch (error) {
-      console.error('Error updating about:', error);
-      showCustomAlert('error', 'Erreur lors de la mise à jour de votre description');
-    }
-  };
-
-  const renderAboutCard = () => {
-    return (
-      <View style={styles.cardContainer}>
-        <View style={[styles.cardIconContainer, styles.aboutIcon]}>
-          <MaterialCommunityIcons name="account-details" size={24} color="#fff" />
-        </View>
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>À propos</Text>
-            <TouchableOpacity 
-              onPress={() => {
-                if (isEditingAbout) {
-                  handleAboutUpdate();
-                } else {
-                  setIsEditingAbout(true);
-                }
-              }}
-            >
-              <MaterialCommunityIcons 
-                name={isEditingAbout ? "check" : "pencil"} 
-                size={24} 
-                color="#3A317B" 
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardDivider} />
-          {isEditingAbout ? (
-            <TextInput
-              style={styles.aboutInput}
-              multiline
-              value={aboutText}
-              onChangeText={setAboutText}
-              placeholder="Parlez-nous de vous..."
-              textAlignVertical="top"
-              numberOfLines={4}
-            />
-          ) : (
-            <Text style={styles.aboutText}>
-              {aboutText || "Aucune description ajoutée"}
-            </Text>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  const handleTextInputFocus = (offset = 0) => {
-    if (scrollViewRef.current) {
-      setTimeout(() => {
-        scrollViewRef.current.scrollTo({
-          y: offset,
-          animated: true
-        });
-      }, 100);
-    }
   };
 
   return (
@@ -1328,31 +1645,32 @@ const EditProfileCandidat = ({ route }) => {
                 {formations.map((formation, index) => (
                   <View key={formation.id} style={styles.formationCard}>
                     <View style={styles.formationHeader}>
-                      <Text style={styles.formationTitle}>{formation.titre}</Text>
+                      <View style={styles.formationTitleContainer}>
+                        <Text style={styles.formationSchool}>
+                          {formation.nomEcole}
+                        </Text>
+                        <Text style={styles.formationTitle}>
+                          {formation.niveauEtude}
+                        </Text>
+                        <Text style={styles.formationDate}>
+                          {formation.dateDebut} - {formation.dateFin}
+                        </Text>
+                      </View>
                       <View style={styles.actionContainer}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[styles.iconButton, styles.editIconButton]}
                           onPress={() => handleEditFormation(formation)}
                         >
                           <MaterialCommunityIcons name="pencil" size={20} color="#3A317B" />
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[styles.iconButton, styles.deleteIconButton]}
-                          onPress={() => {
-                            if (formation.id) {
-                              handleDeleteFormation(formation);
-                            }
-                          }}
+                          onPress={() => handleDeleteFormation(formation.id)}
                         >
-                          <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
+                          <MaterialCommunityIcons name="delete" size={20} color="#FF6B6B" />
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <Text style={styles.formationSchool}>{formation.ecole}</Text>
-                    <Text style={styles.formationDate}>
-                      {formation.dateDebut} - {formation.dateFin || 'Présent'}
-                    </Text>
-                    <Text style={styles.formationDescription}>{formation.description}</Text>
                   </View>
                 ))}
               </View>
@@ -1382,7 +1700,12 @@ const EditProfileCandidat = ({ route }) => {
                 {experiences.map((experience, index) => (
                   <View key={experience.id} style={styles.experienceCard}>
                     <View style={styles.experienceHeader}>
-                      <Text style={styles.experienceTitle}>{experience.titre}</Text>
+                      <View style={styles.experienceTitleContainer}>
+                        <Text style={styles.experiencePoste}>
+                          {experience.poste}
+                        </Text>
+                        <Text style={styles.experienceEntreprise}>{experience.entreprise}</Text>
+                      </View>
                       <View style={styles.actionContainer}>
                         <TouchableOpacity 
                           style={[styles.iconButton, styles.editIconButton]}
@@ -1396,21 +1719,15 @@ const EditProfileCandidat = ({ route }) => {
                         </TouchableOpacity>
                         <TouchableOpacity 
                           style={[styles.iconButton, styles.deleteIconButton]}
-                          onPress={() => {
-                            if (experience.id) {
-                              handleDeleteExperience(experience.id);
-                            }
-                          }}
+                          onPress={() => handleDeleteExperience(experience.id)}
                         >
                           <MaterialCommunityIcons name="delete" size={20} color="#FF4444" />
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <Text style={styles.experienceCompany}>{experience.entreprise}</Text>
-                    <Text style={styles.experienceDate}>
-                      {experience.dateDebut} - {experience.dateFin || 'Présent'}
+                    <Text style={styles.experiencePeriode}>
+                      {experience.dateDebut} - {experience.dateFin}
                     </Text>
-                    <Text style={styles.experienceDescription}>{experience.description}</Text>
                   </View>
                 ))}
               </View>
@@ -1481,13 +1798,11 @@ const EditProfileCandidat = ({ route }) => {
         {ExperienceModal()}
         {FormationModal()}
         {LanguageModal()}
-        {renderDeleteConfirmationModal()}
       </KeyboardAvoidingView>
 
       <View style={styles.bottomTabContainer}>
         <BottomTabNavigation />
       </View>
-      <CustomAlert />
     </SafeAreaView>
   );
 };
@@ -1789,9 +2104,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   experiencePoste: {
-    fontSize: 14,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
-    fontWeight: '500',
+    marginBottom: 4,
   },
   experienceEntreprise: {
     fontSize: 12,
@@ -1811,57 +2127,58 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    elevation: 5,
+    alignSelf: 'center',
+    marginTop: 'auto',
+    marginBottom: 'auto',
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    width: '100%',
-    maxHeight: '80%'
+    padding: 16,
+    paddingBottom: 20,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#3A317B'
-  },
-  formScrollView: {
-    maxHeight: '70%'
+    color: '#333',
   },
   formGroup: {
-    marginBottom: 15
+    marginBottom: 8
   },
   label: {
-    fontSize: 16,
-    marginBottom: 5,
+    fontSize: 12,
+    fontWeight: "700",
     color: '#333',
-    fontWeight: '500'
   },
   input: {
+    marginVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    height: 50,
+    fontSize: 14,
+    color: '#333',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff'
+    borderColor: '#E0E0E0',
   },
   inputError: {
-    borderColor: '#ff4444'
+    borderColor: '#FF4444',
+    borderWidth: 1,
   },
   errorText: {
-    color: '#ff4444',
+    color: "red",
+    fontWeight: "700",
     fontSize: 12,
-    marginTop: 5
+    paddingBottom: 10,
   },
   pickerContainer: {
     borderWidth: 1,
@@ -1875,7 +2192,8 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20
+    marginTop: 20,
+    marginBottom: 10,
   },
   button: {
     flex: 1,
@@ -1901,7 +2219,7 @@ const styles = StyleSheet.create({
   formationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   experienceHeader: {
@@ -1912,13 +2230,11 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
   iconButton: {
     padding: 8,
     borderRadius: 8,
-    marginLeft: 8,
   },
   editIconButton: {
     backgroundColor: '#E8F0FE',
@@ -1937,6 +2253,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     flex: 1,
+  },
+  formationTitleContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  formationSchool: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  formationTitle: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  formationDate: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  experienceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   avatarContainer: {
     width: 120,
@@ -1983,6 +2330,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   loadingContainer: {
     position: 'absolute',
@@ -2060,7 +2408,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   modalContent: {
-    padding: 20,
+    padding: 16,
+    paddingBottom: 20,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2074,20 +2424,24 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   formGroup: {
-    marginBottom: 20,
+    marginBottom: 8
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
   },
-  input: {
+  textInputContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 15,
+    marginVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    height: 60,
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderColor: '#E0E0E0',
   },
   levelButtons: {
     flexDirection: 'column',
@@ -2123,6 +2477,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  formationCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  formationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  experienceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  iconButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  editIconButton: {
+    backgroundColor: '#E8F0FE',
+  },
+  deleteIconButton: {
+    backgroundColor: '#FEE8E8',
+  },
+  formationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  experienceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  experienceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
 });
 

@@ -582,29 +582,17 @@ export const deleteAbout = createAsyncThunk(
 // Upload Profile Picture
 export const uploadProfilePicture = createAsyncThunk(
   'candidatProfile/uploadProfilePicture',
-  async ({ email, imageUri }) => {
+  async ({ candidatId, formData }) => {
     try {
-      console.log('Uploading profile picture for candidat:', email);
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'profile_picture.jpg'
-      });
-
-      console.log('FormData created:', formData);
+      console.log('Uploading profile picture for candidat:', candidatId);
 
       const response = await axiosInstance.post(
-        `/api/candidat/profile-picture/${email}`,
+        `/api/candidat/profile-picture/${candidatId}`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
         }
       );
 
@@ -615,8 +603,6 @@ export const uploadProfilePicture = createAsyncThunk(
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        method: error.config?.method,
-        url: error.config?.url
       });
       throw error;
     }
