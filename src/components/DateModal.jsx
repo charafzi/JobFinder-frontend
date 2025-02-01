@@ -2,6 +2,7 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { Controller } from "react-hook-form";
 import DateTimePicker from "react-native-ui-datepicker";
+import dayjs from "dayjs"; // Import dayjs library
 import { Color } from "../constants/Color";
 
 const DateModal = ({
@@ -22,7 +23,7 @@ const DateModal = ({
         <View style={styles.dateModalContent}>
           <Controller
             control={control}
-            name="dateLimite"
+            name="deadlineDate"
             render={({ field: { onChange, value } }) => (
               <View>
                 <DateTimePicker
@@ -30,9 +31,10 @@ const DateModal = ({
                   date={date}
                   value={value ? new Date(value) : date.toDate()}
                   onChange={(params) => {
-                    console.log("Selected Date:", params.date);
-                    handleSetDate(params.date);
-                    onChange(params.date);
+                    const selectedDate = dayjs(params.date).format("YYYY-MM-DDTHH:mm:ss");
+                    console.log("Selected Date:", selectedDate);
+                    handleSetDate(selectedDate);
+                    onChange(selectedDate);
                     // handleCloseModal();
                   }}
                   minimumDate={new Date()}

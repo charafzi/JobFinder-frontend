@@ -77,14 +77,14 @@ const JobCard = ({ jobPoste }) => {
         <View style={{ marginLeft: 20 }}>
           <Text style={styles.title}>{jobPoste.position}</Text>
           <Text style={styles.subtitle}>
-            {jobPoste.company.name} . {jobPoste.adress.city}
+            {jobPoste.company?.name || 'Company'} • {jobPoste.adress?.city || 'Location'}
           </Text>
         </View>
       </View>
       {requirements}
       <View style={[styles.row]}>
         <Text style={styles.postedTime}>{timeAgo}</Text>
-        <Text style={styles.salary}>{jobPoste?.salary} DH</Text>
+        <Text style={styles.salary}>{jobPoste?.salary || 0} DH</Text>
         <Text style={[styles.postedTime, { fontWeight: "bold" }]}>/Mo</Text>
       </View>
     </TouchableOpacity>

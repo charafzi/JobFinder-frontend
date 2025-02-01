@@ -26,7 +26,8 @@ const LocationMapModal = ({
   }, [showModal]);
 
   const handleMapPress = (event) => {
-    setSelectedLocation(event.nativeEvent.coordinate);
+    const { coordinate } = event.nativeEvent;
+    setSelectedLocation(coordinate);
   };
 
   const handleConfirm = () => {
@@ -44,31 +45,25 @@ const LocationMapModal = ({
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Controller
-            control={control}
-            name="longitude"
-            render={() => (
-              <Controller
-                control={control}
-                name="latitude"
-                render={() => (
-                  <MapView
-                    style={styles.map}
-                    initialRegion={initialLocation}
-                    onPress={handleMapPress}
-                  >
-                    {selectedLocation && (
-                      <Marker 
-                        coordinate={selectedLocation}
-                        draggable
-                        onDragEnd={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
-                      />
-                    )}
-                  </MapView>
-                )}
+          <MapView
+            style={styles.map}
+            initialRegion={initialLocation}
+            onPress={handleMapPress}
+            zoomEnabled={true}
+            rotateEnabled={false}
+            scrollEnabled={true}
+            pitchEnabled={false}
+            toolbarEnabled={false}
+            moveOnMarkerPress={false}
+          >
+            {selectedLocation && (
+              <Marker 
+                coordinate={selectedLocation}
+                draggable
+                onDragEnd={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
               />
             )}
-          />
+          </MapView>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}

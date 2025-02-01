@@ -8,9 +8,8 @@ import { ENTREPRISE_IMAGE_URL } from "../config/axiosConfig";
 
 
 const JobPreviewHeader = ({ navigation }) => {
-  const { name: entrepriseName, id } = useSelector((state) => state.auth);
-  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
-  const { profilePicture } = useSelector((state) => state.entrepriseProfile);
+  const {id } = useSelector((state) => state.auth);
+  const entreprise = useSelector((state) => state.auth.entreprise);
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
@@ -21,12 +20,12 @@ const JobPreviewHeader = ({ navigation }) => {
       </TouchableOpacity>
       <Text style={styles.title}>Share a Job</Text>
       <View style={styles.profileContainer}>
-        <Image source={profilePicture ? {
+        <Image source={id ? {
           uri: ENTREPRISE_IMAGE_URL + id,
         } : profile} style={styles.profileImage} />
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.title}>{entrepriseName || "Entreprise Name"}</Text>
-          <Text>{entrepriseVille || "Entreprise Ville"}</Text>
+          <Text style={styles.title}>{entreprise.name || "Entreprise Name"}</Text>
+          <Text>{entreprise.adress.city || "Entreprise Ville"}</Text>
         </View>
       </View>
     </View>

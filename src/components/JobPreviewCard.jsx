@@ -11,8 +11,10 @@ const MAX_REQUIREMENTS = 2;
 const JobPreviewCard = ({ jobPoste }) => {
   const [showDetails, setShowDetails] = useState(false);
   const { id } = useSelector((state) => state.auth);
-  const { profilePicture } = useSelector((state) => state.entrepriseProfile);
 
+  console.log("JobPreviewCard - Received JobPoste:", jobPoste);
+  console.log("JobPreviewCard - Deadline Date:", jobPoste?.deadlineDate);
+  console.log("JobPreviewCard - Is Valid Date:", jobPoste?.deadlineDate && dayjs(jobPoste.deadlineDate).isValid());
 
   const requirements = useMemo(() => {
     const requirementsList = jobPoste?.requirements || [];
@@ -40,16 +42,16 @@ const JobPreviewCard = ({ jobPoste }) => {
     <View style={styles.jobCardContainer}>
       <View style={styles.jobCardHeader}>
         <View style={styles.leftContent}>
-          <Image source={profilePicture ? {
+          <Image source={id ? {
             uri: ENTREPRISE_IMAGE_URL + id,
           } : logo} style={styles.iconStyle} />
           <View style={styles.textContainer}>
-            <Text style={styles.text}>{jobPoste?.poste || "job Poste"}</Text>
+            <Text style={styles.text}>{jobPoste?.position || "job Poste"}</Text>
             <Text style={styles.description}>
               {jobPoste?.title || "job title"}
             </Text>
             <Text style={styles.subtitle}>
-              {jobPoste?.city || "job city"} . {jobPoste?.typecontract || "job type contrat"}
+              {jobPoste?.city || "job city"} . {jobPoste?.contractType || "job type contrat"}
             </Text>
           </View>
         </View>
@@ -68,11 +70,13 @@ const JobPreviewCard = ({ jobPoste }) => {
           {requirements}
 
           <Text style={styles.detailTitle}>Salary</Text>
-          <Text style={styles.detailText}>{jobPoste?.salaire || "6000"} Dh</Text>
+          <Text style={styles.detailText}>{jobPoste?.salary || "6000"} Dh</Text>
 
           <Text style={styles.detailTitle}>Deadline</Text>
           <Text style={styles.detailText}>
-            {dayjs(jobPoste?.dateLimite).format("DD/MM/YYYY") || "DD/MM/YYYY"}
+            {jobPoste?.deadlineDate && dayjs(jobPoste.deadlineDate).isValid() 
+              ? dayjs(jobPoste.deadlineDate).format("DD/MM/YYYY HH:mm") 
+              : "No deadline set"}
           </Text>
 
           <Text style={styles.detailTitle}>Location</Text>

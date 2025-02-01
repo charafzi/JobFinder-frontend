@@ -34,6 +34,8 @@ const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
   const ref = useRef(null);
   const entreprise = useSelector((state) => state.auth.entreprise);
+  const id = useSelector((state) => state.auth.id);
+  console.log('Company ID from auth state:', id);  // Add this line to debug
   useScrollToTop(ref);
   const {
     control,
@@ -43,15 +45,16 @@ const AddJob = ({ navigation }) => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      titre: "",
+      title: "",
       description: "",
-      poste: "",
+      position: "",
       exigences: [],
-      typeContrat: "",
-      salaire: "",
-      dateLimite: "",
-      address: "",
+      requirements: [],
+      contractType: "",
+      salary: "",
+      deadlineDate: "",
       city: "",
+      address: "",
       longitude: "",
       latitude: "",
       question: "",
@@ -60,96 +63,92 @@ const AddJob = ({ navigation }) => {
       const errors = {};
 
       // Validation du titre
-      if (!data.titre) {
-        errors.titre = { message: "Le titre est requis" };
-      } else if (data.titre.trim().length < 5) {
-        errors.titre = {
-          message: "Le titre doit contenir au moins 5 caractères",
+      if (!data.title) {
+        errors.title = { message: "Title is required" };
+      } else if (data.title.trim().length < 5) {
+        errors.title = {
+          message: "Title must be at least 5 characters long",
         };
       }
 
       // Validation de la description
       if (!data.description) {
-        errors.description = { message: "La description est requise" };
-      } else if (data.description.trim().length < 10) {
+        errors.description = { message: "Description is required" };
+      } else if (data.description.trim().length < 20) {
         errors.description = {
-          message: "La description doit contenir au moins 10 caractères",
+          message: "Description must be at least 20 characters long",
         };
       }
 
       // Validation du poste
-      if (!data.poste) {
-        errors.poste = { message: "Le poste est requis" };
-      } else if (data.poste.trim().length < 3) {
-        errors.poste = {
-          message: "Le poste doit contenir au moins 3 caractères",
+      if (!data.position) {
+        errors.position = { message: "Position is required" };
+      } else if (data.position.trim().length < 3) {
+        errors.position = {
+          message: "Position must be at least 3 characters long",
         };
       }
 
       // Validation du type de contrat
-      if (!data.typeContrat) {
-        errors.typeContrat = { message: "Le type de contrat est requis" };
+      if (!data.contractType) {
+        errors.contractType = { message: "Contract type is required" };
       } else if (
-        !["CDD", "CDI", "Stage", "Freelance"].includes(data.typeContrat)
+        !["CDD", "CDI", "Freelance", "Stage"].includes(data.contractType)
       ) {
-        errors.typeContrat = {
+        errors.contractType = {
           message:
-            "Le type de contrat doit être valide (CDD, CDI, Stage, Freelance)",
+            "Contract type must be valid (CDD, CDI, Internship, Freelance)",
         };
       }
 
       // Validation du salaire
-      if (!data.salaire) {
-        errors.salaire = { message: "Le salaire est requis" };
-      } else if (isNaN(data.salaire)) {
-        errors.salaire = { message: "Le salaire doit être un nombre" };
-      } else if (parseFloat(data.salaire) <= 0) {
-        errors.salaire = {
-          message: "Le salaire doit être un montant positif supérieur à zéro",
+      if (!data.salary) {
+        errors.salary = { message: "Salary is required" };
+      } else if (isNaN(data.salary)) {
+        errors.salary = { message: "Salary must be a number" };
+      } else if (parseFloat(data.salary) <= 0) {
+        errors.salary = {
+          message: "Salary must be a positive amount greater than zero",
         };
       }
 
       // Validation de la date limite
-      if (!data.dateLimite) {
-        errors.dateLimite = { message: "La date limite est requise" };
-      } else if (isNaN(Date.parse(data.dateLimite))) {
-        errors.dateLimite = {
-          message: "La date limite doit être une date valide",
+      if (!data.deadlineDate) {
+        errors.deadlineDate = { message: "Deadline date is required" };
+      } else if (isNaN(Date.parse(data.deadlineDate))) {
+        errors.deadlineDate = {
+          message: "Deadline date must be a valid date",
         };
-      } else if (new Date(data.dateLimite) <= new Date()) {
-        errors.dateLimite = {
-          message: "La date limite doit être une date future",
+      } else if (new Date(data.deadlineDate) <= new Date()) {
+        errors.deadlineDate = {
+          message: "Deadline date must be in the future",
         };
       }
 
       // Validation des exigences
       if (!data.exigences || data.exigences.length === 0) {
-        errors.exigences = { message: "Au moins une exigence est requise" };
+        errors.exigences = { message: "At least one requirement is required" };
       } else if (data.exigences.some((exigence) => exigence.trim() === "")) {
         errors.exigences = {
-          message: "Chaque exigence doit contenir du texte valide",
+          message: "Each requirement must contain valid text",
         };
       }
 
       // Validation de l'adresse
       if (!data.address) {
-        errors.address = { message: "L'adresse est requise" };
-      } else if (data.address.trim().length < 5) {
-        errors.address = {
-          message: "L'adresse doit contenir au moins 5 caractères",
-        };
+        errors.address = { message: "Address is required" };
       }
 
       if (!data.city) {
-        errors.city = { message: "La ville est requise" };
+        errors.city = { message: "City is required" };
       }
       if (!data.longitude || !data.latitude) {
-        errors.location = { message: "La localisation est requise" };
+        errors.location = { message: "Location is required" };
       }
 
       if (data.question.trim().length < 10) {
         errors.question = {
-          message: "La question doit contenir au moins 10 caractères",
+          message: "Question must be at least 10 characters long",
         };
       }
 
@@ -170,78 +169,63 @@ const AddJob = ({ navigation }) => {
   const hasSavedLocation = useHasSavedLocation();
 
   const handleUseSavedLocation = useCallback(() => {
-    if (hasSavedLocation) {
-      setValue("address", entreprise.adress.adress);
-      setValue("city", entreprise.adress.city);
-      setValue("longitude", entreprise.adress.longitude.toString());
-      setValue("latitude", entreprise.adress.latitude.toString());
-    } else {
-      navigation.navigate("EditCompanyProfile");
+    if (entreprise?.adress) {
+      const longitude = entreprise.adress.longitude;
+      const latitude = entreprise.adress.latitude;
+      
+      if (longitude && latitude) {
+        setValue('address', entreprise.adress.adress);
+        setValue('city', entreprise.adress.city);
+        setValue('longitude', longitude.toString());
+        setValue('latitude', latitude.toString());
+        
+        // Force a re-render of the map
+        setTimeout(() => {
+          setValue('longitude', longitude.toString());
+          setValue('latitude', latitude.toString());
+        }, 100);
+      }
     }
     setShowLocationChoiceModal(false);
-  }, [entreprise?.adress, setValue, navigation, hasSavedLocation]);
-
-  const renderLocationField = useCallback(() => (
-    <Controller
-      control={control}
-      name="longitude"
-      render={({ field: { value: longitudeValue } }) => (
-        <Controller
-          control={control}
-          name="latitude"
-          render={({ field: { value: latitudeValue } }) => (
-            <View style={styles.card}>
-              <View style={styles.fieldHeader}>
-                <Text style={styles.text}>Localisation</Text>
-                <TouchableOpacity onPress={() => setShowLocationChoiceModal(true)}>
-                  <Feather
-                    name={!longitudeValue ? "plus" : "edit-2"}
-                    size={!longitudeValue ? 24 : 20}
-                    color={Color.link}
-                  />
-                </TouchableOpacity>
-              </View>
-              {(!longitudeValue || !latitudeValue) && errors.location && (
-                <Text style={styles.errorText}>{errors.location.message}</Text>
-              )}
-              {longitudeValue && latitudeValue && (
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.map}
-                    region={{
-                      latitude: parseFloat(latitudeValue),
-                      longitude: parseFloat(longitudeValue),
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    pitchEnabled={false}
-                    rotateEnabled={false}
-                  >
-                    <Marker
-                      coordinate={{
-                        latitude: parseFloat(latitudeValue),
-                        longitude: parseFloat(longitudeValue),
-                      }}
-                    />
-                  </MapView>
-                </View>
-              )}
-            </View>
-          )}
-        />
-      )}
-    />
-  ), [control, errors.location, setShowLocationChoiceModal]);
+  }, [entreprise, setValue]);
 
   const handleSetLocation = (location) => {
     setValue('longitude', location.longitude.toString());
     setValue('latitude', location.latitude.toString());
   }
   const onSubmit = (data) => {
-    console.log("Form Data:", data);
-    navigation.navigate("jobPreview", data);
+    // Ensure we have a valid company id
+    if (!id) {
+      console.error('Company ID is missing');
+      return;
+    }
+
+    // Convert form data to match backend DTO
+    const formattedData = {
+      title: data.title,
+      description: data.description,
+      position: data.position,
+      exigences: data.exigences || [], // Pass exigences instead of requirements
+      contractType: data.contractType,
+      salary: parseFloat(data.salary),
+      question: data.question,
+      publicationDate: dayjs().format('YYYY-MM-DDTHH:mm:ss'),
+      deadlineDate: dayjs(data.deadlineDate).format('YYYY-MM-DDTHH:mm:ss'),
+      company: {
+        id: parseInt(id)
+      },
+      adress: {
+        city: data.city,
+        adress: data.address,
+        longitude: parseFloat(data.longitude),
+        latitude: parseFloat(data.latitude)
+      }
+    };
+
+    console.log("AddJob - Deadline Date:", data.deadlineDate);
+    console.log("AddJob - Formatted Deadline Date:", formattedData.deadlineDate);
+    console.log("Formatted Form Data:", formattedData);
+    navigation.navigate("jobPreview", formattedData);
   };
 
   const onError = (errors) => {
@@ -276,6 +260,62 @@ const AddJob = ({ navigation }) => {
     [control, editingField, errors],
   );
 
+  const renderLocationField = useCallback(() => (
+    <Controller
+      control={control}
+      name="longitude"
+      render={({ field: { value: longitudeValue } }) => (
+        <Controller
+          control={control}
+          name="latitude"
+          render={({ field: { value: latitudeValue } }) => (
+            <View style={styles.card}>
+              <View style={styles.fieldHeader}>
+                <Text style={styles.text}>Location</Text>
+                <TouchableOpacity onPress={() => setShowLocationChoiceModal(true)}>
+                  <Feather
+                    name={!longitudeValue ? "plus" : "edit-2"}
+                    size={!longitudeValue ? 24 : 20}
+                    color={Color.link}
+                  />
+                </TouchableOpacity>
+              </View>
+              {(!longitudeValue || !latitudeValue) && errors.location && (
+                <Text style={styles.errorText}>{errors.location.message}</Text>
+              )}
+              {longitudeValue && latitudeValue && (
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    initialRegion={{
+                      latitude: parseFloat(latitudeValue) || 0,
+                      longitude: parseFloat(longitudeValue) || 0,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    region={{
+                      latitude: parseFloat(latitudeValue) || 0,
+                      longitude: parseFloat(longitudeValue) || 0,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                  >
+                    <Marker
+                      coordinate={{
+                        latitude: parseFloat(latitudeValue) || 0,
+                        longitude: parseFloat(longitudeValue) || 0,
+                      }}
+                    />
+                  </MapView>
+                </View>
+              )}
+            </View>
+          )}
+        />
+      )}
+    />
+  ), [control, errors.location, setShowLocationChoiceModal]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
@@ -293,16 +333,16 @@ const AddJob = ({ navigation }) => {
               <Feather name="x" size={24} color={Color.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSubmit(onSubmit, onError)}>
-              <Text style={styles.submitText}>Suivant</Text>
+              <Text style={styles.submitText}>Next</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Add a Job</Text>
           </View>
           <View style={styles.formContainer}>
-            {renderFormField("titre", "Enter titre")}
-            {renderFormField("description", "Enter description")}
-            {renderFormField("poste", "Enter poste")}
+            {renderFormField("title", "Enter job title")}
+            {renderFormField("description", "Enter job description")}
+            {renderFormField("position", "Enter position")}
             {renderFormField("city", "Enter city")}
             {renderFormField("address", "Enter address")}
             {renderLocationField()}
@@ -312,7 +352,7 @@ const AddJob = ({ navigation }) => {
               render={({ field: { value } }) => (
                 <View style={styles.card}>
                   <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Exigences</Text>
+                    <Text style={styles.text}>Requirements</Text>
                     <TouchableOpacity
                       onPress={() => setShowExigencesModal(true)}
                     >
@@ -343,11 +383,11 @@ const AddJob = ({ navigation }) => {
 
             <Controller
               control={control}
-              name="typeContrat"
+              name="contractType"
               render={({ field: { value } }) => (
                 <View style={styles.card}>
                   <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Type Contrat</Text>
+                    <Text style={styles.text}>Contract Type</Text>
                     <TouchableOpacity
                       onPress={() => setShowContractModal(true)}
                     >
@@ -359,26 +399,26 @@ const AddJob = ({ navigation }) => {
                     </TouchableOpacity>
                   </View>
                   {value && <Text style={styles.value}>{value}</Text>}
-                  {errors.typeContrat && (
+                  {errors.contractType && (
                     <Text style={styles.errorText}>
-                      {errors.typeContrat.message}
+                      {errors.contractType.message}
                     </Text>
                   )}
                 </View>
               )}
             />
 
-            {renderFormField("salaire", "Enter salaire", {
+            {renderFormField("salary", "Enter salary (DH/Month)", {
               keyboardType: "number-pad",
             })}
 
             <Controller
               control={control}
-              name="dateLimite"
+              name="deadlineDate"
               render={({ field: { value } }) => (
                 <View style={styles.card}>
                   <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Date Limite</Text>
+                    <Text style={styles.text}>Deadline Date</Text>
                     <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                       <Feather
                         name={!value ? "plus" : "edit-2"}
@@ -392,16 +432,16 @@ const AddJob = ({ navigation }) => {
                       {new Date(value).toLocaleString()}
                     </Text>
                   )}
-                  {errors.dateLimite && (
+                  {errors.deadlineDate && (
                     <Text style={styles.errorText}>
-                      {errors.dateLimite.message}
+                      {errors.deadlineDate.message}
                     </Text>
                   )}
                 </View>
               )}
             />
 
-            {renderFormField("question", "Entrez une question pour les candidats")}
+            {renderFormField("question", "Enter screening question")}
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -419,19 +459,13 @@ const AddJob = ({ navigation }) => {
 
       <ExigencesModal
         showModal={showExigencesModal}
-        handleCloseModal={useCallback(() => {
-          setShowExigencesModal(false);
-        }, [])}
-        currentExigences={useCallback(() => {
-          getValues("exigences");
-        }, [getValues])}
-        handleSetExigences={useCallback(
-          (newExigences) => {
-            setValue("exigences", newExigences);
-          },
-          [setValue],
-        )}
+        handleCloseModal={() => setShowExigencesModal(false)}
         control={control}
+        handleSetExigences={(newExigences) => {
+          setValue("exigences", newExigences);
+          const requirements = [...newExigences]; // Copy for the requirements field
+          setValue("requirements", requirements);
+        }}
       />
 
       <LocationMapModal
@@ -454,7 +488,7 @@ const AddJob = ({ navigation }) => {
         showModal={showContractModal}
         handleSetValue={useCallback(
           (option) => {
-            setValue("typeContrat", option);
+            setValue("contractType", option);
           },
           [setValue],
         )}
@@ -466,13 +500,11 @@ const AddJob = ({ navigation }) => {
           setShowDatePicker(false);
         }, [setShowDatePicker])}
         showDatePicker={showDatePicker}
-        date={date}
-        handleSetDate={useCallback(
-          (date) => {
-            setDate(date);
-          },
-          [setDate],
-        )}
+        handleSetDate={useCallback((date) => {
+          setValue("deadlineDate", date);
+          setShowDatePicker(false);
+        }, [setValue])}
+        date={dayjs()}
         control={control}
       />
     </SafeAreaView>
