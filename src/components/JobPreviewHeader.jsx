@@ -4,11 +4,12 @@ import { profile } from "../../assets";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Color } from "../constants/Color";
 import { useSelector } from "react-redux";
+import { ENTREPRISE_IMAGE_URL } from "../config/axiosConfig";
 
 
 const JobPreviewHeader = ({ navigation }) => {
-  const { name: entrepriseName } = useSelector((state) => state.auth);
-  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
+  const {id } = useSelector((state) => state.auth);
+  const entreprise = useSelector((state) => state.auth.entreprise);
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
@@ -19,10 +20,12 @@ const JobPreviewHeader = ({ navigation }) => {
       </TouchableOpacity>
       <Text style={styles.title}>Share a Job</Text>
       <View style={styles.profileContainer}>
-        <Image source={profile} style={styles.profileImage} />
+        <Image source={id ? {
+          uri: ENTREPRISE_IMAGE_URL + id,
+        } : profile} style={styles.profileImage} />
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.title}>{entrepriseName || "Entreprise Name"}</Text>
-          <Text>{entrepriseVille || "Entreprise Ville"}</Text>
+          <Text style={styles.title}>{entreprise.name || "Entreprise Name"}</Text>
+          <Text>{entreprise.adress.city || "Entreprise Ville"}</Text>
         </View>
       </View>
     </View>
@@ -44,6 +47,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     width: 56,
     height: 56,
+    borderRadius: 30,
   },
   title: {
     color: Color.text,

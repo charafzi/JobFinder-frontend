@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -8,8 +8,7 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   StatusBar, 
-  Dimensions,
-  Animated
+  Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from '@expo/vector-icons/Feather';
@@ -19,122 +18,44 @@ import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   fetchEntrepriseByEmail,
-  getProfilePicture 
 } from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
+import { ENTREPRISE_IMAGE_URL } from '../config/axiosConfig';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 350;
-const HEADER_MIN_HEIGHT = 90;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-const TopNavBar = ({ opacity }) => {
+const TopNavBar = () => {
   const navigation = useNavigation();
   return (
-    <Animated.View style={[styles.topNavBar, { opacity }]}>
+    <View style={styles.topNavBar}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Icon name="arrow-back-ios" size={24} color="#fff" />
       </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 };
 
+
 const CompanyProfile = () => {
   const dispatch = useDispatch();
-  const { email } = useSelector((state) => state.auth);
-  const { entreprise, loading, error } = useSelector((state) => state.entrepriseProfile);
-  const [profileImage, setProfileImage] = useState(null);
-
-  const loadProfilePicture = async () => {
-    try {
-      if (!entreprise?.id) {
-        return;
-      }
-      const result = await dispatch(getProfilePicture(entreprise.id));
-      if (result.payload) {
-        setProfileImage(result.payload);
-      }
-    } catch (error) {
-      console.error('Error loading profile picture:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (email) {
-      dispatch(fetchEntrepriseByEmail(email));
-    }
-  }, [dispatch, email]);
-
-  useEffect(() => {
-    if (entreprise?.id) {
-      loadProfilePicture();
-    }
-  }, [entreprise?.id]);
-
-  useEffect(() => {
-    if (entreprise?.id) {
-      const interval = setInterval(() => {
-        loadProfilePicture();
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [entreprise?.id]);
-
-  useEffect(() => {
-    if (entreprise) {
-      console.log('Entreprise data received:', {
-        name: entreprise.name,
-        about: entreprise.about,
-        activitySectors: entreprise.activitySectors,
-        adress: entreprise.adress
-      });
-    }
-    if (error) {
-      console.log('Error fetching entreprise:', error);
-    }
-  }, [entreprise, error]);
-
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const { email, id } = useSelector((state) => state.auth);
+  const { entreprise, loading, error, profilePicture } = useSelector((state) => state.entrepriseProfile);
   const [expandedSections, setExpandedSections] = useState({
     about: false,
     industries: false,
     address: false
   });
 
-  const rotationValues = {
-    about: useRef(new Animated.Value(0)).current,
-    industries: useRef(new Animated.Value(0)).current,
-    address: useRef(new Animated.Value(0)).current
-  };
+  //see the content of profilePicture on the loading of the page
+  useEffect(() => {
+    console.log("profile Picture: " ,profilePicture);
+  }, []);
 
-  const headerHeight = scrollY.interpolate({
-    inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-    extrapolate: 'clamp',
-  });
-
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
-    outputRange: [1, 0.5, 0],
-    extrapolate: 'clamp',
-  });
-
-  const logoScale = scrollY.interpolate({
-    inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [1, 0.6],
-    extrapolate: 'clamp',
-  });
-
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [0, -HEADER_SCROLL_DISTANCE],
-    extrapolate: 'clamp',
-  });
-
-  const headerContentTranslateY = scrollY.interpolate({
-    inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [0, HEADER_SCROLL_DISTANCE / 2],
-    extrapolate: 'clamp',
-  });
+  useEffect(() => {
+    if (email) {
+      dispatch(fetchEntrepriseByEmail(email));
+    }
+  }, [dispatch, email]);
 
   const navigation = useNavigation();
 
@@ -147,52 +68,21 @@ const CompanyProfile = () => {
       ...prev,
       [sectionName]: !prev[sectionName]
     }));
-
-    Animated.spring(rotationValues[sectionName], {
-      toValue: expandedSections[sectionName] ? 0 : 1,
-      useNativeDriver: true,
-      tension: 125,
-      friction: 8
-    }).start();
-  };
-
-  const getRotation = (sectionName) => {
-    return rotationValues[sectionName].interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '45deg']
-    });
   };
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <StatusBar translucent backgroundColor="transparent" />
-      
-      <Animated.View 
-        style={[
-          styles.header, 
-          { 
-            height: headerHeight,
-            transform: [{ translateY: headerTranslateY }]
-          }
-        ]}
-      >
+      <StatusBar translucent backgroundColor="transparent" />      
+      <View style={styles.header}>
         <View style={styles.headerBackground}>
-          <TopNavBar opacity={headerOpacity} />
-          <Animated.View 
-            style={[
-              styles.headerContent, 
-              { 
-                opacity: headerOpacity,
-                transform: [{ translateY: headerContentTranslateY }]
-              }
-            ]}
-          >
-            <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
+          <TopNavBar />
+          <View style={styles.headerContent}>
+            <View style={styles.logoContainer}>
               <Image
-                source={profileImage ? { uri: profileImage } : require('../../assets/google.png')}
+                source={profilePicture ? { uri: ENTREPRISE_IMAGE_URL + id } : require('../../assets/google.png')}
                 style={styles.logo}
               />
-            </Animated.View>
+            </View>
             <View style={styles.profileInfo}>
               <Text style={styles.companyName}>{entreprise?.name || 'Company Name'}</Text>
               <Text style={styles.location}>
@@ -217,18 +107,13 @@ const CompanyProfile = () => {
                 Modifier le profil
               </Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </View>
-      </Animated.View>
+      </View>
 
-      <Animated.ScrollView 
+      <ScrollView 
         style={styles.container} 
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
       >
         {/* About Section */}
         <TouchableOpacity 
@@ -241,18 +126,13 @@ const CompanyProfile = () => {
               <MaterialCommunityIcons name="information-outline" size={24} color="#FF6B6B" style={styles.sectionIcon} />
               <Text style={styles.sectionTitleText}>About</Text>
             </View>
-            <Animated.View 
-              style={[
-                styles.expandButton,
-                { transform: [{ rotate: getRotation('about') }] }
-              ]}
-            >
+            <View style={styles.expandButton}>
               <Icon 
                 name="add"
                 size={24} 
                 color="#FF9228"
               />
-            </Animated.View>
+            </View>
           </View>
           {expandedSections.about && (
             <Text style={styles.sectionContent}>
@@ -272,18 +152,13 @@ const CompanyProfile = () => {
               <MaterialCommunityIcons name="office-building" size={24} color="#FF8C42" style={styles.sectionIcon} />
               <Text style={styles.sectionTitleText}>Secteurs d'activités</Text>
             </View>
-            <Animated.View 
-              style={[
-                styles.expandButton,
-                { transform: [{ rotate: getRotation('industries') }] }
-              ]}
-            >
+            <View style={styles.expandButton}>
               <Icon 
                 name="add"
                 size={24} 
                 color="#FF9228"
               />
-            </Animated.View>
+            </View>
           </View>
           {expandedSections.industries && (
             <View style={styles.tags}>
@@ -311,18 +186,13 @@ const CompanyProfile = () => {
               <Icon name="place" size={24} color="#FF6B6B" style={styles.sectionIcon} />
               <Text style={styles.sectionTitleText}>Address</Text>
             </View>
-            <Animated.View 
-              style={[
-                styles.expandButton,
-                { transform: [{ rotate: getRotation('address') }] }
-              ]}
-            >
+            <View style={styles.expandButton}>
               <Icon 
                 name="add"
                 size={24} 
                 color="#FF9228"
               />
-            </Animated.View>
+            </View>
           </View>
           {expandedSections.address && entreprise?.adress && (
             <>
@@ -357,7 +227,7 @@ const CompanyProfile = () => {
           )}
         </TouchableOpacity>
         <View style={styles.bottomSpacing} />
-      </Animated.ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -370,24 +240,18 @@ const styles = StyleSheet.create({
   header: {
     width: '100%',
     height: HEADER_MAX_HEIGHT,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    overflow: 'hidden',
-  },
-  headerBackground: {
-    flex: 1,
     backgroundColor: '#3A317B',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+  },
+  headerBackground: {
+    flex: 1,
+    paddingBottom: 50,
   },
   headerContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 20,
   },
   topNavBar: {
     flexDirection: 'row',
@@ -395,16 +259,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    position: 'absolute',
-    top: 40,
-    left: 0,
-    right: 0,
-    zIndex: 2,
+    marginTop: 40,
   },
   container: {
+    marginTop: 20,
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: HEADER_MAX_HEIGHT + 20,
   },
   section: {
     backgroundColor: '#fff',

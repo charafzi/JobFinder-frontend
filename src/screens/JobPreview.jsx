@@ -7,14 +7,13 @@ import {
   Text,
   View,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { Color } from "../constants/Color";
 import {
   JobPreviewCard,
   JobPreviewDescription,
   JobPreviewFooter,
   JobPreviewHeader,
-  JobPreviewPhotoUploader,
 } from "../components";
 import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
@@ -22,51 +21,72 @@ import { createEntrepriseOffre } from "../redux/slices/entrepriseOffres/createEn
 
 const JobPreview = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const { id: companyId, name: entrepriseName } = useSelector((state) => state.auth);
-  const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
-  const [showAddPhotos, setShowAddPhotos] = useState(false);
+  const entreprise = useSelector((state) => state.auth.entreprise);
+  const {id} = useSelector((state) => state.auth);
   const {
-    titre,
+    title,
     description,
-    poste,
+    position,
     exigences,
-    typeContrat,
-    salaire,
-    dateLimite,
-    address,
-    city,
-    longitude,
-    latitude,
+    contractType,
+    salary,
+    deadlineDate,
+    adress,
     question,
   } = route.params || {};
 
+  console.log("JobPreview - Received Deadline Date:", deadlineDate);
+
+  const jobPoste = {
+    title: title,
+    requirements: exigences || [],
+    position: position,
+    city: adress.city,
+    contractType: contractType,
+    description: description,
+    salary: salary,
+    deadlineDate: deadlineDate,
+    address: adress.adress,
+  };
+
+  console.log("JobPreview - JobPoste Deadline Date:", jobPoste.deadlineDate);
+
   const onSubmit = async () => {
+    const publicationDate = dayjs().format("YYYY-MM-DDTHH:mm:ss");
+    // Make sure deadlineDate is a valid date string
+    const formattedDeadlineDate = deadlineDate ? dayjs(deadlineDate).format("YYYY-MM-DDTHH:mm:ss") : null;
+
     const payload = {
-      title: titre,
+      title: title,
       description: description,
-      position: poste,
+      position: position,
       requirements: exigences || [],
-      contractType: typeContrat,
-      salary: parseFloat(salaire),
-      deadlineDate: dayjs(dateLimite).format("YYYY-MM-DDTHH:mm:ss"),
-      companyId: companyId,
-      adress: {
-        city: city,
-        adress: address,
-        longitude: parseFloat(longitude),
-        latitude: parseFloat(latitude),
-      },
+      contractType: contractType,
+      salary: parseFloat(salary),
+      status: "active",
       question: question,
+      publicationDate: publicationDate,
+      deadlineDate: formattedDeadlineDate,
+      company: {
+        id: id
+      },
+      adress: {
+        city: adress.city,
+        adress: adress.adress,
+        longitude: parseFloat(adress.longitude),
+        latitude: parseFloat(adress.latitude)
+      }
     };
 
-    dispatch(createEntrepriseOffre(payload))
-      .unwrap()
-      .then(() => {
-        navigation.navigate("tabNavigator", { screen: "home" });
-      })
-      .catch((error) => {
-        console.error("Error creating job:", error);
+    try {
+      await dispatch(createEntrepriseOffre(payload)).unwrap();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'tabNavigator', params: { screen: 'home' } }],
       });
+    } catch (error) {
+      console.error("Error creating job:", error);
+    }
   };
 
   return (
@@ -76,14 +96,12 @@ const JobPreview = ({ route, navigation }) => {
         <View style={{ padding: 15 }}>
           <JobPreviewHeader
             navigation={navigation}
-            entrepriseName={entrepriseName}
-            entrepriseVille={entrepriseVille}
           />
           <JobPreviewDescription
-            titre={titre}
+            title={title}
             jobDescription={description}
             jobPreviewCard={
-              <JobPreviewCard jobPoste={poste} />
+              <JobPreviewCard jobPoste={jobPoste} />
             }
           />
         </View>

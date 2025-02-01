@@ -50,7 +50,7 @@ const ExigencesModal = ({
           <TouchableOpacity onPress={handleCloseModal}>
             <Feather name="x" size={24} color={Color.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Add Exigences</Text>
+          <Text style={styles.title}>Add Requirements</Text>
           <Controller
             control={control}
             name="exigences"
@@ -71,7 +71,7 @@ const ExigencesModal = ({
                 <TextInput
                   style={styles.input}
                   value={newExigence}
-                  placeholder="Enter exigence"
+                  placeholder="Enter requirement"
                   onChangeText={setNewExigence}
                   onSubmitEditing={() => addExigence(field)}
                 />
@@ -105,8 +105,6 @@ const ExigencesModal = ({
   );
 };
 
-export default React.memo(ExigencesModal);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -125,8 +123,8 @@ const styles = StyleSheet.create({
     color: Color.text,
   },
   submitText: {
-    color: Color.link,
     fontSize: 16,
+    color: Color.link,
     fontWeight: "bold",
   },
   inputContainer: {
@@ -143,6 +141,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   addButton: {
+    alignItems: "center",
     backgroundColor: Color.link,
     borderRadius: 10,
     padding: 10,
@@ -163,3 +162,5 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 });
+
+export default React.memo(ExigencesModal);

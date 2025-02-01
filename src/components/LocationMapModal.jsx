@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Color } from '../constants/Color';
@@ -17,6 +17,13 @@ const LocationMapModal = ({
   }
 }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
+
+  // Reset selected location when modal is opened
+  useEffect(() => {
+    if (showModal) {
+      setSelectedLocation(null);
+    }
+  }, [showModal]);
 
   const handleMapPress = (event) => {
     const { coordinate } = event.nativeEvent;
@@ -38,27 +45,25 @@ const LocationMapModal = ({
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Controller
-            control={control}
-            name="longitude"
-            render={() => (
-              <Controller
-                control={control}
-                name="latitude"
-                render={() => (
-                  <MapView
-                    style={styles.map}
-                    initialRegion={initialLocation}
-                    onPress={handleMapPress}
-                  >
-                    {selectedLocation && (
-                      <Marker coordinate={selectedLocation} />
-                    )}
-                  </MapView>
-                )}
+          <MapView
+            style={styles.map}
+            initialRegion={initialLocation}
+            onPress={handleMapPress}
+            zoomEnabled={true}
+            rotateEnabled={false}
+            scrollEnabled={true}
+            pitchEnabled={false}
+            toolbarEnabled={false}
+            moveOnMarkerPress={false}
+          >
+            {selectedLocation && (
+              <Marker 
+                coordinate={selectedLocation}
+                draggable
+                onDragEnd={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
               />
             )}
-          />
+          </MapView>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
@@ -88,38 +93,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
     width: '90%',
     height: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    overflow: 'hidden',
   },
   map: {
-    flex: 1,
+    width: '100%',
+    height: '85%',
+    borderRadius: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 15,
+    marginTop: 15,
   },
   button: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 5,
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: Color.text,
+    backgroundColor: Color.red,
   },
   confirmButton: {
-    backgroundColor: Color.link,
+    backgroundColor: Color.primary,
   },
   disabledButton: {
     opacity: 0.5,
   },
   buttonText: {
     color: 'white',
-    textAlign: 'center',
     fontWeight: 'bold',
   },
 });

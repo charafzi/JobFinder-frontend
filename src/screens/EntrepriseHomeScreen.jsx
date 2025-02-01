@@ -100,7 +100,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
                     ref={flatListRef}
                     data={recentJobs}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item?.id?.toString() || Math.random().toString()}
                     ListHeaderComponent={ListHeaderComponent}
                     ListFooterComponent={
                         <View style={{ paddingBottom: tabBarHeight + 30, marginBottom: tabBarHeight }}>
