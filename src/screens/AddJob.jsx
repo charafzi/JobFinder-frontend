@@ -172,13 +172,13 @@ const AddJob = ({ navigation }) => {
     if (entreprise?.adress) {
       const longitude = entreprise.adress.longitude;
       const latitude = entreprise.adress.latitude;
-      
+
       if (longitude && latitude) {
         setValue('address', entreprise.adress.adress);
         setValue('city', entreprise.adress.city);
         setValue('longitude', longitude.toString());
         setValue('latitude', latitude.toString());
-        
+
         // Force a re-render of the map
         setTimeout(() => {
           setValue('longitude', longitude.toString());
@@ -320,7 +320,7 @@ const AddJob = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView ref={ref} contentContainerStyle={{ paddingBottom: tabBarHeight + 50, marginBottom: tabBarHeight }}>
+        <>
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
@@ -336,114 +336,116 @@ const AddJob = ({ navigation }) => {
               <Text style={styles.submitText}>Next</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Add a Job</Text>
-          </View>
-          <View style={styles.formContainer}>
-            {renderFormField("title", "Enter job title")}
-            {renderFormField("description", "Enter job description")}
-            {renderFormField("position", "Enter position")}
-            {renderFormField("city", "Enter city")}
-            {renderFormField("address", "Enter address")}
-            {renderLocationField()}
-            <Controller
-              control={control}
-              name="exigences"
-              render={({ field: { value } }) => (
-                <View style={styles.card}>
-                  <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Requirements</Text>
-                    <TouchableOpacity
-                      onPress={() => setShowExigencesModal(true)}
-                    >
-                      <Feather
-                        name={!value?.length ? "plus" : "edit-2"}
-                        size={!value?.length ? 24 : 20}
-                        color={Color.link}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {value?.length > 0 && (
-                    <View style={styles.exigencesList}>
-                      {value.map((exigence, index) => (
-                        <Text key={index} style={styles.exigenceItem}>
-                          • {exigence}
-                        </Text>
-                      ))}
+          <ScrollView ref={ref} contentContainerStyle={{ paddingBottom: tabBarHeight + 50, marginBottom: tabBarHeight }}>
+            <View style={styles.headerContainer}>
+              <Text style={styles.title}>Add a Job</Text>
+            </View>
+            <View style={styles.formContainer}>
+              {renderFormField("title", "Enter job title")}
+              {renderFormField("description", "Enter job description")}
+              {renderFormField("position", "Enter position")}
+              {renderFormField("city", "Enter city")}
+              {renderFormField("address", "Enter address")}
+              {renderLocationField()}
+              <Controller
+                control={control}
+                name="exigences"
+                render={({ field: { value } }) => (
+                  <View style={styles.card}>
+                    <View style={styles.fieldHeader}>
+                      <Text style={styles.text}>Requirements</Text>
+                      <TouchableOpacity
+                        onPress={() => setShowExigencesModal(true)}
+                      >
+                        <Feather
+                          name={!value?.length ? "plus" : "edit-2"}
+                          size={!value?.length ? 24 : 20}
+                          color={Color.link}
+                        />
+                      </TouchableOpacity>
                     </View>
-                  )}
-                  {errors.exigences && (
-                    <Text style={styles.errorText}>
-                      {errors.exigences.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="contractType"
-              render={({ field: { value } }) => (
-                <View style={styles.card}>
-                  <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Contract Type</Text>
-                    <TouchableOpacity
-                      onPress={() => setShowContractModal(true)}
-                    >
-                      <Feather
-                        name={!value ? "plus" : "edit-2"}
-                        size={!value ? 24 : 20}
-                        color={Color.link}
-                      />
-                    </TouchableOpacity>
+                    {value?.length > 0 && (
+                      <View style={styles.exigencesList}>
+                        {value.map((exigence, index) => (
+                          <Text key={index} style={styles.exigenceItem}>
+                            • {exigence}
+                          </Text>
+                        ))}
+                      </View>
+                    )}
+                    {errors.exigences && (
+                      <Text style={styles.errorText}>
+                        {errors.exigences.message}
+                      </Text>
+                    )}
                   </View>
-                  {value && <Text style={styles.value}>{value}</Text>}
-                  {errors.contractType && (
-                    <Text style={styles.errorText}>
-                      {errors.contractType.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
+                )}
+              />
 
-            {renderFormField("salary", "Enter salary (DH/Month)", {
-              keyboardType: "number-pad",
-            })}
-
-            <Controller
-              control={control}
-              name="deadlineDate"
-              render={({ field: { value } }) => (
-                <View style={styles.card}>
-                  <View style={styles.fieldHeader}>
-                    <Text style={styles.text}>Deadline Date</Text>
-                    <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                      <Feather
-                        name={!value ? "plus" : "edit-2"}
-                        size={!value ? 24 : 20}
-                        color={Color.link}
-                      />
-                    </TouchableOpacity>
+              <Controller
+                control={control}
+                name="contractType"
+                render={({ field: { value } }) => (
+                  <View style={styles.card}>
+                    <View style={styles.fieldHeader}>
+                      <Text style={styles.text}>Contract Type</Text>
+                      <TouchableOpacity
+                        onPress={() => setShowContractModal(true)}
+                      >
+                        <Feather
+                          name={!value ? "plus" : "edit-2"}
+                          size={!value ? 24 : 20}
+                          color={Color.link}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    {value && <Text style={styles.value}>{value}</Text>}
+                    {errors.contractType && (
+                      <Text style={styles.errorText}>
+                        {errors.contractType.message}
+                      </Text>
+                    )}
                   </View>
-                  {value && (
-                    <Text style={styles.value}>
-                      {new Date(value).toLocaleString()}
-                    </Text>
-                  )}
-                  {errors.deadlineDate && (
-                    <Text style={styles.errorText}>
-                      {errors.deadlineDate.message}
-                    </Text>
-                  )}
-                </View>
-              )}
-            />
+                )}
+              />
 
-            {renderFormField("question", "Enter screening question")}
-          </View>
-        </ScrollView>
+              {renderFormField("salary", "Enter salary (DH/Month)", {
+                keyboardType: "number-pad",
+              })}
+
+              <Controller
+                control={control}
+                name="deadlineDate"
+                render={({ field: { value } }) => (
+                  <View style={styles.card}>
+                    <View style={styles.fieldHeader}>
+                      <Text style={styles.text}>Deadline Date</Text>
+                      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                        <Feather
+                          name={!value ? "plus" : "edit-2"}
+                          size={!value ? 24 : 20}
+                          color={Color.link}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    {value && (
+                      <Text style={styles.value}>
+                        {new Date(value).toLocaleString()}
+                      </Text>
+                    )}
+                    {errors.deadlineDate && (
+                      <Text style={styles.errorText}>
+                        {errors.deadlineDate.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+
+              {renderFormField("question", "Enter screening question")}
+            </View>
+          </ScrollView>
+        </>
       </TouchableWithoutFeedback>
 
       <LocationChoiceModal
