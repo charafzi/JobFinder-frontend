@@ -49,14 +49,14 @@ const JobCard = ({ jobPoste }) => {
 
   const requirements = useMemo(() => {
     return (<View style={styles.requirementsContainer}>
-      {jobPoste.requirements.slice(0, MAX_REQUIREMENTS).map((requirement, index) => (
+      {jobPoste?.requirements?.slice(0, MAX_REQUIREMENTS).map((requirement, index) => (
         <Text key={index} style={styles.jobRequires}>
           {requirement}
         </Text>
       ))}
-      {jobPoste?.requirements.length > MAX_REQUIREMENTS && (
+      {jobPoste?.requirements?.length > MAX_REQUIREMENTS && (
         <Text style={styles.viewMore}>
-          +{jobPoste?.requirements.length - MAX_REQUIREMENTS} more
+          +{jobPoste?.requirements?.length - MAX_REQUIREMENTS} more
         </Text>
       )}
     </View>
