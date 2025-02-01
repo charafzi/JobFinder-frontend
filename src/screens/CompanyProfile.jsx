@@ -188,10 +188,16 @@ const CompanyProfile = () => {
             ]}
           >
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-              <Image
-                source={profileImage ? { uri: profileImage } : require('../../assets/google.png')}
-                style={styles.logo}
-              />
+              {profileImage ? (
+                <Image
+                  source={{ uri: profileImage }}
+                  style={styles.logo}
+                />
+              ) : (
+                <View style={[styles.logo, styles.defaultLogoContainer]}>
+                  <MaterialCommunityIcons name="office-building" size={40} color="#666" />
+                </View>
+              )}
             </Animated.View>
             <View style={styles.profileInfo}>
               <Text style={styles.companyName}>{entreprise?.name || 'Company Name'}</Text>
@@ -554,6 +560,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 16,
+  },
+  defaultLogoContainer: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });
 

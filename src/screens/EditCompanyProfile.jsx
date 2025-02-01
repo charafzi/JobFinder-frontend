@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,12 +9,12 @@ import {
   Image,
   Platform,
   Dimensions,
-
   Animated,
   Keyboard,
   Alert,
   ToastAndroid,
-
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -28,25 +27,15 @@ import {
   uploadProfilePicture,
   getProfilePicture
 } from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
+import LocationMapModal from '../components/LocationMapModal';
 import MapView, { Marker } from 'react-native-maps';
+import { useForm, Controller } from "react-hook-form";
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 350;
 const HEADER_MIN_HEIGHT = 84;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
-
-const MOROCCO_CITIES = {
-  "Casablanca": ["Anfa", "Ain Sebaa", "Hay Hassani", "Ben M'Sick", "Sidi Bernoussi", "Al Fida", "Moulay Rachid", "Hay Mohammadi"],
-  "Rabat": ["Agdal", "Hassan", "Youssoufia", "Yacoub El Mansour", "Souissi", "Sale"],
-  "Marrakech": ["Médina", "Guéliz", "Annakhil", "Sidi Youssef Ben Ali", "Menara"],
-  "Fès": ["Fès-Médina", "Zouagha", "Saïss", "Jnan El Ouard", "Fès-El-Jadid"],
-  "Tanger": ["Tanger-Médina", "Beni Makada", "Charf-Souani", "Charf-Mghogha"],
-  "Agadir": ["Agadir-Ville", "Anza", "Bensergao", "Tikiouine", "Dcheira"],
-  "Meknès": ["Meknès-Médina", "Al Ismailia", "Hamria", "Ouislane"],
-  "Oujda": ["Oujda-Médina", "Angad", "Sidi Yahya", "Sidi Maafa"],
-  "Kénitra": ["Kénitra-Ville", "Mehdia", "Saknia", "Fouarat"],
-  "Tétouan": ["Tétouan-Médina", "Al Azhar", "Wilaya", "Martil"]
-};
 
 const CustomCheckbox = ({ title, checked, onPress }) => (
   <TouchableOpacity 
@@ -87,16 +76,91 @@ const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref
   );
 });
 
+
 function EditCompanyProfile() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { entreprise, secteursActivites } = useSelector((state) => state.entrepriseProfile);
   const [image, setImage] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const imageCache = useRef(null);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfilePicture = async () => {
+      if (!entreprise?.id || isLoadingImage || imageCache.current) return;
+      
+      try {
+        setIsLoadingImage(true);
+        const imageUrl = await dispatch(getProfilePicture(entreprise.id)).unwrap();
+        if (isMounted) {
+          setProfileImage(imageUrl);
+          setImage(imageUrl);
+          imageCache.current = imageUrl; // Mettre en cache l'URL
+        }
+      } catch (error) {
+        console.error('Error loading profile picture:', error);
+        if (isMounted) {
+          showNotification(
+            'Impossible de charger l\'image de profil. Veuillez réessayer plus tard.',
+            'error'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingImage(false);
+        }
+      }
+    };
+
+    if (entreprise?.id && !imageCache.current) {
+      loadProfilePicture();
+    } else if (imageCache.current) {
+      // Utiliser l'image en cache si disponible
+      setProfileImage(imageCache.current);
+      setImage(imageCache.current);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [entreprise?.id]);
+
+  // Nettoyer le cache lors du démontage du composant
+  useEffect(() => {
+    return () => {
+      imageCache.current = null;
+    };
+  }, []);
+
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const aboutInputRef = useRef(null);
+  const cityInputRef = useRef(null);
+  const addressInputRef = useRef(null);
+
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+
+    const keyboardWillHide = Keyboard.addListener('keyboardWillHide', () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   const [formData, setFormData] = useState({
-
     about: '',
     adress: {
       adress: '',
@@ -105,6 +169,12 @@ function EditCompanyProfile() {
       longitude: -7.5898434
     },
     selectedSectors: []
+  });
+
+  const [errors, setErrors] = useState({
+    about: null,
+    city: null,
+    adress: null
   });
 
   const [isIndustriesExpanded, setIsIndustriesExpanded] = useState(false);
@@ -122,17 +192,11 @@ function EditCompanyProfile() {
 
   const [selectedSecteurs, setSelectedSecteurs] = useState([]);
   const [isEditingIndustries, setIsEditingIndustries] = useState(false);
-
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [cityInput, setCityInput] = useState(addressData.city || '');
   const [selectedCity, setSelectedCity] = useState('');
-  const [selectedPrefecture, setSelectedPrefecture] = useState('');
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [showPrefectureDropdown, setShowPrefectureDropdown] = useState(false);
-  const [filteredCities, setFilteredCities] = useState([]);
-  const [citySearchText, setCitySearchText] = useState('');
-
   const [notification, setNotification] = useState({ visible: false, message: '', type: '' });
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   useEffect(() => {
     if (entreprise?.activitySectors) {
@@ -158,36 +222,6 @@ function EditCompanyProfile() {
       });
     }
   }, [entreprise]);
-
-  useEffect(() => {
-    const loadProfilePicture = async () => {
-      try {
-        if (!entreprise?.id) return;
-        const result = await dispatch(getProfilePicture(entreprise.id)).unwrap();
-        if (result) {
-          setProfileImage(result);
-          setImage(result);
-        }
-      } catch (error) {
-        console.error('Error loading profile picture:', error);
-      }
-    };
-
-    if (entreprise?.id) {
-      loadProfilePicture();
-    }
-  }, [entreprise?.id, dispatch]);
-
-  useEffect(() => {
-    if (citySearchText) {
-      const filtered = Object.keys(MOROCCO_CITIES).filter(city => 
-        city.toLowerCase().includes(citySearchText.toLowerCase())
-      );
-      setFilteredCities(filtered);
-    } else {
-      setFilteredCities(Object.keys(MOROCCO_CITIES));
-    }
-  }, [citySearchText]);
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -245,6 +279,8 @@ function EditCompanyProfile() {
   };
 
   const pickImage = async () => {
+    if (isLoadingImage) return;
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -255,51 +291,47 @@ function EditCompanyProfile() {
 
       if (!result.canceled) {
         const selectedImage = result.assets[0];
-        
-        // Vérifier l'ID de l'entreprise
         const id = entreprise?.id;
+        
         if (!id) {
           showNotification('ID de l\'entreprise non disponible', 'error');
           return;
         }
 
-        // Mettre à jour l'image localement immédiatement
-        setImage(selectedImage.uri);
-        setProfileImage(selectedImage.uri);
-        
-        // Créer le FormData exactement comme dans Postman
+        // Mise à jour locale immédiate pour l'UX
+        const localImageUri = selectedImage.uri;
+        setImage(localImageUri);
+
         const formData = new FormData();
         formData.append('file', {
-          uri: selectedImage.uri,
+          uri: localImageUri,
           type: 'image/jpeg',
           name: 'profile.jpg'
         });
 
+        setIsLoadingImage(true);
         try {
-          // Upload l'image
           await dispatch(uploadProfilePicture({
             formData,
             entrepriseId: id
           })).unwrap();
           
-          // Recharger l'image depuis le serveur
-          const newImageUrl = await dispatch(getProfilePicture(id)).unwrap();
-          setProfileImage(newImageUrl);
+          // Mettre à jour le cache avec la nouvelle image
+          imageCache.current = localImageUri;
+          setProfileImage(localImageUri);
           showNotification('Photo de profil mise à jour avec succès', 'success');
         } catch (error) {
-          // En cas d'erreur, réinitialiser l'image
-          setImage(null);
-          setProfileImage(null);
-          showNotification(
-            error.message || 'Erreur lors de la mise à jour de la photo',
-            'error'
-          );
+          // Restaurer l'ancienne image en cas d'erreur
+          setImage(imageCache.current);
+          showNotification('Erreur lors de la mise à jour de la photo', 'error');
+        } finally {
+          setIsLoadingImage(false);
         }
       }
     } catch (error) {
-      console.error('Image picker error:', error);
+      console.error('Error picking image:', error);
       showNotification(
-        error.message || 'Erreur lors de la sélection de l\'image',
+        'Erreur lors de la sélection de l\'image. Veuillez réessayer.',
         'error'
       );
     }
@@ -374,19 +406,30 @@ function EditCompanyProfile() {
     }
   }, [cityInput]);
 
-  const selectAddress = (suggestion) => {
-    const { lat, lon, display_name } = suggestion;
-    setAddressData({
-      adress: display_name,
-      city: cityInput,
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon)
-    });
-    setCityInput(cityInput);
-    setAddressSuggestions([]);
-  };
+  // const selectAddress = (suggestion) => {
+  //   const { lat, lon, display_name } = suggestion;
+  //   setAddressData({
+  //     adress: display_name,
+  //     city: cityInput,
+  //     latitude: parseFloat(lat),
+  //     longitude: parseFloat(lon)
+  //   });
+  //   setCityInput(cityInput);
+  //   setAddressSuggestions([]);
+  // };
 
   const handleUpdateAddress = async () => {
+    // Validation
+    if (!addressData.city?.trim()) {
+      setErrors(prev => ({ ...prev, city: 'La ville est requise' }));
+      return;
+    }
+
+    if (!addressData.adress?.trim()) {
+      setErrors(prev => ({ ...prev, adress: 'L\'adresse est requise' }));
+      return;
+    }
+
     try {
       console.log('Données d\'adresse actuelles:', addressData);
       
@@ -424,6 +467,29 @@ function EditCompanyProfile() {
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'adresse:', error);
       setNotification({ visible: true, message: error.message || 'Erreur lors de la mise à jour de l\'adresse', type: 'error' });
+    }
+  };
+
+  const handleUpdateAbout = async () => {
+    // Validation
+    if (!formData.about?.trim()) {
+      setErrors(prev => ({ ...prev, about: 'La description est requise' }));
+      return;
+    }
+
+    try {
+      const result = await dispatch(updateEntreprise({
+        ...entreprise,
+        about: formData.about
+      })).unwrap();
+      
+      if (result) {
+        setIsEditingAbout(false);
+        showNotification('Description mise à jour avec succès', 'success');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      showNotification('Erreur lors de la mise à jour de la description', 'error');
     }
   };
 
@@ -465,68 +531,93 @@ function EditCompanyProfile() {
       </View>
     </View>
   );
+  const [testText, setTestText] = useState('');
+  const [isEditingTest, setIsEditingTest] = useState(false);
 
-  const AboutCard = () => (
-    <View style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <MaterialCommunityIcons name="information" size={24} color="#3A317B" style={styles.sectionIcon} />
-          <Text style={styles.sectionTitle}>À propos</Text>
+  const handleTextInputFocus = (offset = 0) => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current.scrollTo({
+          y: offset,
+          animated: true
+        });
+      }, 100);
+    }
+  };
+
+  const handleTestUpdate = async () => {
+    Keyboard.dismiss();
+    setIsEditingTest(false);
+    // Add any update logic here if needed
+  };
+
+  const AboutCard = () => {
+    const [isEditingAbout, setIsEditingAbout] = useState(false);
+    const [aboutText, setAboutText] = useState(entreprise?.about || ''); // Initialisation correcte
+  
+    const handleSaveAbout = async () => {
+      try {
+        const result = await dispatch(updateEntreprise({
+          ...entreprise,
+          about: aboutText,
+        })).unwrap();
+  
+        if (result) {
+          setIsEditingAbout(false);
+          setFormData(prev => ({ ...prev, about: aboutText }));
+          showNotification('Description mise à jour avec succès', 'success');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour:', error);
+        showNotification('Erreur lors de la mise à jour de la description', 'error');
+      }
+    };
+  
+    return (
+      <View style={styles.cardContainer}>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+          <View style={styles.sectionTitleContainer}>
+          <MaterialCommunityIcons name="account-details" size={24} color="#3A317B" style={styles.sectionIcon} />
+          <Text style={styles.sectionTitle}>About</Text>
         </View>
-        <TouchableOpacity onPress={() => setIsEditingAbout(!isEditingAbout)}>
-          <MaterialCommunityIcons name="pencil" size={24} color="#3A317B" />
-        </TouchableOpacity>
-      </View>
-
-      {isEditingAbout ? (
-        <View style={styles.editContainer}>
-          <TextInput
-            style={[styles.textInput, styles.multilineInput]}
-            value={formData.about}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, about: text }))}
-            placeholder="Parlez-nous de votre entreprise"
-            multiline={true}
-            numberOfLines={6}
-            textAlignVertical="top"
-          />
-          <View style={styles.editButtonsContainer}>
             <TouchableOpacity 
-              style={[styles.editButton, styles.cancelButton]}
               onPress={() => {
-                setFormData(prev => ({ ...prev, about: entreprise?.about || '' }));
-                setIsEditingAbout(false);
-              }}
-            >
-              <Text style={styles.cancelButtonText}>Annuler</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.editButton, styles.saveButton]}
-              onPress={async () => {
-                try {
-                  const result = await dispatch(updateEntreprise({
-                    ...entreprise,
-                    about: formData.about
-                  })).unwrap();
-                  
-                  if (result) {
-                    setIsEditingAbout(false);
-                  }
-                } catch (error) {
-                  console.error('Erreur lors de la mise à jour:', error);
+                if (isEditingAbout) {
+                  handleSaveAbout();
+                } else {
+                  setIsEditingAbout(true);
                 }
               }}
             >
-              <Text style={styles.saveButtonText}>Enregistrer</Text>
+              <MaterialCommunityIcons 
+                name={isEditingAbout ? "check" : "pencil"} 
+                size={24} 
+                color="#3A317B" 
+              />
             </TouchableOpacity>
           </View>
+          <View style={styles.cardDivider} />
+          {isEditingAbout ? (
+            <TextInput
+              style={styles.aboutInput}
+              multiline
+              value={aboutText}
+              onChangeText={setAboutText}
+              placeholder="Décrivez votre entreprise..."
+              placeholderTextColor="#999"
+              autoCapitalize="sentences"
+              textAlignVertical="top"
+            />
+          ) : (
+            <Text style={styles.aboutText}>
+              {aboutText || "Aucune description ajoutée"}
+            </Text>
+          )}
         </View>
-      ) : (
-        <Text style={styles.sectionText}>
-          {formData.about || 'Aucune description disponible'}
-        </Text>
-      )}
-    </View>
-  );
+      </View>
+    );
+  };
 
   const IndustriesCard = () => (
     <View style={styles.sectionCard}>
@@ -563,264 +654,305 @@ function EditCompanyProfile() {
   );
 
   const AddressDisplay = () => {
+    if (!formData.adress) {
+      return (
+        <Text style={styles.sectionText}>Aucune adresse disponible</Text>
+      );
+    }
+  
     return (
-      <View>
-        <Text style={styles.addressText}>{addressData.adress}</Text>
-        <Text style={styles.addressText}>{addressData.city}</Text>
-        {addressData.latitude !== 0 && addressData.longitude !== 0 && (
-          <View style={styles.mapPreviewContainer}>
-            <MapView
-              style={styles.mapPreview}
-              initialRegion={{
-                latitude: addressData.latitude,
-                longitude: addressData.longitude,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }}
-            >
-              <Marker
-                coordinate={{
-                  latitude: addressData.latitude,
-                  longitude: addressData.longitude,
-                }}
-              />
-            </MapView>
-          </View>
+      <View style={styles.addressDisplayContainer}>
+        <View style={styles.addressTextContainer}>
+          <Text style={styles.addressLabel}>Ville:</Text>
+          <Text style={styles.addressText}>{formData.adress.city || 'Non spécifiée'}</Text>
+        </View>
+        <View style={styles.addressTextContainer}>
+          <Text style={styles.addressLabel}>Adresse complète:</Text>
+          <Text style={styles.addressText}>{formData.adress.adress || 'Non spécifiée'}</Text>
+        </View>
+        {formData.adress.latitude !== 0 && formData.adress.longitude !== 0 && (
+          <TouchableOpacity 
+            style={styles.viewLocationButton}
+            onPress={() => setShowLocationModal(true)}
+          >
+            <MaterialCommunityIcons name="map-marker" size={20} color="#3A317B" />
+            <Text style={styles.viewLocationText}>Voir la localisation</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
   };
+  
+  const AddressCard = () => {
+    const handleUpdateAddress = async () => {
+        // Vérifier si les champs obligatoires sont remplis
+        if (!addressData.city || !addressData.adress) {
+            showNotification("La ville et l'adresse sont obligatoires", "error");
+            return; // Si l'un des champs est manquant, ne pas envoyer la requête
+        }
 
-  const AddressCard = () => (
-    <View style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          <MaterialCommunityIcons name="map-marker" size={24} color="#3A317B" style={styles.sectionIcon} />
-          <Text style={styles.sectionTitle}>Adresse</Text>
-        </View>
-        {!isEditingAddress && (
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setIsEditingAddress(true)}
-          >
-            <MaterialCommunityIcons name="pencil" size={24} color="#3A317B" />
-          </TouchableOpacity>
-        )}
-      </View>
+        // Créer un objet pour envoyer les données mises à jour
+        const entrepriseData = {
+            ...entreprise, // Préserver les autres informations de l'entreprise
+            adress: {
+                city: addressData.city,
+                adress: addressData.adress,
+                latitude: addressData.latitude,
+                longitude: addressData.longitude,
+            },
+        };
 
-      {!isEditingAddress ? (
-        <AddressDisplay />
-      ) : (
-        <View style={styles.editContainer}>
-          {/* Sélecteur de ville */}
-          <View style={styles.dropdownContainer}>
-            <TouchableOpacity
-              style={[styles.dropdownButton, showCityDropdown && styles.dropdownButtonActive]}
-              onPress={() => {
-                setShowCityDropdown(!showCityDropdown);
-                setShowPrefectureDropdown(false);
-              }}
-            >
-              <TextInput
-                style={styles.dropdownInput}
-                value={citySearchText}
-                onChangeText={(text) => {
-                  setCitySearchText(text);
-                  setShowCityDropdown(true);
-                }}
-                placeholder="Rechercher une ville"
-                onFocus={() => setShowCityDropdown(true)}
-              />
-              <MaterialCommunityIcons
-                name={showCityDropdown ? "chevron-up" : "chevron-down"}
-                size={24}
-                color="#666"
-              />
-            </TouchableOpacity>
+        try {
+            // Appel à Redux pour mettre à jour l'entreprise avec la nouvelle adresse
+            const result = await dispatch(updateEntreprise(entrepriseData)).unwrap();
 
-            {showCityDropdown && (
-              <View style={styles.dropdownList}>
-                <ScrollView 
-                  nestedScrollEnabled={true}
-                  style={styles.dropdownScroll}
-                  showsVerticalScrollIndicator={true}
-                >
-                  {filteredCities.map((city) => (
-                    <TouchableOpacity
-                      key={city}
-                      style={styles.dropdownItem}
-                      onPress={() => selectCity(city)}
-                    >
-                      <Text style={[
-                        styles.dropdownItemText,
-                        selectedCity === city && styles.dropdownItemTextSelected
-                      ]}>
-                        {city}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          {/* Sélecteur de préfecture */}
-          {selectedCity && (
-            <View style={[styles.dropdownContainer, { marginBottom: showPrefectureDropdown ? 220 : 16 }]}>
-              <TouchableOpacity
-                style={[styles.dropdownButton, showPrefectureDropdown && styles.dropdownButtonActive]}
-                onPress={() => {
-                  setShowPrefectureDropdown(!showPrefectureDropdown);
-                  setShowCityDropdown(false);
-                }}
-              >
-                <Text style={styles.dropdownInput}>
-                  {selectedPrefecture || "Sélectionner une préfecture"}
-                </Text>
-                <MaterialCommunityIcons
-                  name={showPrefectureDropdown ? "chevron-up" : "chevron-down"}
-                  size={24}
-                  color="#666"
-                />
-              </TouchableOpacity>
-
-              {showPrefectureDropdown && (
-                <View style={styles.dropdownList}>
-                  <ScrollView 
-                    nestedScrollEnabled={true}
-                    style={styles.dropdownScroll}
-                    showsVerticalScrollIndicator={true}
-                  >
-                    {MOROCCO_CITIES[selectedCity].map((prefecture) => (
-                      <TouchableOpacity
-                        key={prefecture}
-                        style={styles.dropdownItem}
-                        onPress={() => selectPrefecture(prefecture)}
-                      >
-                        <Text style={[
-                          styles.dropdownItemText,
-                          selectedPrefecture === prefecture && styles.dropdownItemTextSelected
-                        ]}>
-                          {prefecture}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Boutons */}
-          <View style={styles.editButtonsContainer}>
-            <TouchableOpacity
-              style={[styles.editButton, styles.cancelButton]}
-              onPress={() => {
+            if (result) {
+                // Si la mise à jour réussit, désactiver le mode édition et mettre à jour les données du formulaire
                 setIsEditingAddress(false);
-                setShowCityDropdown(false);
-                setShowPrefectureDropdown(false);
-              }}
-            >
-              <Text style={styles.cancelButtonText}>Annuler</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.editButton, styles.saveButton]}
-              onPress={() => {
-                if (selectedCity && selectedPrefecture) {
-                  const fullAddress = `${selectedPrefecture}, ${selectedCity}, Maroc`;
-                  setAddressData(prev => ({
+                setFormData((prev) => ({ ...prev, adress: addressData }));
+                showNotification("Adresse mise à jour avec succès", "success");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour de l'adresse:", error);
+            showNotification("Erreur lors de la mise à jour de l'adresse", "error");
+        }
+    };
+
+    const handleOpenLocationModal = async () => {
+        if (!addressData.city || !addressData.adress) {
+            showNotification("Veuillez d'abord saisir la ville et l'adresse.", "error");
+            return;
+        }
+
+        try {
+            const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+                params: {
+                    q: `${addressData.adress}, ${addressData.city}`,
+                    format: "json",
+                    limit: 1,
+                },
+            });
+
+            if (response.data.length > 0) {
+                const { lat, lon } = response.data[0];
+
+                setAddressData((prev) => ({
                     ...prev,
-                    adress: fullAddress,
-                    city: selectedCity
-                  }));
-                  handleUpdateAddress();
-                } else {
-                  if (Platform.OS === 'android') {
-                    ToastAndroid.show('Veuillez sélectionner une ville et une préfecture', ToastAndroid.SHORT);
-                  } else {
-                    Alert.alert('Attention', 'Veuillez sélectionner une ville et une préfecture');
-                  }
-                }
-              }}
-            >
-              <Text style={styles.saveButtonText}>Enregistrer</Text>
-            </TouchableOpacity>
-          </View>
+                    latitude: parseFloat(lat),
+                    longitude: parseFloat(lon),
+                }));
+            } else {
+                showNotification("Adresse introuvable. Veuillez vérifier les informations saisies.", "error");
+            }
+        } catch (error) {
+            console.error("Erreur lors du géocodage:", error);
+            showNotification("Impossible d'obtenir les coordonnées GPS.", "error");
+        }
+
+        setShowLocationModal(true);
+    };
+
+    return (
+        <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleContainer}>
+                    <MaterialCommunityIcons
+                        name="map-marker"
+                        size={24}
+                        color="#3A317B"
+                        style={styles.sectionIcon}
+                    />
+                    <Text style={styles.sectionTitle}>Adresse</Text>
+                </View>
+                {!isEditingAddress && (
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => {
+                            setIsEditingAddress(true);
+                            setTimeout(() => {
+                                cityInputRef.current?.focus();
+                            }, 100);
+                        }}
+                    >
+                        <MaterialCommunityIcons name="pencil" size={24} color="#3A317B" />
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {!isEditingAddress ? (
+                <AddressDisplay />
+            ) : (
+                <View style={styles.editContainer}>
+                    {/* Ville Input */}
+                    <TextInput
+                        ref={cityInputRef}
+                        style={[styles.textInput, styles.addressInput]}
+                        value={addressData.city}
+                        onChangeText={(text) => setAddressData((prev) => ({ ...prev, city: text }))}
+                        placeholder="Ville"
+                        returnKeyType="next"
+                        onSubmitEditing={() => {
+                            addressInputRef.current?.focus();
+                        }}
+                        editable={true}
+                    />
+                    {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+
+                    {/* Adresse Input */}
+                    <TextInput
+                        ref={addressInputRef}
+                        style={[styles.textInput, styles.addressInput]}
+                        value={addressData.adress}
+                        onChangeText={(text) => setAddressData((prev) => ({ ...prev, adress: text }))}
+                        placeholder="Adresse complète"
+                        multiline={true}
+                        numberOfLines={2}
+                        textAlignVertical="top"
+                        editable={true}
+                    />
+                    {errors.adress && <Text style={styles.errorText}>{errors.adress}</Text>}
+
+                    {/* Location Button (pour ouvrir la carte) */}
+                    <TouchableOpacity style={styles.locationButton} onPress={handleOpenLocationModal}>
+                        <MaterialCommunityIcons name="map-marker" size={24} color="#3A317B" />
+                        <Text style={styles.locationButtonText}>
+                            {addressData.latitude !== 0 && addressData.longitude !== 0
+                                ? "Modifier la localisation"
+                                : "Ajouter la localisation"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Location Modal */}
+                    {showLocationModal && (
+                        <LocationMapModal
+                            visible={showLocationModal}
+                            onClose={() => setShowLocationModal(false)}
+                            onLocationSelect={(latitude, longitude) => {
+                                setAddressData((prev) => ({
+                                    ...prev,
+                                    latitude,
+                                    longitude,
+                                }));
+                            }}
+                            initialLocation={{
+                                latitude: addressData.latitude || 33.5731104,
+                                longitude: addressData.longitude || -7.5898434,
+                            }}
+                        />
+                    )}
+
+                    {/* Buttons */}
+                    <View style={styles.editButtonsContainer}>
+                        <TouchableOpacity
+                            style={[styles.editButton, styles.cancelButton]}
+                            onPress={() => {
+                                setIsEditingAddress(false);
+                                setAddressData({
+                                    adress: formData.adress?.adress || "",
+                                    city: formData.adress?.city || "",
+                                    latitude: formData.adress?.latitude || 0,
+                                    longitude: formData.adress?.longitude || 0,
+                                });
+                            }}
+                        >
+                            <Text style={styles.cancelButtonText}>Annuler</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.editButton, styles.saveButton]}
+                            onPress={handleUpdateAddress}
+                        >
+                            <Text style={styles.saveButtonText}>Enregistrer</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
         </View>
-      )}
-    </View>
-  );
+    );
+};
+
+  
 
   return (
-    <View style={{ flex: 1 }}>
-      {notification.visible && (
-        <Animated.View style={[
-          styles.notification,
-          notification.type === 'success' ? styles.notificationSuccess : styles.notificationError
-        ]}>
-          <View style={styles.notificationContent}>
-            <MaterialCommunityIcons
-              name={notification.type === 'success' ? 'check-circle' : 'alert-circle'}
-              size={24}
-              color="#fff"
-              style={styles.notificationIcon}
-            />
-            <Text style={styles.notificationText}>{notification.message}</Text>
-          </View>
-        </Animated.View>
-      )}
-      <ScrollView 
-        style={styles.container}
-        keyboardShouldPersistTaps="always"
-        scrollEnabled={!isEditingAddress}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View style={[styles.header, { 
-          transform: [{ 
-            translateY: scrollY.interpolate({
-              inputRange: [0, HEADER_SCROLL_DISTANCE],
-              outputRange: [0, -HEADER_SCROLL_DISTANCE],
-              extrapolate: 'clamp',
-            }) 
-          }] 
-        }]}>
-          <View style={styles.headerBackground}>
-            <TopNavBar />
-            <View style={styles.headerContent}>
-              <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
-                {(image || profileImage) ? (
-                  <Image
-                    source={
-                      image
-                        ? { uri: image }
-                        : { uri: profileImage }
-                    }
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <View style={styles.placeholderContainer}>
-                    <MaterialCommunityIcons name="account" size={40} color="#666" />
-                  </View>
-                )}
-                <View style={styles.cameraIconContainer}>
-                  <MaterialCommunityIcons name="camera" size={20} color="#fff" />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{ flex: 1 }}>
+          {notification.visible && (
+            <Animated.View style={[
+              styles.notification,
+              notification.type === 'success' ? styles.notificationSuccess : styles.notificationError
+            ]}>
+              <View style={styles.notificationContent}>
+                <MaterialCommunityIcons
+                  name={notification.type === 'success' ? 'check-circle' : 'alert-circle'}
+                  size={24}
+                  color="#fff"
+                  style={styles.notificationIcon}
+                />
+                <Text style={styles.notificationText}>{notification.message}</Text>
+              </View>
+            </Animated.View>
+          )}
+          <ScrollView 
+            ref={scrollViewRef}
+            style={styles.container}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ 
+              paddingBottom: keyboardVisible ? keyboardHeight + 20 : 20 
+            }}
+          >
+            <Animated.View style={[styles.header, { 
+              transform: [{ 
+                translateY: scrollY.interpolate({
+                  inputRange: [0, HEADER_SCROLL_DISTANCE],
+                  outputRange: [0, -HEADER_SCROLL_DISTANCE],
+                  extrapolate: 'clamp',
+                }) 
+              }] 
+            }]}>
+              <View style={styles.headerBackground}>
+                <TopNavBar />
+                <View style={styles.headerContent}>
+                  <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
+                    {(image || profileImage) ? (
+                      <Image
+                        source={
+                          image
+                            ? { uri: image }
+                            : { uri: profileImage }
+                        }
+                        style={styles.profileImage}
+                      />
+                    ) : (
+                      <View style={styles.placeholderContainer}>
+                        <MaterialCommunityIcons name="account" size={40} color="#666" />
+                      </View>
+                    )}
+                    <View style={styles.cameraIconContainer}>
+                      <MaterialCommunityIcons name="camera" size={20} color="#fff" />
+                    </View>
+                  </TouchableOpacity>
+                  <HeaderInfo />
                 </View>
-              </TouchableOpacity>
-              <HeaderInfo />
+              </View>
+            </Animated.View>
+
+            <View style={styles.content}>
+              <View style={{paddingTop: 20}}></View>
+              {AboutCard()}
+              <IndustriesCard />
+              {AddressCard()}
+              <View style={styles.bottomSpacing} />
             </View>
-          </View>
-        </Animated.View>
+          </ScrollView>
 
-        <View style={styles.content}>
-          <View style={{paddingTop: 20}}></View>
-          <AboutCard />
-          <IndustriesCard />
-          <AddressCard />
-          <View style={styles.bottomSpacing} />
         </View>
-      </ScrollView>
-
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -949,29 +1081,26 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 16,
     padding: 16,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   cardIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  industriesIcon: {
-    backgroundColor: '#4CAF50',
+  aboutIcon: {
+    backgroundColor: '#3A317B',
   },
   cardContent: {
     flex: 1,
@@ -981,31 +1110,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    paddingVertical: 4,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#333',
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#E5E5E5',
     marginVertical: 8,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+  textInputContainer: {
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     padding: 12,
-    fontSize: 14,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    fontSize: 16,
     color: '#333',
-    marginBottom: 8,
   },
   aboutText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
-    lineHeight: 20,
+    lineHeight: 24,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -1064,14 +1192,17 @@ const styles = StyleSheet.create({
     color: '#3A317B',
   },
   textInput: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#333',
-    minHeight: 40,
+    marginVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  activeInput: {
+  inputFocused: {
     borderColor: '#3A317B',
     borderWidth: 1,
   },
@@ -1157,10 +1288,34 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
-  addressDisplay: {
+  addressDisplayContainer: {
+    padding: 10,
+  },
+  addressTextContainer: {
+    marginBottom: 10,
+  },
+  addressLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  addressText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  viewLocationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  viewLocationText: {
+    marginLeft: 8,
+    color: '#3A317B',
+    fontSize: 14,
+    fontWeight: '500',
   },
   industriesContainer: {
     marginTop: 10,
@@ -1338,6 +1493,73 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     flex: 1,
+  },
+  addressInput: {
+    marginBottom: 16,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  locationButtonText: {
+    marginLeft: 8,
+    color: '#3A317B',
+    fontSize: 16,
+  },
+  aboutInput: {
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    color: '#FF4B55',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  formSection: {
+    marginTop: 15,
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3A317B',
+    marginBottom: 8,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  button: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  saveBtn: {
+    backgroundColor: '#3A317B',
+  },
+  cancelBtnText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
