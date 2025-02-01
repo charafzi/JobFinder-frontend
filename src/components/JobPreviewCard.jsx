@@ -81,6 +81,8 @@ const JobPreviewCard = ({ jobPoste }) => {
 
           <Text style={styles.detailTitle}>Location</Text>
           <Text style={styles.detailText}>{jobPoste?.address || "job address"}, {jobPoste?.city || "job city"}</Text>
+          <Text style={styles.detailTitle}>Question</Text>
+          <Text style={styles.detailText}>{jobPoste?.question || "question"}</Text>
         </View>
       )}
     </View>

@@ -7,13 +7,14 @@ import {
   Text,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { Color } from "../constants/Color";
 import {
   JobPreviewCard,
   JobPreviewDescription,
   JobPreviewFooter,
   JobPreviewHeader,
+  LoadingIndicator,
 } from "../components";
 import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,8 +22,8 @@ import { createEntrepriseOffre } from "../redux/slices/entrepriseOffres/createEn
 
 const JobPreview = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const entreprise = useSelector((state) => state.auth.entreprise);
-  const {id} = useSelector((state) => state.auth);
+  const { id } = useSelector((state) => state.auth);
+  const { isLoading, error } = useSelector((state) => state.entrepriseOffres);
   const {
     title,
     description,
@@ -37,6 +38,12 @@ const JobPreview = ({ route, navigation }) => {
 
   console.log("JobPreview - Received Deadline Date:", deadlineDate);
 
+  useEffect(() => {
+    if (error) {
+      showToast("error", "Error", error);
+    }
+  }, [error]);
+
   const jobPoste = {
     title: title,
     requirements: exigences || [],
@@ -47,6 +54,7 @@ const JobPreview = ({ route, navigation }) => {
     salary: salary,
     deadlineDate: deadlineDate,
     address: adress.adress,
+    question: question,
   };
 
   console.log("JobPreview - JobPoste Deadline Date:", jobPoste.deadlineDate);
@@ -80,9 +88,11 @@ const JobPreview = ({ route, navigation }) => {
 
     try {
       await dispatch(createEntrepriseOffre(payload)).unwrap();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'tabNavigator', params: { screen: 'home' } }],
+      navigation.navigate('tabNavigator', {
+        screen: 'home',
+        params: {
+          refresh: true // Optional: Add this if you want to trigger a refresh
+        }
       });
     } catch (error) {
       console.error("Error creating job:", error);
@@ -106,9 +116,13 @@ const JobPreview = ({ route, navigation }) => {
           />
         </View>
       </ScrollView>
-      <JobPreviewFooter
-        onSubmit={onSubmit}
-      />
+      {isLoading ? (
+        <LoadingIndicator />
+      ) : (
+        <JobPreviewFooter
+          onSubmit={onSubmit}
+        />
+      )}
     </SafeAreaView>
   );
 };
