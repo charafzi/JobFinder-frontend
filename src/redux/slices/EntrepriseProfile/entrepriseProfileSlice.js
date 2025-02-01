@@ -40,6 +40,7 @@ const entrepriseProfileSlice = createSlice({
       })
       .addCase(fetchEntrepriseByEmail.fulfilled, (state, action) => {
         state.loading = false;
+        state.profilePicture = action.payload.profilePicture;
         state.entreprise = action.payload;
         state.about = action.payload.about || '';
         state.adress = action.payload.adress || null;

@@ -6,58 +6,32 @@ import { ENTREPRISE_IMAGE_URL } from "../config/axiosConfig";
 import { logo } from "../../assets";
 import dayjs from "dayjs";
 
-const MAX_REQUIREMENTS = 3;
+const MAX_REQUIREMENTS = 2;
 
 const JobPreviewCard = ({ jobPoste }) => {
   const [showDetails, setShowDetails] = useState(false);
   const { id } = useSelector((state) => state.auth);
   const { profilePicture } = useSelector((state) => state.entrepriseProfile);
-  const exigencesTest = [
-    {
-      "requirement": "Bachelor's degree in Computer Science",
-      "index": 0
-    },
-    {
-      "requirement": "At least 2 years of experience in software development",
-      "index": 1
-    },
-    {
-      "requirement": "Proficiency in JavaScript and React",
-      "index": 2
-    },
-    {
-      "requirement": "Familiarity with RESTful APIs",
-      "index": 3
-    },
-    {
-      "requirement": "Strong problem-solving skills",
-      "index": 4
-    },
-    {
-      "requirement": "Experience with Node.js and Express.js",
-      "index": 5
-    },
-    {
-      "requirement": "Knowledge of PostgreSQL or MongoDB",
-      "index": 6
-    }
-  ]
-  
+
 
   const requirements = useMemo(() => {
-    const requirementsList = jobPoste?.exigences || exigencesTest;
+    const requirementsList = jobPoste?.requirements || [];
     const displayedRequirements = requirementsList.slice(0, MAX_REQUIREMENTS);
     return (
       <View style={styles.requirementsContainer}>
         {displayedRequirements.map((item, index) => (
-          <Text key={index} style={styles.jobRequires}>
-             {item.requirement}
-          </Text>
+          <View key={index} style={styles.requirementItem}>
+            <Text style={styles.jobRequires}>
+              {item}
+            </Text>
+          </View>
         ))}
         {requirementsList.length > MAX_REQUIREMENTS && (
-          <Text style={styles.viewMore}>
-            +{requirementsList.length - MAX_REQUIREMENTS} more
-          </Text>
+          <View style={styles.requirementItem}>
+            <Text style={styles.viewMore}>
+              +{requirementsList.length - MAX_REQUIREMENTS}
+            </Text>
+          </View>
         )}
       </View>
     );
@@ -68,14 +42,14 @@ const JobPreviewCard = ({ jobPoste }) => {
         <View style={styles.leftContent}>
           <Image source={profilePicture ? {
             uri: ENTREPRISE_IMAGE_URL + id,
-          } : logo} style={styles.iconStyle} resizeMode="center" />
+          } : logo} style={styles.iconStyle} />
           <View style={styles.textContainer}>
             <Text style={styles.text}>{jobPoste?.poste || "job Poste"}</Text>
             <Text style={styles.description}>
               {jobPoste?.title || "job title"}
             </Text>
             <Text style={styles.subtitle}>
-              {jobPoste?.city || "job city"} . {jobPoste?.typeContrat || "job type contrat"}
+              {jobPoste?.city || "job city"} . {jobPoste?.typecontract || "job type contrat"}
             </Text>
           </View>
         </View>
@@ -188,14 +162,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   requirementsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 10,
   },
-  jobRequires: {
+  requirementItem: {
     backgroundColor: Color.boxBackground,
     borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  jobRequires: {
     fontSize: 12,
+    color: Color.text,
   },
   viewMore: {
     color: Color.subtitle,

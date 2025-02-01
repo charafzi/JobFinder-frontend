@@ -7,14 +7,13 @@ import {
   Text,
   View,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { Color } from "../constants/Color";
 import {
   JobPreviewCard,
   JobPreviewDescription,
   JobPreviewFooter,
   JobPreviewHeader,
-  JobPreviewPhotoUploader,
 } from "../components";
 import dayjs from "dayjs";
 import { useSelector, useDispatch } from "react-redux";
@@ -24,7 +23,6 @@ const JobPreview = ({ route, navigation }) => {
   const dispatch = useDispatch();
   const { id: companyId, name: entrepriseName } = useSelector((state) => state.auth);
   const { city: entrepriseVille } = useSelector((state) => state.auth.entreprise.adress);
-  const [showAddPhotos, setShowAddPhotos] = useState(false);
   const {
     titre,
     description,
@@ -39,6 +37,18 @@ const JobPreview = ({ route, navigation }) => {
     latitude,
     question,
   } = route.params || {};
+  const jobPoste = {
+    title: titre,
+    requirements: exigences || [],
+    poste: poste,
+    city: city,
+    typecontract: typeContrat,
+    description: description,
+    salaire: salaire,
+    dateLimite: dateLimite,
+    address: address,
+  };
+
 
   const onSubmit = async () => {
     const payload = {
@@ -58,7 +68,6 @@ const JobPreview = ({ route, navigation }) => {
       },
       question: question,
     };
-
     dispatch(createEntrepriseOffre(payload))
       .unwrap()
       .then(() => {
@@ -83,7 +92,7 @@ const JobPreview = ({ route, navigation }) => {
             titre={titre}
             jobDescription={description}
             jobPreviewCard={
-              <JobPreviewCard jobPoste={poste} />
+              <JobPreviewCard jobPoste={jobPoste} />
             }
           />
         </View>
