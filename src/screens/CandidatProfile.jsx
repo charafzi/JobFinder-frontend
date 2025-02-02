@@ -339,6 +339,7 @@ const CandidatProfile = () => {
             showProfile={false}
             theme={"purple"}
             borderRadius={false}
+            showLogout={true}
           />
           <LinearGradient
             colors={['#3A317B', '#2D2665']}
