@@ -15,6 +15,7 @@ const initialState = {
   about: '',
   adress: null,
   profilePicture: null,
+  profileVersion: 0,
   secteursActivites: [],
   loadingSecteursActivites: false,
   errorSecteursActivites: null
@@ -73,6 +74,7 @@ const entrepriseProfileSlice = createSlice({
       })
       .addCase(uploadProfilePicture.fulfilled, (state, action) => {
         state.loading = false;
+        state.profileVersion = Date.now();
         if (state.entreprise) {
           state.entreprise.profilePicture = action.payload;
         }
