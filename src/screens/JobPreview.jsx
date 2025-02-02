@@ -117,7 +117,7 @@ const JobPreview = ({ route, navigation }) => {
         </View>
       </ScrollView>
       {isLoading ? (
-        <LoadingIndicator />
+        <LoadingIndicator isLoading={isLoading}/>
       ) : (
         <JobPreviewFooter
           onSubmit={onSubmit}
