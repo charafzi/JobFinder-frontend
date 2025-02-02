@@ -22,28 +22,14 @@ import {
 } from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import TopNavBar from "../components/TopNavBar";
+import {LinearGradient} from "expo-linear-gradient";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 350;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-const TopNavBar = ({ opacity }) => {
-	const insets = useSafeAreaInsets();
-	const navigation = useNavigation();
-	return (
-		<Animated.View style={[styles.navBar, { opacity },{paddingTop: insets.top}]}>
-			<TouchableOpacity onPress={() => navigation.goBack()}>
-				<AntDesign
-					name="left"
-					size={24}
-					color={"#fff"}
-					style={styles.icon}
-				/>
-			</TouchableOpacity>
-		</Animated.View>
-	);
-};
 
 const CompanyProfile = () => {
 	const dispatch = useDispatch();
@@ -149,83 +135,62 @@ const CompanyProfile = () => {
 	return (
 		<SafeAreaView style={styles.mainContainer}>
 			<StatusBar translucent backgroundColor="transparent" />
-			<Animated.View
-				style={[
-					styles.header,
-					{
-						transform: [
-							{
-								translateY: scrollY.interpolate({
-									inputRange: [0, HEADER_SCROLL_DISTANCE],
-									outputRange: [0, -HEADER_SCROLL_DISTANCE],
-									extrapolate: 'clamp',
-								})
-							}
-						]
-					}
-				]}
-			>
-				<View style={[styles.headerBackground, { height: HEADER_MAX_HEIGHT }]}>
-					<TopNavBar />
-					<Animated.View
-						style={[
-							styles.headerContent,
-							{
-								opacity: scrollY.interpolate({
-									inputRange: [0, HEADER_SCROLL_DISTANCE],
-									outputRange: [1, 0],
-									extrapolate: 'clamp',
-								})
-							}
-						]}
-					>
-						<Animated.View style={[styles.logoContainer]}>
-							{profileImage ? (
-								<Image
-									source={{ uri: profileImage }}
-									style={styles.logo}
-								/>
-							) : (
-								<View style={[styles.logo, styles.defaultLogoContainer]}>
-									<MaterialCommunityIcons name="office-building" size={40} color="#666" />
-								</View>
-							)}
-						</Animated.View>
-						<View style={styles.profileInfo}>
-							<Text style={styles.companyName}>{entreprise?.name || 'Company Name'}</Text>
-							<Text style={styles.location}>
-								<MaterialCommunityIcons name="map-marker" size={16} color="#fff" />
-								{' '}{entreprise?.adress?.adress || 'Adresse'}, {entreprise?.adress?.city || 'Ville'}
-							</Text>
-							<Text style={styles.location}>
-								<MaterialCommunityIcons name="phone" size={16} color="#fff" />
-								{' '}{entreprise?.phoneNumber || 'Non spécifié'}
-							</Text>
-						</View>
-						<TouchableOpacity
-							style={styles.editButton}
-							onPress={handleEditProfile}
-						>
-							<MaterialCommunityIcons
-								name="pencil"
-								size={24}
-								color="#3A317B"
+			<View>
+				<TopNavBar
+					showProfile={false}
+					theme={"purple"}
+					borderRadius={false}
+				/>
+				<LinearGradient
+					colors={['#3A317B', '#2D2665']}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+					style={styles.headerContent}
+				>
+					<View style={[styles.logoContainer]}>
+						{profileImage ? (
+							<Image
+								source={{ uri: profileImage }}
+								style={styles.logo}
 							/>
-							<Text style={styles.editButtonText}>
-								Modifier le profil
-							</Text>
-						</TouchableOpacity>
-					</Animated.View>
-				</View>
-			</Animated.View>
+						) : (
+							<View style={[styles.logo, styles.defaultLogoContainer]}>
+								<MaterialCommunityIcons name="office-building" size={40} color="#666" />
+							</View>
+						)}
+					</View>
+					<View style={styles.profileInfo}>
+						<Text style={styles.companyName}>{entreprise?.name || 'Company Name'}</Text>
+						<Text style={styles.location}>
+							<MaterialCommunityIcons name="map-marker" size={16} color="#fff" />
+							{' '}{entreprise?.adress?.adress || 'Adresse'}, {entreprise?.adress?.city || 'Ville'}
+						</Text>
+						<Text style={styles.location}>
+							<MaterialCommunityIcons name="phone" size={16} color="#fff" />
+							{' '}{entreprise?.phoneNumber || 'Non spécifié'}
+						</Text>
+					</View>
+					<TouchableOpacity
+						style={styles.editButton}
+						onPress={handleEditProfile}
+					>
+						<MaterialCommunityIcons
+							name="pencil"
+							size={24}
+							color="#3A317B"
+						/>
+						<Text style={styles.editButtonText}>
+							Modifier le profil
+						</Text>
+					</TouchableOpacity>
+				</LinearGradient>
+			</View>
 
 			<Animated.ScrollView
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollViewContent}
 				onScroll={handleScroll}
-				scrollEventThrottle={16}
 				showsVerticalScrollIndicator={false}
-				bounces={false}
 			>
 				<View style={styles.contentContainer}>
 					{/* About Section */}
@@ -236,7 +201,7 @@ const CompanyProfile = () => {
 					>
 						<View style={styles.sectionHeader}>
 							<View style={styles.sectionTitle}>
-								<MaterialCommunityIcons name="information-outline" size={24} color="#FF6B6B" style={styles.sectionIcon} />
+								<MaterialCommunityIcons name="information-outline" size={24} color="#FF9228" style={styles.sectionIcon} />
 								<Text style={styles.sectionTitleText}>About</Text>
 							</View>
 							<Animated.View
@@ -306,7 +271,7 @@ const CompanyProfile = () => {
 					>
 						<View style={styles.sectionHeader}>
 							<View style={styles.sectionTitle}>
-								<Icon name="place" size={24} color="#FF6B6B" style={styles.sectionIcon} />
+								<Icon name="place" size={24} color="#FF9228" style={styles.sectionIcon} />
 								<Text style={styles.sectionTitleText}>Address</Text>
 							</View>
 							<Animated.View
@@ -383,12 +348,15 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		paddingTop: 0,
+		borderBottomLeftRadius: 30,
+		borderBottomRightRadius: 30,
+		paddingBottom : 20
+
 	},
 	scrollView: {
 		flex: 1,
 	},
 	scrollViewContent: {
-		paddingTop: HEADER_MAX_HEIGHT,
 		paddingHorizontal: 16,
 		paddingBottom: 40,
 	},
