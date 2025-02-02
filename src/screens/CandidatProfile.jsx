@@ -1,7 +1,6 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { 
+import {
   View, 
   Text, 
   StyleSheet, 
@@ -11,50 +10,37 @@ import {
   StatusBar,
   Platform, 
   Dimensions,
-  Animated,
   ActivityIndicator,
-  Modal,
-  TextInput,
   ScrollView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { 
-  fetchFormations, 
-  fetchExperiences, 
-  fetchLangues, 
-  fetchCompetences, 
+import {
+  fetchFormations,
+  fetchExperiences,
+  fetchLangues,
+  fetchCompetences,
   fetchAbout,
-  getProfilePicture 
+  getProfilePicture
 } from '../redux/slices/candidat/candidatProfileThunks';
 import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
+import TopNavBar from "../components/TopNavBar";
+import {LinearGradient} from "expo-linear-gradient";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-const TopNavBar = ({ opacity }) => {
-  const navigation = useNavigation();
-  return (
-    <Animated.View style={[styles.topNavBar]}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back-ios" size={24} color="#fff" />
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
 
 const ProfileSection = ({ title, icon, content, isExpanded, onToggle }) => {
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
         styles.profileSection,
         isExpanded && styles.profileSectionExpanded
-      ]} 
+      ]}
       onPress={onToggle}
     >
       <View style={styles.sectionHeader}>
@@ -62,10 +48,10 @@ const ProfileSection = ({ title, icon, content, isExpanded, onToggle }) => {
           {icon}
           <Text style={styles.sectionTitle}>{title}</Text>
         </View>
-        <Icon 
-          name={isExpanded ? "edit" : "add"} 
-          size={24} 
-          color={isExpanded ? "#666" : "#FF9228"} 
+        <Icon
+          name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+          size={24}
+          color={isExpanded ? "#666" : "#FF9228"}
         />
       </View>
       {isExpanded && (
@@ -130,7 +116,7 @@ const CandidatProfile = () => {
   const candidatId = useSelector(state => state.auth.id);
   const { firstName, lastName, email } = useSelector(state => state.auth.candidat);
   const [isLoadingImage, setIsLoadingImage] = useState(false);
-  
+
   const {
     formations,
     experiences,
@@ -177,8 +163,6 @@ const CandidatProfile = () => {
     fetchProfilePicture();
   }, [fetchProfilePicture]);
 
-  const scrollY = useRef(new Animated.Value(0)).current;
-  
   const [expandedSections, setExpandedSections] = useState({
     aboutMe: false,
     workExperience: false,
@@ -187,11 +171,6 @@ const CandidatProfile = () => {
     language: false,
     appreciation: false,
   });
-
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
-  );
 
   const isLoading = Object.values(loading).some(value => value === true);
   const hasError = Object.values(error).some(value => value !== null);
@@ -333,78 +312,60 @@ const CandidatProfile = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
-      <Animated.View 
-        style={[
-          styles.header,
-          {
-            transform: [
-              { translateY: scrollY.interpolate({
-                inputRange: [0, HEADER_SCROLL_DISTANCE],
-                outputRange: [0, -HEADER_SCROLL_DISTANCE],
-                extrapolate: 'clamp',
-              })}
-            ]
-          }
-        ]}
-      >
-        <View style={[styles.headerBackground, { height: HEADER_MAX_HEIGHT }]}>
-          <TopNavBar />
-          <Animated.View 
-            style={[
-              styles.headerContent,
-              { 
-                opacity: scrollY.interpolate({
-                  inputRange: [0, HEADER_SCROLL_DISTANCE],
-                  outputRange: [1, 0],
-                  extrapolate: 'clamp',
-                })
-              }
-            ]}
+      <View style={[styles.header]}>
+        <View style={[{ height: HEADER_MAX_HEIGHT }]}>
+          <TopNavBar
+            showProfile={false}
+            theme={"purple"}
+            borderRadius={false}
+          />
+          <LinearGradient
+            colors={['#3A317B', '#2D2665']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.headerContent}
           >
-            <Animated.View style={[styles.avatarContainer, { transform: [{ scale: 1 }] }]}>
-              {isLoadingImage ? (
-                <ActivityIndicator size="large" color="#3A317B" />
-              ) : profilePicture ? (
-                <Image
-                  source={{ uri: profilePicture }}
-                  style={styles.profileImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <MaterialCommunityIcons 
-                  name="account-circle" 
-                  size={94} 
-                  color="#3A317B" 
-                />
-              )}
-            </Animated.View>
-            <Text style={styles.userName}>{firstName} {lastName}</Text>
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => {
-                navigation.navigate('EditProfileCandidat', {
-                  candidatId: candidatId,
-                  firstName: firstName,
-                  lastName: lastName
-                });
-              }}
-            >
-              <Icon name="edit" size={18} color="#fff" style={styles.editIcon} />
-              <Text style={styles.editButtonText}>Modifier le profil</Text>
-            </TouchableOpacity>
-          </Animated.View>
+            <View style={styles.headerContent}>
+              <View style={styles.avatarContainer}>
+                {isLoadingImage ? (
+                  <ActivityIndicator size="large" color="#3A317B" />
+                ) : profilePicture ? (
+                  <Image
+                    source={{ uri: profilePicture }}
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <MaterialCommunityIcons
+                    name="account-circle"
+                    size={94}
+                    color="#3A317B"
+                  />
+                )}
+              </View>
+              <Text style={styles.userName}>{firstName} {lastName}</Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  navigation.navigate('EditProfileCandidat', {
+                    candidatId: candidatId,
+                    firstName: firstName,
+                    lastName: lastName
+                  });
+                }}
+              >
+                <Icon name="edit" size={18} color="#fff" style={styles.editIcon} />
+                <Text style={styles.editButtonText}>Modifier le profil</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </View>
-      </Animated.View>
+      </View>
 
-      <Animated.ScrollView
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
-        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.spacer} />
-        
         <ProfileSection
           title="À propos"
           icon={<MaterialCommunityIcons name="account-details" size={24} color="#FF9228" />}
@@ -444,10 +405,7 @@ const CandidatProfile = () => {
           isExpanded={expandedSections.language}
           onToggle={() => setExpandedSections(prev => ({...prev, language: !prev.language}))}
         />
-      </Animated.ScrollView>
-      <View style={styles.bottomTabContainer}>
-        <BottomTabNavigation />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -470,14 +428,13 @@ const styles = StyleSheet.create({
   headerBackground: {
     flex: 1,
     backgroundColor: '#3A317B',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   headerContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 60,
-    paddingBottom: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    paddingBottom : 20
   },
   avatarContainer: {
     width: 94,
@@ -743,13 +700,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
-  },
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,

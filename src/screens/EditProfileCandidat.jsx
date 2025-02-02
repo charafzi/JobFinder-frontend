@@ -22,7 +22,6 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import BottomTabNavigation from '../navigator/BottomTabNavigator';
 import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -49,6 +48,8 @@ import {
 	createAbout
 } from '../redux/slices/candidat/candidatProfileThunks';
 import Toast from 'react-native-toast-message';
+import { SelectList } from "react-native-dropdown-select-list";
+import TopNavBar from "../components/TopNavBar";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 320;
@@ -56,7 +57,7 @@ const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 const EditProfileCandidat = ({ route }) => {
-	const { candidatId } = route.params;
+	const { id } =  useSelector(state=>state.auth)
 	const dispatch = useDispatch();
 	const scrollViewRef = useRef(null);
 	const scrollY = new Animated.Value(0);
@@ -105,7 +106,7 @@ const EditProfileCandidat = ({ route }) => {
 	const [formations, setFormations] = useState([]);
 	const [newFormation, setNewFormation] = useState({
 		nomEcole: '',
-		niveauEtude: '',
+		niveauEtude: 'NIVEAU_BAC',
 		dateDebut: '',
 		dateFin: ''
 	});
@@ -140,6 +141,16 @@ const EditProfileCandidat = ({ route }) => {
 		setShowCompetenceModal(false);
 	};
 
+	const niveauEtudeOptions = [
+		{ key: 'NIVEAU_BAC', value: 'Niveau BAC' },
+		{ key: 'BAC_PLUS_1', value: 'BAC+1' },
+		{ key: 'BAC_PLUS_2', value: 'BAC+2' },
+		{ key: 'BAC_PLUS_3', value: 'BAC+3' },
+		{ key: 'BAC_PLUS_4', value: 'BAC+4' },
+		{ key: 'BAC_PLUS_5', value: 'BAC+5' },
+		{ key: 'PLUSDEBAC_PLUS_5', value: 'Plus de BAC+5' }
+	];
+
 	useEffect(() => {
 		const keyboardWillShow = Platform.OS === 'ios'
 			? Keyboard.addListener('keyboardWillShow', (e) => {
@@ -168,19 +179,19 @@ const EditProfileCandidat = ({ route }) => {
 	}, []);
 
 	useEffect(() => {
-		console.log('EditProfileCandidat - CandidatId:', candidatId);
-		console.log('EditProfileCandidat - CandidatId Type:', typeof candidatId);
-		if (candidatId) {
-			console.log('Fetching initial data for candidat:', candidatId);
-			dispatch(fetchFormations(candidatId));
-			dispatch(fetchAbout(candidatId));
-			dispatch(fetchExperiences(candidatId));
-			dispatch(fetchLangues(candidatId));
-			dispatch(fetchCompetences(candidatId));
+		console.log('EditProfileCandidat - CandidatId:', id);
+		console.log('EditProfileCandidat - CandidatId Type:', typeof id);
+		if (id) {
+			console.log('Fetching initial data for candidat:', id);
+			dispatch(fetchFormations(id));
+			dispatch(fetchAbout(id));
+			dispatch(fetchExperiences(id));
+			dispatch(fetchLangues(id));
+			dispatch(fetchCompetences(id));
 		} else {
 			console.log('CandidatId is not available yet');
 		}
-	}, [candidatId, dispatch]);
+	}, [id, dispatch]);
 
 	useEffect(() => {
 		console.log('About effect triggered. Current about:', aboutText);
@@ -256,9 +267,9 @@ const EditProfileCandidat = ({ route }) => {
 
 	useEffect(() => {
 		const loadProfilePicture = async () => {
-			if (candidatId && !image) {
+			if (id && !image) {
 				try {
-					const result = await dispatch(getProfilePicture(candidatId)).unwrap();
+					const result = await dispatch(getProfilePicture(id)).unwrap();
 					if (result) {
 						setImage(result);
 					}
@@ -279,7 +290,7 @@ const EditProfileCandidat = ({ route }) => {
 		};
 
 		loadProfilePicture();
-	}, [candidatId]);
+	}, [id]);
 
 	const pickImage = async () => {
 		try {
@@ -294,7 +305,7 @@ const EditProfileCandidat = ({ route }) => {
 			if (!result.canceled && result.assets[0]) {
 				setIsLoading(true);
 				try {
-					if (!candidatId) {
+					if (!id) {
 						Toast.show({
 							type: 'error',
 							position: 'top',
@@ -320,12 +331,12 @@ const EditProfileCandidat = ({ route }) => {
 
 					// Upload the new image
 					await dispatch(uploadProfilePicture({
-						candidatId: Number(candidatId),
+						candidatId: Number(id),
 						formData: formData
 					})).unwrap();
 
 					// Reload the image after successful upload
-					const newImageUri = await dispatch(getProfilePicture(candidatId)).unwrap();
+					const newImageUri = await dispatch(getProfilePicture(id)).unwrap();
 					if (newImageUri) {
 						setImage(newImageUri);
 					}
@@ -419,31 +430,21 @@ const EditProfileCandidat = ({ route }) => {
 		setIsEditingProfile(false);
 	};
 
-	const TopNavBar = () => {
-		const navigation = useNavigation();
-		return (
-			<View style={styles.topNavBar}>
-				<TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-					<Icon name="arrow-back-ios" size={24} color="#fff" />
-				</TouchableOpacity>
-			</View>
-		);
-	};
 
 	const addSkill = async () => {
 		if (newSkill.trim()) {
 			try {
-				console.log('Adding skill - candidatId:', candidatId);
+				console.log('Adding skill - id:', id);
 				console.log('Adding skill - newSkill:', newSkill.trim());
 
-				if (!candidatId) {
+				if (!id) {
 					console.error('CandidatId is missing or invalid');
 					return;
 				}
 
 				const response = await dispatch(createCompetence({
 					nomCompetence: newSkill.trim(),
-					candidatId
+					candidatId: id
 				})).unwrap();
 
 				// Mettre à jour immédiatement le state local
@@ -500,8 +501,8 @@ const EditProfileCandidat = ({ route }) => {
 				return;
 			}
 
-			if (!candidatId || isNaN(candidatId)) {
-				console.error('Invalid candidatId:', candidatId);
+			if (!id || isNaN(id)) {
+				console.error('Invalid id:', id);
 				Toast.show({
 					type: 'error',
 					position: 'top',
@@ -518,7 +519,7 @@ const EditProfileCandidat = ({ route }) => {
 			const languageData = {
 				nomLangue: newLanguage.nomLangue.trim(),
 				niveau: newLanguage.niveau,
-				candidatId: Number(candidatId)
+				candidatId: Number(id)
 			};
 
 			console.log('Adding language with data:', languageData);
@@ -526,7 +527,7 @@ const EditProfileCandidat = ({ route }) => {
 			console.log('Language added successfully:', result);
 
 			// Refresh the languages list
-			await dispatch(fetchLangues(candidatId));
+			await dispatch(fetchLangues(id));
 
 			// Reset form and close modal
 			setNewLanguage({ nomLangue: '', niveau: 'DEBUTANT' });
@@ -552,7 +553,7 @@ const EditProfileCandidat = ({ route }) => {
 			await dispatch(deleteLangue(langueId)).unwrap();
 
 			// Refresh the languages list
-			await dispatch(fetchLangues(candidatId));
+			await dispatch(fetchLangues(id));
 
 			console.log('Language removed successfully');
 		} catch (error) {
@@ -572,7 +573,7 @@ const EditProfileCandidat = ({ route }) => {
 
 	const handleFormationSubmit = async () => {
 		try {
-			if (!candidatId) {
+			if (!id) {
 				Toast.show({
 					type: 'error',
 					position: 'top',
@@ -644,7 +645,7 @@ const EditProfileCandidat = ({ route }) => {
 				niveauEtude: newFormation.niveauEtude.trim(),
 				dateDebut: newFormation.dateDebut.trim(),
 				dateFin: newFormation.dateFin.trim(),
-				candidatId: Number(candidatId)
+				candidatId: Number(id)
 			};
 
 			if (editingFormation) {
@@ -656,11 +657,11 @@ const EditProfileCandidat = ({ route }) => {
 				await dispatch(createFormation(formationData)).unwrap();
 			}
 
-			await dispatch(fetchFormations(candidatId));
+			await dispatch(fetchFormations(id));
 
 			setNewFormation({
 				nomEcole: '',
-				niveauEtude: '',
+				niveauEtude: 'NIVEAU_BAC',
 				dateDebut: '',
 				dateFin: ''
 			});
@@ -695,7 +696,7 @@ const EditProfileCandidat = ({ route }) => {
 
 	const handleExperienceSubmit = async () => {
 		try {
-			if (!candidatId) {
+			if (!id) {
 				Toast.show({
 					type: 'error',
 					position: 'top',
@@ -766,7 +767,7 @@ const EditProfileCandidat = ({ route }) => {
 				poste: newExperience.poste.trim(),
 				dateDebut: newExperience.dateDebut.trim(),
 				dateFin: newExperience.dateFin.trim(),
-				candidatId: Number(candidatId)
+				candidatId: Number(id)
 			};
 
 			if (editingExperience && editingExperience.id) {
@@ -778,7 +779,7 @@ const EditProfileCandidat = ({ route }) => {
 				await dispatch(createExperience(experienceData)).unwrap();
 			}
 
-			await dispatch(fetchExperiences(candidatId));
+			await dispatch(fetchExperiences(id));
 
 			setNewExperience({
 				poste: '',
@@ -1019,7 +1020,7 @@ const EditProfileCandidat = ({ route }) => {
 												onPress={() => {
 													setShowFormationModal(false);
 													setEditingFormation(null);
-													setNewFormation({ nomEcole: '', niveauEtude: '', dateDebut: '', dateFin: '' });
+													setNewFormation({ nomEcole: '', niveauEtude: 'NIVEAU_BAC', dateDebut: '', dateFin: '' });
 												}}
 											>
 												<MaterialCommunityIcons name="close" size={24} color="#666" />
@@ -1044,25 +1045,29 @@ const EditProfileCandidat = ({ route }) => {
 											{errors.nomEcole && <Text style={styles.errorText}>{errors.nomEcole}</Text>}
 										</View>
 
-										<View style={[styles.formGroup, { marginTop: 1 }]}>
+										<View style={styles.formGroup}>
 											<Text style={styles.inputTitle}>Niveau d'étude *</Text>
-											<TextInput
-												style={[styles.input, errors.niveauEtude && styles.inputError]}
-												placeholder="Ex: BAC+5, Master, Licence..."
-												placeholderTextColor="#AAA6B9"
-												value={editingFormation ? editingFormation.niveauEtude : newFormation.niveauEtude}
-												onChangeText={(text) => {
+											<SelectList
+												setSelected={(val) => {
 													if (editingFormation) {
-														setEditingFormation({...editingFormation, niveauEtude: text});
+														setEditingFormation({ ...editingFormation, niveauEtude: val });
+													} else {
+														setNewFormation({ ...newFormation, niveauEtude: val });
 													}
-													setNewFormation(prev => ({ ...prev, niveauEtude: text }));
-													if (errors.niveauEtude) setErrors(prev => ({ ...prev, niveauEtude: null }));
 												}}
+												data={niveauEtudeOptions}
+												save="key"
+												placeholder="Sélectionner le niveau d'étude"
+												defaultOption={{
+													key: editingFormation ? editingFormation.niveauEtude : newFormation.niveauEtude,
+													value: niveauEtudeOptions.find(opt => opt.key === (editingFormation ? editingFormation.niveauEtude : newFormation.niveauEtude))?.value
+												}}
+												boxStyles={styles.selectBox}
+												dropdownStyles={styles.dropdown}
 											/>
-											{errors.niveauEtude && <Text style={styles.errorText}>{errors.niveauEtude}</Text>}
 										</View>
 
-										<View style={[styles.formGroup, { marginTop: 1 }]}>
+										<View style={styles.formGroup}>
 											<Text style={styles.inputTitle}>Date de début *</Text>
 											<TextInput
 												style={[styles.input, errors.dateDebut && styles.inputError]}
@@ -1077,7 +1082,7 @@ const EditProfileCandidat = ({ route }) => {
 											{errors.dateDebut && <Text style={styles.errorText}>{errors.dateDebut}</Text>}
 										</View>
 
-										<View style={[styles.formGroup, { marginTop: 1 }]}>
+										<View style={styles.formGroup}>
 											<Text style={styles.inputTitle}>Date de fin *</Text>
 											<TextInput
 												style={[styles.input, errors.dateFin && styles.inputError]}
@@ -1217,7 +1222,7 @@ const EditProfileCandidat = ({ route }) => {
 					id: newLanguage.id,
 					nomLangue: newLanguage.nomLangue.trim(),
 					niveau: newLanguage.niveau,
-					candidatId
+					candidatId: id
 				})).unwrap();
 				Toast.show({
 					type: 'success',
@@ -1234,7 +1239,7 @@ const EditProfileCandidat = ({ route }) => {
 				await dispatch(createLangue({
 					nomLangue: newLanguage.nomLangue.trim(),
 					niveau: newLanguage.niveau,
-					candidatId
+					candidatId: id
 				})).unwrap();
 				Toast.show({
 					type: 'success',
@@ -1253,7 +1258,7 @@ const EditProfileCandidat = ({ route }) => {
 			setShowLangueModal(false);
 
 			// Refresh the languages list
-			dispatch(fetchLangues(candidatId));
+			dispatch(fetchLangues(id));
 		} catch (error) {
 			console.error('Error submitting language:', error);
 			Toast.show({
@@ -1295,7 +1300,7 @@ const EditProfileCandidat = ({ route }) => {
 
 	const handleAboutUpdate = async () => {
 		try {
-			if (!candidatId) {
+			if (!id) {
 				Toast.show({
 					type: 'error',
 					position: 'top',
@@ -1310,7 +1315,7 @@ const EditProfileCandidat = ({ route }) => {
 			}
 
 			// Get the current about data
-			const aboutResponse = await dispatch(fetchAbout(candidatId)).unwrap();
+			const aboutResponse = await dispatch(fetchAbout(id)).unwrap();
 			console.log('Current about data:', aboutResponse);
 
 			if (!aboutResponse || !aboutResponse[0]) {
@@ -1318,7 +1323,7 @@ const EditProfileCandidat = ({ route }) => {
 				console.log('No about exists, creating new one');
 				await dispatch(createAbout({
 					description: aboutText.trim(),
-					candidatId: candidatId
+					candidatId: id
 				})).unwrap();
 			} else {
 				// Update existing about
@@ -1326,7 +1331,7 @@ const EditProfileCandidat = ({ route }) => {
 				await dispatch(updateAbout({
 					aboutId: aboutResponse[0].id,
 					description: aboutText.trim(),
-					candidatId: candidatId
+					candidatId: id
 				})).unwrap();
 			}
 
@@ -1343,7 +1348,7 @@ const EditProfileCandidat = ({ route }) => {
 			});
 
 			// Refresh the about data
-			dispatch(fetchAbout(candidatId));
+			dispatch(fetchAbout(id));
 		} catch (error) {
 			console.error('Error updating about:', error);
 			Toast.show({
@@ -1429,7 +1434,7 @@ const EditProfileCandidat = ({ route }) => {
 				topOffset: 30,
 				bottomOffset: 40,
 			});
-			dispatch(fetchExperiences(candidatId));
+			dispatch(fetchExperiences(id));
 		} catch (error) {
 			console.error('Error deleting experience:', error);
 			Toast.show({
@@ -1530,7 +1535,11 @@ const EditProfileCandidat = ({ route }) => {
 				]}
 			>
 				<View style={[styles.headerBackground, { height: HEADER_MAX_HEIGHT }]}>
-					<TopNavBar />
+					<TopNavBar
+						showProfile={false}
+						theme={"purple"}
+						borderRadius={false}
+					/>
 					<Animated.View
 						style={[
 							styles.headerContent,
@@ -1799,10 +1808,6 @@ const EditProfileCandidat = ({ route }) => {
 				{FormationModal()}
 				{LanguageModal()}
 			</KeyboardAvoidingView>
-
-			<View style={styles.bottomTabContainer}>
-				<BottomTabNavigation />
-			</View>
 		</SafeAreaView>
 	);
 };
@@ -1901,13 +1906,6 @@ const styles = StyleSheet.create({
 	spacer: {
 		height: 20,
 	},
-	bottomTabContainer: {
-		position: 'absolute',
-		bottom: 0,
-		left: 0,
-		right: 0,
-		backgroundColor: 'transparent',
-	},
 	cardContainer: {
 		flexDirection: 'row',
 		backgroundColor: '#fff',
@@ -1997,7 +1995,6 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: '#E0E0E0',
 		borderRadius: 8,
-		paddingHorizontal: 12,
 		marginRight: 8,
 		backgroundColor: '#fff',
 	},
@@ -2058,316 +2055,12 @@ const styles = StyleSheet.create({
 		width: 100,
 		height: 40,
 		borderWidth: 1,
-		borderColor: '#E0F0F0',
+		borderColor: '#ddd',
 		borderRadius: 8,
 		paddingHorizontal: 12,
 		color: '#333',
 	},
-	formationsContainer: {
-		gap: 12,
-		marginBottom: 12,
-	},
-	formationItem: {
-		flexDirection: 'column',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
-	},
-	formationName: {
-		fontSize: 14,
-		color: '#333',
-		fontWeight: '500',
-	},
-	formationEcole: {
-		fontSize: 12,
-		color: '#666',
-	},
-	formationAnnee: {
-		fontSize: 12,
-		color: '#666',
-	},
-	formationDescription: {
-		fontSize: 12,
-		color: '#666',
-	},
-	addFormationContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	experiencesContainer: {
-		gap: 12,
-		marginBottom: 12,
-	},
-	experienceItem: {
-		flexDirection: 'column',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
-	},
-	experiencePoste: {
-		fontSize: 18,
-		fontWeight: 'bold',
-		color: '#333',
-		marginBottom: 4,
-	},
-	experienceEntreprise: {
-		fontSize: 12,
-		color: '#666',
-	},
-	experiencePeriode: {
-		fontSize: 12,
-		color: '#666',
-	},
-	experienceDescription: {
-		fontSize: 12,
-		color: '#666',
-	},
-	addExperienceContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	modalContainer: {
-		width: '90%',
-		backgroundColor: 'white',
-		borderRadius: 20,
-		elevation: 5,
-		alignSelf: 'center',
-		marginTop: 'auto',
-		marginBottom: 'auto',
-	},
-	modalContent: {
-		padding: 16,
-		paddingBottom: 20,
-		maxHeight: '80%',
-	},
-	modalHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: 20,
-	},
-	modalTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
-		color: '#333',
-	},
-	formGroup: {
-		marginBottom: 8
-	},
-	label: {
-		fontSize: 12,
-		fontWeight: "700",
-		color: '#333',
-	},
-	input: {
-		marginVertical: 10,
-		paddingHorizontal: 20,
-		backgroundColor: "#FFFFFF",
-		borderRadius: 10,
-		height: 50,
-		fontSize: 14,
-		color: '#333',
-		borderWidth: 1,
-		borderColor: '#E0E0E0',
-	},
-	inputError: {
-		borderColor: '#FF4444',
-		borderWidth: 1,
-	},
-	errorText: {
-		color: "red",
-		fontWeight: "700",
-		fontSize: 12,
-		paddingBottom: 10,
-	},
 	pickerContainer: {
-		borderWidth: 1,
-		borderColor: '#ddd',
-		borderRadius: 8,
-		backgroundColor: '#fff'
-	},
-	picker: {
-		height: 50
-	},
-	modalButtons: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		marginTop: 20,
-		marginBottom: 10,
-	},
-	button: {
-		flex: 1,
-		padding: 15,
-		borderRadius: 8,
-		marginHorizontal: 5
-	},
-	cancelButton: {
-		backgroundColor: '#f5f5f5'
-	},
-	submitButton: {
-		backgroundColor: '#3A317B'
-	},
-	buttonText: {
-		textAlign: 'center',
-		fontSize: 16,
-		fontWeight: '500',
-		color: '#fff'
-	},
-	closeButton: {
-		padding: 5
-	},
-	formationHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
-		marginBottom: 8,
-	},
-	experienceHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: 8,
-	},
-	actionContainer: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	iconButton: {
-		padding: 8,
-		borderRadius: 8,
-	},
-	editIconButton: {
-		backgroundColor: '#E8F0FE',
-	},
-	deleteIconButton: {
-		backgroundColor: '#FEE8E8',
-	},
-	formationTitle: {
-		fontSize: 16,
-		fontWeight: '600',
-		color: '#333',
-		flex: 1,
-	},
-	experienceTitle: {
-		fontSize: 16,
-		fontWeight: '600',
-		color: '#333',
-		flex: 1,
-	},
-	formationTitleContainer: {
-		flex: 1,
-		marginRight: 12,
-	},
-	formationSchool: {
-		fontSize: 18,
-		fontWeight: 'bold',
-		color: '#333',
-		marginBottom: 4,
-	},
-	formationTitle: {
-		fontSize: 14,
-		color: '#666',
-		fontStyle: 'italic',
-	},
-	formationDate: {
-		fontSize: 14,
-		color: '#666',
-		marginTop: 4,
-	},
-	experienceCard: {
-		backgroundColor: '#fff',
-		borderRadius: 12,
-		padding: 16,
-		marginBottom: 12,
-		elevation: 2,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
-	},
-	avatarContainer: {
-		width: 120,
-		height: 120,
-		borderRadius: 60,
-		backgroundColor: '#f5f5f5',
-		justifyContent: 'center',
-		alignItems: 'center',
-		alignSelf: 'center',
-		marginBottom: 20,
-		overflow: 'hidden',
-		borderWidth: 3,
-		borderColor: '#fff',
-		elevation: 5,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.25,
-		shadowRadius: 3.84,
-	},
-	avatar: {
-		width: '100%',
-		height: '100%',
-		resizeMode: 'cover',
-	},
-	editAvatarButton: {
-		position: 'absolute',
-		bottom: 0,
-		right: 0,
-		backgroundColor: '#3A317B',
-		borderRadius: 20,
-		width: 40,
-		height: 40,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderWidth: 3,
-		borderColor: '#fff',
-	},
-	placeholderAvatar: {
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
-		justifyContent: 'center',
-		alignItems: 'center',
-		padding: 20,
-	},
-	loadingContainer: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		justifyContent: 'center',
-		alignItems: 'center',
-		backgroundColor: 'rgba(255, 255, 255, 0.7)',
-	},
-	alertContainer: {
-		position: 'absolute',
-		top: 60,
-		left: 20,
-		right: 20,
-		backgroundColor: '#4CAF50',
-		borderRadius: 8,
-		padding: 16,
-		elevation: 4,
-		zIndex: 1000,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-	},
-	alertContent: {
-		flexDirection: 'row',
-		alignItems: 'center',
-	},
-	alertText: {
-		color: '#fff',
-		fontSize: 16,
-		marginLeft: 12,
-		flex: 1,
-	},
-	dropdownContainer: {
 		marginBottom: 16,
 	},
 	dropdownLabel: {
@@ -2478,65 +2171,73 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: 'bold',
 	},
-	formationCard: {
-		backgroundColor: '#fff',
-		borderRadius: 12,
-		padding: 16,
-		marginBottom: 12,
-		elevation: 2,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
+	formationTitleContainer: {
+		flex: 1,
+		marginRight: 12,
 	},
-	formationHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'flex-start',
-		marginBottom: 8,
+	formationSchool: {
+		fontSize: 18,
+		fontWeight: 'bold',
+		color: '#333',
+		marginBottom: 4,
 	},
-	experienceHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
+	formationDate: {
+		fontSize: 14,
+		color: '#666',
+		marginTop: 4,
+	},
+	avatarContainer: {
+		width: 120,
+		height: 120,
+		borderRadius: 60,
+		backgroundColor: '#f5f5f5',
+		justifyContent: 'center',
 		alignItems: 'center',
-		marginBottom: 8,
-	},
-	actionContainer: {
-		flexDirection: 'row',
-		gap: 8,
-	},
-	iconButton: {
-		padding: 8,
-		borderRadius: 8,
-	},
-	editIconButton: {
-		backgroundColor: '#E8F0FE',
-	},
-	deleteIconButton: {
-		backgroundColor: '#FEE8E8',
-	},
-	formationTitle: {
-		fontSize: 16,
-		fontWeight: '600',
-		color: '#333',
-		flex: 1,
-	},
-	experienceTitle: {
-		fontSize: 16,
-		fontWeight: '600',
-		color: '#333',
-		flex: 1,
-	},
-	experienceCard: {
-		backgroundColor: '#fff',
-		borderRadius: 12,
-		padding: 16,
-		marginBottom: 12,
-		elevation: 2,
+		alignSelf: 'center',
+		marginBottom: 20,
+		overflow: 'hidden',
+		borderWidth: 3,
+		borderColor: '#fff',
+		elevation: 5,
 		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
+	},
+	avatar: {
+		width: '100%',
+		height: '100%',
+		resizeMode: 'cover',
+	},
+	editAvatarButton: {
+		position: 'absolute',
+		bottom: 0,
+		right: 0,
+		backgroundColor: '#3A317B',
+		borderRadius: 20,
+		width: 40,
+		height: 40,
+		justifyContent: 'center',
+		alignItems: 'center',
+		borderWidth: 3,
+		borderColor: '#fff',
+	},
+	placeholderAvatar: {
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	selectBox: {
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
+		borderRadius: 8,
+		backgroundColor: '#FFFFFF',
+		marginTop: 5,
+	},
+	dropdown: {
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
+		backgroundColor: '#FFFFFF',
+		marginTop: 5,
 	},
 });
 

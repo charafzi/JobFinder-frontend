@@ -12,9 +12,9 @@ import {
 	Animated,
 	Keyboard,
 	Alert,
-	ToastAndroid,
 	KeyboardAvoidingView,
-	TouchableWithoutFeedback
+	TouchableWithoutFeedback,
+	StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -31,6 +31,9 @@ import LocationMapModal from '../components/LocationMapModal';
 import MapView, { Marker } from 'react-native-maps';
 import { useForm, Controller } from "react-hook-form";
 import axios from 'axios';
+import showToast from '../utils/showToast';
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 350;
@@ -81,6 +84,7 @@ function EditCompanyProfile() {
 	const navigation = useNavigation();
 	const dispatch = useDispatch();
 	const { entreprise, secteursActivites } = useSelector((state) => state.entrepriseProfile);
+	const {id} = useSelector(state => state.auth);
 	const [image, setImage] = useState(null);
 	const [profileImage, setProfileImage] = useState(null);
 	const [isLoadingImage, setIsLoadingImage] = useState(false);
@@ -92,11 +96,11 @@ function EditCompanyProfile() {
 		let isMounted = true;
 
 		const loadProfilePicture = async () => {
-			if (!entreprise?.id || isLoadingImage || imageCache.current) return;
+			if (!id || isLoadingImage || imageCache.current) return;
 
 			try {
 				setIsLoadingImage(true);
-				const imageUrl = await dispatch(getProfilePicture(entreprise.id)).unwrap();
+				const imageUrl = await dispatch(getProfilePicture(id)).unwrap();
 				if (isMounted) {
 					setProfileImage(imageUrl);
 					setImage(imageUrl);
@@ -105,10 +109,7 @@ function EditCompanyProfile() {
 			} catch (error) {
 				console.error('Error loading profile picture:', error);
 				if (isMounted) {
-					showNotification(
-						'Impossible de charger l\'image de profil. Veuillez réessayer plus tard.',
-						'error'
-					);
+					showToast('error', 'Erreur', 'Impossible de charger l\'image de profil. Veuillez réessayer plus tard.');
 				}
 			} finally {
 				if (isMounted) {
@@ -117,7 +118,7 @@ function EditCompanyProfile() {
 			}
 		};
 
-		if (entreprise?.id && !imageCache.current) {
+		if (id && !imageCache.current) {
 			loadProfilePicture();
 		} else if (imageCache.current) {
 			// Utiliser l'image en cache si disponible
@@ -128,7 +129,7 @@ function EditCompanyProfile() {
 		return () => {
 			isMounted = false;
 		};
-	}, [entreprise?.id]);
+	}, [id]);
 
 	// Nettoyer le cache lors du démontage du composant
 	useEffect(() => {
@@ -236,7 +237,7 @@ function EditCompanyProfile() {
 	};
 
 	const handleSecteurToggle = (secteurId) => {
-		if (!entreprise?.id) {
+		if (!id) {
 			console.log('No entreprise ID found');
 			return;
 		}
@@ -247,9 +248,9 @@ function EditCompanyProfile() {
 				? prev.filter(id => id !== secteurId)
 				: [...prev, secteurId];
 
-			console.log('Updating secteurs for entreprise:', entreprise.id, 'with selection:', newSelection);
-			dispatch(updateEntrepriseSecteurs({
-				entrepriseId: entreprise.id,
+			dispatch(updateEntrepriseSecteurs(
+				{
+				entrepriseId: id,
 				secteurIds: newSelection
 			})).then(result => {
 				if (result.error) {
@@ -291,10 +292,8 @@ function EditCompanyProfile() {
 
 			if (!result.canceled) {
 				const selectedImage = result.assets[0];
-				const id = entreprise?.id;
-
 				if (!id) {
-					showNotification('ID de l\'entreprise non disponible', 'error');
+					showToast('error', 'Erreur', 'ID de l\'entreprise non disponible');
 					return;
 				}
 
@@ -319,21 +318,18 @@ function EditCompanyProfile() {
 					// Mettre à jour le cache avec la nouvelle image
 					imageCache.current = localImageUri;
 					setProfileImage(localImageUri);
-					showNotification('Photo de profil mise à jour avec succès', 'success');
+					showToast('success', 'Succès', 'Photo de profil mise à jour avec succès');
 				} catch (error) {
 					// Restaurer l'ancienne image en cas d'erreur
 					setImage(imageCache.current);
-					showNotification('Erreur lors de la mise à jour de la photo', 'error');
+					showToast('error', 'Erreur', 'Erreur lors de la mise à jour de la photo');
 				} finally {
 					setIsLoadingImage(false);
 				}
 			}
 		} catch (error) {
 			console.error('Error picking image:', error);
-			showNotification(
-				'Erreur lors de la sélection de l\'image. Veuillez réessayer.',
-				'error'
-			);
+			showToast('error', 'Erreur', 'Erreur lors de la sélection de l\'image. Veuillez réessayer.');
 		}
 	};
 
@@ -436,7 +432,7 @@ function EditCompanyProfile() {
 			// S'assurer que les données d'adresse sont complètes
 			if (!addressData.adress || !addressData.city) {
 				if (Platform.OS === 'android') {
-					ToastAndroid.show('Veuillez sélectionner une ville et une préfecture', ToastAndroid.SHORT);
+					showToast('error', 'Erreur', 'Veuillez sélectionner une ville et une préfecture');
 				} else {
 					console.warn('Ville ou préfecture manquante');
 				}
@@ -445,13 +441,13 @@ function EditCompanyProfile() {
 
 			// Créer une copie de l'entreprise avec la nouvelle adresse
 			const updatedEntreprise = {
-				...entreprise,
+				...entreprise, // Préserver les autres informations de l'entreprise
 				adress: {
-					adress: addressData.adress,
 					city: addressData.city,
+					adress: addressData.adress,
 					latitude: addressData.latitude,
-					longitude: addressData.longitude
-				}
+					longitude: addressData.longitude,
+				},
 			};
 
 			console.log('Envoi des données à l\'API:', updatedEntreprise);
@@ -461,12 +457,14 @@ function EditCompanyProfile() {
 			console.log('Résultat de la mise à jour:', result);
 
 			if (result) {
+				// Si la mise à jour réussit, désactiver le mode édition et mettre à jour les données du formulaire
 				setIsEditingAddress(false);
-				setNotification({ visible: true, message: 'Adresse mise à jour avec succès !', type: 'success' });
+				setFormData((prev) => ({ ...prev, adress: addressData }));
+				showToast('success', 'Succès', 'Adresse mise à jour avec succès !');
 			}
 		} catch (error) {
 			console.error('Erreur lors de la mise à jour de l\'adresse:', error);
-			setNotification({ visible: true, message: error.message || 'Erreur lors de la mise à jour de l\'adresse', type: 'error' });
+			showToast('error', 'Erreur', 'Erreur lors de la mise à jour de l\'adresse');
 		}
 	};
 
@@ -485,11 +483,11 @@ function EditCompanyProfile() {
 
 			if (result) {
 				setIsEditingAbout(false);
-				showNotification('Description mise à jour avec succès', 'success');
+				showToast('success', 'Succès', 'Description mise à jour avec succès');
 			}
 		} catch (error) {
 			console.error('Erreur lors de la mise à jour:', error);
-			showNotification('Erreur lors de la mise à jour de la description', 'error');
+			showToast('error', 'Erreur', 'Erreur lors de la mise à jour de la description');
 		}
 	};
 
@@ -504,13 +502,23 @@ function EditCompanyProfile() {
 		}, 3000);
 	};
 
-	const TopNavBar = () => (
-		<View style={styles.topNavBar}>
-			<TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-				<MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-			</TouchableOpacity>
-		</View>
-	);
+
+	const TopNavBar = ({ opacity }) => {
+		const insets = useSafeAreaInsets();
+		const navigation = useNavigation();
+		return (
+			<Animated.View style={[styles.navBar, { opacity },{paddingTop: insets.top}]}>
+				<TouchableOpacity onPress={() => navigation.goBack()}>
+					<AntDesign
+						name="left"
+						size={24}
+						color={"#fff"}
+						style={styles.icon}
+					/>
+				</TouchableOpacity>
+			</Animated.View>
+		);
+	};
 
 	const HeaderInfo = () => (
 		<View style={styles.headerInfo}>
@@ -565,11 +573,11 @@ function EditCompanyProfile() {
 				if (result) {
 					setIsEditingAbout(false);
 					setFormData(prev => ({ ...prev, about: aboutText }));
-					showNotification('Description mise à jour avec succès', 'success');
+					showToast('success', 'Succès', 'Description mise à jour avec succès');
 				}
 			} catch (error) {
 				console.error('Erreur lors de la mise à jour:', error);
-				showNotification('Erreur lors de la mise à jour de la description', 'error');
+				showToast('error', 'Erreur', 'Erreur lors de la mise à jour de la description');
 			}
 		};
 
@@ -687,7 +695,7 @@ function EditCompanyProfile() {
 		const handleUpdateAddress = async () => {
 			// Vérifier si les champs obligatoires sont remplis
 			if (!addressData.city || !addressData.adress) {
-				showNotification("La ville et l'adresse sont obligatoires", "error");
+				showToast('error', 'Erreur', 'La ville et l\'adresse sont obligatoires');
 				return; // Si l'un des champs est manquant, ne pas envoyer la requête
 			}
 
@@ -710,17 +718,17 @@ function EditCompanyProfile() {
 					// Si la mise à jour réussit, désactiver le mode édition et mettre à jour les données du formulaire
 					setIsEditingAddress(false);
 					setFormData((prev) => ({ ...prev, adress: addressData }));
-					showNotification("Adresse mise à jour avec succès", "success");
+					showToast('success', 'Succès', 'Adresse mise à jour avec succès !');
 				}
 			} catch (error) {
 				console.error("Erreur lors de la mise à jour de l'adresse:", error);
-				showNotification("Erreur lors de la mise à jour de l'adresse", "error");
+				showToast('error', 'Erreur', 'Erreur lors de la mise à jour de l\'adresse');
 			}
 		};
 
 		const handleOpenLocationModal = async () => {
 			if (!addressData.city || !addressData.adress) {
-				showNotification("Veuillez d'abord saisir la ville et l'adresse.", "error");
+				showToast('error', 'Erreur', 'Veuillez d\'abord saisir la ville et l\'adresse.');
 				return;
 			}
 
@@ -742,11 +750,11 @@ function EditCompanyProfile() {
 						longitude: parseFloat(lon),
 					}));
 				} else {
-					showNotification("Adresse introuvable. Veuillez vérifier les informations saisies.", "error");
+					showToast('error', 'Erreur', 'Adresse introuvable. Veuillez vérifier les informations saisies.');
 				}
 			} catch (error) {
 				console.error("Erreur lors du géocodage:", error);
-				showNotification("Impossible d'obtenir les coordonnées GPS.", "error");
+				showToast('error', 'Erreur', 'Impossible d\'obtenir les coordonnées GPS.');
 			}
 
 			setShowLocationModal(true);
@@ -915,7 +923,11 @@ function EditCompanyProfile() {
 							}]
 						}]}>
 							<View style={styles.headerBackground}>
-								<TopNavBar />
+								<TopNavBar opacity={scrollY.interpolate({
+									inputRange: [0, HEADER_SCROLL_DISTANCE],
+									outputRange: [1, 0],
+									extrapolate: 'clamp',
+								})} />
 								<View style={styles.headerContent}>
 									<TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
 										{(image || profileImage) ? (
@@ -981,7 +993,6 @@ const styles = StyleSheet.create({
 		backgroundColor: '#3A317B',
 		borderBottomLeftRadius: 30,
 		borderBottomRightRadius: 30,
-		paddingTop: Platform.OS === 'ios' ? 40 : StatusBar.currentHeight,
 		paddingBottom: 20,
 	},
 	headerContent: {
@@ -1069,16 +1080,6 @@ const styles = StyleSheet.create({
 		backgroundColor: 'transparent',
 		zIndex: 2,
 	},
-	saveButton: {
-		backgroundColor: '#fff',
-		paddingHorizontal: 16,
-		paddingVertical: 8,
-		borderRadius: 20,
-	},
-	saveButtonText: {
-		color: '#3A317B',
-		fontWeight: '600',
-	},
 	cardContainer: {
 		flexDirection: 'row',
 		backgroundColor: '#FFFFFF',
@@ -1120,15 +1121,6 @@ const styles = StyleSheet.create({
 		height: 1,
 		backgroundColor: '#E5E5E5',
 		marginVertical: 8,
-	},
-	textInputContainer: {
-		backgroundColor: '#F5F5F5',
-		borderRadius: 8,
-		padding: 12,
-		minHeight: 100,
-		textAlignVertical: 'top',
-		fontSize: 16,
-		color: '#333',
 	},
 	aboutText: {
 		fontSize: 16,
@@ -1237,22 +1229,8 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 		backgroundColor: '#fff',
 	},
-	inputContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		backgroundColor: '#f5f5f5',
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		marginBottom: 10,
-	},
 	inputIcon: {
 		marginRight: 8,
-	},
-	addressInput: {
-		flex: 1,
-		paddingVertical: 12,
-		fontSize: 16,
-		color: '#333',
 	},
 	suggestionsContainer: {
 		backgroundColor: '#fff',
@@ -1298,10 +1276,6 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		color: '#666',
 		marginBottom: 4,
-	},
-	addressText: {
-		fontSize: 16,
-		color: '#333',
 	},
 	viewLocationButton: {
 		flexDirection: 'row',
@@ -1561,6 +1535,16 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontWeight: '500',
 	},
+	navBar: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		backgroundColor: "transparent",
+		width: '100%',
+		height: 80
+	}
 });
 
 export default EditCompanyProfile;

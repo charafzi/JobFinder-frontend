@@ -9,3 +9,4 @@ export { default as google } from "./google.png";
 export { default as profile } from "./profile.png";
 export { default as designicon } from "./designicon.png";
 export { default as remotejobs } from "./remotejobs.png";
+export { default as defaultAvatar } from "./defaultAvatar.png";

@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import {Color} from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
@@ -40,6 +41,7 @@ const TopNavBar = React.memo(({
     onBackPress,
     showProfile = true,
     showNotification = true,
+    borderRadius = true,
     theme = "default"
 }) => {
     const { isCandidat, id, email, entreprise } = useSelector((state) => state.auth);
@@ -81,7 +83,14 @@ const TopNavBar = React.memo(({
             colors={colorConfig.colors}
             start={colorConfig.start}
             end={colorConfig.end}
-            style={[styles.container, { paddingTop: insets.top }]}
+            style={[
+                styles.container,
+                {
+                    paddingTop: insets.top,
+                    borderBottomRightRadius: borderRadius ? 15 : 0,
+                    borderBottomLeftRadius: borderRadius ? 15 : 0,
+                }
+            ]}
         >
             <View style={[styles.navBar]}>
                 {showBackButton && (
@@ -120,12 +129,17 @@ const TopNavBar = React.memo(({
 
                     {showProfile && (
                         <TouchableOpacity onPress={onProfilePress}>
-                            <Image
-                                source={{
-                                    uri: isCandidat ? CANDIDAT_IMAGE_URL + id : ENTREPRISE_IMAGE_URL + id,
-                                }}
-                                style={styles.profilePic}
-                            />
+                            {id ? (
+                                <Image
+                                    source={{ uri: isCandidat ? CANDIDAT_IMAGE_URL + id : ENTREPRISE_IMAGE_URL + id }}
+                                    style={styles.profilePic}
+                                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                                />
+                            ) : (
+                                <View style={[styles.profilePic, styles.defaultAvatarContainer]}>
+                                    <MaterialCommunityIcons name="account-circle" size={40} color={Color.text} />
+                                </View>
+                            )}
                         </TouchableOpacity>
                     )}
                 </View>
@@ -179,7 +193,12 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        marginLeft: 8,
+        backgroundColor: '#fff',
+    },
+    defaultAvatarContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
     },
     headerContainer: {
         display: "flex",
