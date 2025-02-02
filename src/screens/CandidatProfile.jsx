@@ -28,11 +28,23 @@ import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
 import TopNavBar from "../components/TopNavBar";
 import {LinearGradient} from "expo-linear-gradient";
 
-const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 390;
 const HEADER_MIN_HEIGHT = 90;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
+const niveauEtudeOptions = [
+  { label: 'Bac', value: 'BAC' },
+  { label: 'Bac +1', value: 'BAC_PLUS_1' },
+  { label: 'Bac +2', value: 'BAC_PLUS_2' },
+  { label: 'Bac +3', value: 'BAC_PLUS_3' },
+  { label: 'Bac +4', value: 'BAC_PLUS_4' },
+  { label: 'Bac +5', value: 'BAC_PLUS_5' },
+  { label: '> Bac +5', value: 'SUPERIEUR_BAC_PLUS_5' },
+];
+
+const getNiveauEtudeLabel = (value) => {
+  const option = niveauEtudeOptions.find(opt => opt.value === value);
+  return option ? option.label : value;
+};
 
 const ProfileSection = ({ title, icon, content, isExpanded, onToggle }) => {
   return (
@@ -207,7 +219,7 @@ const CandidatProfile = () => {
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{formation.nomEcole}</Text>
                 <View style={styles.levelBadge}>
-                  <Text style={styles.levelText}>{formation.niveauEtude}</Text>
+                  <Text style={styles.levelText}>{getNiveauEtudeLabel(formation.niveauEtude)}</Text>
                 </View>
               </View>
               <View style={styles.cardDivider} />
@@ -300,7 +312,9 @@ const CandidatProfile = () => {
         langues.map((langue, index) => (
           <View key={index} style={styles.languageItem}>
             <Text style={styles.languageName}>{langue.nomLangue || 'Non spécifié'}</Text>
-            <Text style={styles.languageLevel}>{langue.niveau}</Text>
+            <View style={styles.levelBadge}>
+              <Text style={styles.languageLevel}>{langue.niveau}</Text>
+            </View>
           </View>
         ))
       ) : (
@@ -612,6 +626,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   levelText: {
     fontSize: 12,
@@ -633,7 +650,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: {
-    marginLeft: 8,
     fontSize: 13,
     color: '#666',
   },
