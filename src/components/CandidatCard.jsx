@@ -4,8 +4,12 @@ import { Color } from "../constants/Color";
 import { useNavigation } from "@react-navigation/native";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { CANDIDAT_IMAGE_URL } from "../config/axiosConfig";
+import { useSelector } from "react-redux";
+import LoadingIndicator from "./LoadingIndicator";
 
 const CandidateCard = ({ candidate, handleAccept, handleDecline }) => {
+  const { isLoading } = useSelector((state) => state.entrepCandidatures);
   const [isAccepted, setIsAccepted] = useState(candidate.status === "ACCEPTE");
   const [isDeclined, setIsDeclined] = useState(candidate.status === "REJETEE");
   const navigation = useNavigation();
@@ -55,7 +59,12 @@ const CandidateCard = ({ candidate, handleAccept, handleDecline }) => {
   return (
     <TouchableOpacity style={styles.cardContainer} >
       <View style={styles.row}>
-        <Image source={{ uri: candidate.candidat.profilePicture }} style={styles.candidateImage} />
+        <Image
+          source={{ uri: candidate.candidat.profilePicture && CANDIDAT_IMAGE_URL + candidate.candidat.id }}
+          style={styles.candidateImage}
+          onError={() => console.log("Erreur de chargement de l'image")}
+          defaultSource={require('../../assets/logo.png')}
+        />
         <View style={{ marginLeft: 20, flex: 1, }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <Text style={styles.title}>{fullName}</Text>
@@ -71,16 +80,18 @@ const CandidateCard = ({ candidate, handleAccept, handleDecline }) => {
       </View>
       <View style={{ marginVertical: 10 }}>
         <Text style={[styles.title, { marginBottom: 10 }]}>{candidate.offreEmploi?.question || "What are the characteristics of a fake job call form?"}</Text>
-        <Text style={styles.subtitle}>{candidate.response || "Because I always find fake job calls so I'm confused which job to take can you share your knowledge here? thank you"}</Text>
+        <Text style={styles.subtitle}>{candidate.reponse || "Because I always find fake job calls so I'm confused which job to take can you share your knowledge here? thank you"}</Text>
       </View>
       {/* Afficher les boutons uniquement si la candidature n'est pas encore acceptée */}
       {!isAccepted && !isDeclined && candidate.status === "ENVOYEE" && (
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(candidate.candidat.email, candidate.offreEmploi.offreId)}>
-            <Text style={styles.buttonText}>Accept</Text>
+            {!isLoading && <Text style={styles.buttonText}>Accept</Text>}
+            <LoadingIndicator isLoading={isLoading} />
           </TouchableOpacity>
           <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={() => handleDecline(candidate.candidat.email, candidate.offreEmploi.offreId)}>
-            <Text style={styles.buttonText}>Decline</Text>
+            {!isLoading && <Text style={styles.buttonText}>Decline</Text>}
+            <LoadingIndicator isLoading={isLoading} />
           </TouchableOpacity>
         </View>
       )}
@@ -118,7 +129,6 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: "row", alignItems: "center", marginVertical: 10, },
   candidateImage: {
-    backgroundColor: "#D6CDFE",
     borderRadius: 30,
     width: 40,
     height: 40,
