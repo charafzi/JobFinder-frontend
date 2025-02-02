@@ -1,17 +1,17 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef,  } from 'react';
+import {StyleSheet} from "react-native";
 import { useDispatch, useSelector } from 'react-redux';
 import {
   View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  SafeAreaView, 
-  StatusBar,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
   Platform, 
   Dimensions,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -28,7 +28,7 @@ import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
 import TopNavBar from "../components/TopNavBar";
 import {LinearGradient} from "expo-linear-gradient";
 
-const HEADER_MAX_HEIGHT = 390;
+const HEADER_MAX_HEIGHT = 360;
 const HEADER_MIN_HEIGHT = 90;
 
 const niveauEtudeOptions = [
@@ -47,31 +47,39 @@ const getNiveauEtudeLabel = (value) => {
 };
 
 const ProfileSection = ({ title, icon, content, isExpanded, onToggle }) => {
+  const rotationValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(rotationValue, {
+      toValue: isExpanded ? 1 : 0,
+      useNativeDriver: true,
+      tension: 125,
+      friction: 8
+    }).start();
+  }, [isExpanded]);
+
+  const rotation = rotationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.profileSection,
-        isExpanded && styles.profileSectionExpanded
-      ]}
-      onPress={onToggle}
-    >
-      <View style={styles.sectionHeader}>
+    <View style={[styles.profileSection, isExpanded && styles.profileSectionExpanded]}>
+      <TouchableOpacity onPress={onToggle} style={styles.sectionHeader}>
         <View style={styles.sectionTitleContainer}>
           {icon}
           <Text style={styles.sectionTitle}>{title}</Text>
         </View>
-        <Icon
-          name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-          size={24}
-          color={isExpanded ? "#666" : "#FF9228"}
-        />
-      </View>
+        <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+          <MaterialCommunityIcons name="plus" size={24} color="#FF9228" />
+        </Animated.View>
+      </TouchableOpacity>
       {isExpanded && (
         <View style={styles.sectionContent}>
           {content}
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -325,7 +333,6 @@ const CandidatProfile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
       <View style={[styles.header]}>
         <View style={[{ height: HEADER_MAX_HEIGHT }]}>
           <TopNavBar
@@ -522,7 +529,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   content: {
-    paddingTop: HEADER_MAX_HEIGHT + 20,
+    paddingTop: HEADER_MAX_HEIGHT,
     paddingHorizontal: 16,
     paddingBottom: 80,
     gap: 16,
@@ -736,7 +743,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
     height: HEADER_MIN_HEIGHT,
     backgroundColor: 'transparent',
     zIndex: 2,
