@@ -14,7 +14,7 @@ import {
 	Alert,
 	KeyboardAvoidingView,
 	TouchableWithoutFeedback,
-	StatusBar
+	StatusBar, SafeAreaView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -27,13 +27,11 @@ import {
 	uploadProfilePicture,
 	getProfilePicture
 } from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
-import LocationMapModal from '../components/LocationMapModal';
-import MapView, { Marker } from 'react-native-maps';
-import { useForm, Controller } from "react-hook-form";
 import axios from 'axios';
 import showToast from '../utils/showToast';
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import TopNavBar from "../components/TopNavBar";
+import {LinearGradient} from "expo-linear-gradient";
+import {LocationMapModal} from "../components";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 350;
@@ -54,30 +52,6 @@ const CustomCheckbox = ({ title, checked, onPress }) => (
 	</TouchableOpacity>
 );
 
-const CustomTextInput = React.forwardRef(({ value, onChangeText, ...props }, ref) => {
-	const [localValue, setLocalValue] = useState(value);
-
-	const handleChange = (text) => {
-		setLocalValue(text);
-		if (onChangeText) {
-			onChangeText(text);
-		}
-	};
-
-	useEffect(() => {
-		setLocalValue(value);
-	}, [value]);
-
-	return (
-		<TextInput
-			ref={ref}
-			value={localValue}
-			onChangeText={handleChange}
-			style={[styles.textInput, props.style]}
-			{...props}
-		/>
-	);
-});
 
 
 function EditCompanyProfile() {
@@ -91,6 +65,134 @@ function EditCompanyProfile() {
 	const imageCache = useRef(null);
 	const scrollY = useRef(new Animated.Value(0)).current;
 	const scrollViewRef = useRef(null);
+	const [isMapModalVisible, setIsMapModalVisible] = useState(false);
+	const [selectedLocation, setSelectedLocation] = useState({
+		latitude: entreprise?.adress?.latitude || 0,
+		longitude: entreprise?.adress?.longitude || 0,
+		address: entreprise?.adress?.adress || ''
+	});
+
+	const [keyboardHeight, setKeyboardHeight] = useState(0);
+	const [keyboardVisible, setKeyboardVisible] = useState(false);
+	const [isEditingIndustries, setIsEditingIndustries] = useState(false);
+	const [selectedSecteurs, setSelectedSecteurs] = useState([]);
+	const [isEditingAddress, setIsEditingAddress] = useState(false);
+
+	const [formData, setFormData] = useState({
+		about: entreprise?.about || '',
+		adress: {
+			adress: entreprise?.adress?.adress || '',
+			city: entreprise?.adress?.city || '',
+			latitude: entreprise?.adress?.latitude || 33.5731104,
+			longitude: entreprise?.adress?.longitude || -7.5898434
+		},
+		selectedSectors: []
+	});
+
+	const [addressData, setAddressData] = useState({
+		adress: formData.adress?.adress || '',
+		city: formData.adress?.city || '',
+		latitude: formData.adress?.latitude || 0,
+		longitude: formData.adress?.longitude || 0
+	});
+
+	useEffect(() => {
+		const keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
+			setKeyboardVisible(true);
+			setKeyboardHeight(e.endCoordinates.height);
+		});
+
+		const keyboardWillHide = Keyboard.addListener('keyboardWillHide', () => {
+			setKeyboardVisible(false);
+			setKeyboardHeight(0);
+		});
+
+		return () => {
+			keyboardWillShow.remove();
+			keyboardWillHide.remove();
+		};
+	}, []);
+
+	useEffect(() => {
+		if (entreprise?.activitySectors) {
+			setSelectedSecteurs(entreprise.activitySectors.map(secteur => secteur.id));
+		}
+	}, [entreprise]);
+
+	useEffect(() => {
+		dispatch(fetchSecteursActivite());
+	}, [dispatch]);
+
+	// Profile image loading
+	useEffect(() => {
+		let isMounted = true;
+
+		const loadProfilePicture = async () => {
+			if (!id || isLoadingImage || imageCache.current) return;
+
+			try {
+				setIsLoadingImage(true);
+				const imageUrl = await dispatch(getProfilePicture(id)).unwrap();
+				if (isMounted) {
+					setProfileImage(imageUrl);
+					setImage(imageUrl);
+					imageCache.current = imageUrl;
+				}
+			} catch (error) {
+				console.error('Error loading profile picture:', error);
+				if (isMounted) {
+					showToast('error', 'Erreur', 'Impossible de charger l\'image de profil');
+				}
+			} finally {
+				if (isMounted) {
+					setIsLoadingImage(false);
+				}
+			}
+		};
+
+		if (id && !imageCache.current) {
+			loadProfilePicture();
+		}
+
+		return () => {
+			isMounted = false;
+		};
+	}, [id]);
+
+	const handleSecteurToggle = (secteurId) => {
+		if (!id) return;
+
+		setSelectedSecteurs(prev => {
+			const isSelected = prev.includes(secteurId);
+			const newSelection = isSelected
+				? prev.filter(id => id !== secteurId)
+				: [...prev, secteurId];
+
+			dispatch(updateEntrepriseSecteurs({
+				entrepriseId: id,
+				secteurIds: newSelection
+			}));
+
+			return newSelection;
+		});
+	};
+
+
+	const handleUpdateAddress = async () => {
+		try {
+			const updatedEntreprise = {
+				...entreprise,
+				adress: addressData
+			};
+
+			await dispatch(updateEntreprise(updatedEntreprise)).unwrap();
+			setIsEditingAddress(false);
+			showToast('success', 'Succès', 'Adresse mise à jour avec succès');
+		} catch (error) {
+			console.error('Error updating address:', error);
+			showToast('error', 'Erreur', 'Erreur lors de la mise à jour de l\'adresse');
+		}
+	};
 
 	useEffect(() => {
 		let isMounted = true;
@@ -138,11 +240,6 @@ function EditCompanyProfile() {
 		};
 	}, []);
 
-	const [keyboardHeight, setKeyboardHeight] = useState(0);
-	const [keyboardVisible, setKeyboardVisible] = useState(false);
-	const aboutInputRef = useRef(null);
-	const cityInputRef = useRef(null);
-	const addressInputRef = useRef(null);
 
 	useEffect(() => {
 		const keyboardWillShow = Keyboard.addListener('keyboardWillShow', (e) => {
@@ -161,16 +258,6 @@ function EditCompanyProfile() {
 		};
 	}, []);
 
-	const [formData, setFormData] = useState({
-		about: '',
-		adress: {
-			adress: '',
-			city: '',
-			latitude: 33.5731104,
-			longitude: -7.5898434
-		},
-		selectedSectors: []
-	});
 
 	const [errors, setErrors] = useState({
 		about: null,
@@ -182,17 +269,7 @@ function EditCompanyProfile() {
 	const industriesAnimation = useRef(new Animated.Value(0)).current;
 
 	const [isEditingAbout, setIsEditingAbout] = useState(false);
-	const [isEditingAddress, setIsEditingAddress] = useState(false);
 
-	const [addressData, setAddressData] = useState({
-		adress: formData.adress?.adress || '',
-		city: formData.adress?.city || '',
-		latitude: formData.adress?.latitude || 0,
-		longitude: formData.adress?.longitude || 0
-	});
-
-	const [selectedSecteurs, setSelectedSecteurs] = useState([]);
-	const [isEditingIndustries, setIsEditingIndustries] = useState(false);
 	const [addressSuggestions, setAddressSuggestions] = useState([]);
 	const [cityInput, setCityInput] = useState(addressData.city || '');
 	const [selectedCity, setSelectedCity] = useState('');
@@ -236,33 +313,6 @@ function EditCompanyProfile() {
 		}));
 	};
 
-	const handleSecteurToggle = (secteurId) => {
-		if (!id) {
-			console.log('No entreprise ID found');
-			return;
-		}
-
-		setSelectedSecteurs(prev => {
-			const isSelected = prev.includes(secteurId);
-			const newSelection = isSelected
-				? prev.filter(id => id !== secteurId)
-				: [...prev, secteurId];
-
-			dispatch(updateEntrepriseSecteurs(
-				{
-				entrepriseId: id,
-				secteurIds: newSelection
-			})).then(result => {
-				if (result.error) {
-					console.error('Failed to update secteurs:', result.error);
-				} else {
-					console.log('Secteurs updated successfully');
-				}
-			});
-
-			return newSelection;
-		});
-	};
 
 	const handleSubmit = async () => {
 		try {
@@ -277,6 +327,25 @@ function EditCompanyProfile() {
 		} catch (error) {
 			console.error('Error updating profile:', error);
 		}
+	};
+
+	const handleShowMap = () => {
+		setIsMapModalVisible(true);
+	};
+
+	const handleLocationSelect = (location) => {
+		setSelectedLocation(location);
+		setIsMapModalVisible(false);
+		// Update your form values here
+		setFormData(prev => ({
+			...prev,
+			address: {
+				...prev.address,
+				fullAddress: location.address,
+				latitude: location.latitude,
+				longitude: location.longitude
+			}
+		}));
 	};
 
 	const pickImage = async () => {
@@ -414,60 +483,6 @@ function EditCompanyProfile() {
 	//   setAddressSuggestions([]);
 	// };
 
-	const handleUpdateAddress = async () => {
-		// Validation
-		if (!addressData.city?.trim()) {
-			setErrors(prev => ({ ...prev, city: 'La ville est requise' }));
-			return;
-		}
-
-		if (!addressData.adress?.trim()) {
-			setErrors(prev => ({ ...prev, adress: 'L\'adresse est requise' }));
-			return;
-		}
-
-		try {
-			console.log('Données d\'adresse actuelles:', addressData);
-
-			// S'assurer que les données d'adresse sont complètes
-			if (!addressData.adress || !addressData.city) {
-				if (Platform.OS === 'android') {
-					showToast('error', 'Erreur', 'Veuillez sélectionner une ville et une préfecture');
-				} else {
-					console.warn('Ville ou préfecture manquante');
-				}
-				return;
-			}
-
-			// Créer une copie de l'entreprise avec la nouvelle adresse
-			const updatedEntreprise = {
-				...entreprise, // Préserver les autres informations de l'entreprise
-				adress: {
-					city: addressData.city,
-					adress: addressData.adress,
-					latitude: addressData.latitude,
-					longitude: addressData.longitude,
-				},
-			};
-
-			console.log('Envoi des données à l\'API:', updatedEntreprise);
-
-			// Mettre à jour l'entreprise
-			const result = await dispatch(updateEntreprise(updatedEntreprise)).unwrap();
-			console.log('Résultat de la mise à jour:', result);
-
-			if (result) {
-				// Si la mise à jour réussit, désactiver le mode édition et mettre à jour les données du formulaire
-				setIsEditingAddress(false);
-				setFormData((prev) => ({ ...prev, adress: addressData }));
-				showToast('success', 'Succès', 'Adresse mise à jour avec succès !');
-			}
-		} catch (error) {
-			console.error('Erreur lors de la mise à jour de l\'adresse:', error);
-			showToast('error', 'Erreur', 'Erreur lors de la mise à jour de l\'adresse');
-		}
-	};
-
 	const handleUpdateAbout = async () => {
 		// Validation
 		if (!formData.about?.trim()) {
@@ -502,23 +517,6 @@ function EditCompanyProfile() {
 		}, 3000);
 	};
 
-
-	const TopNavBar = ({ opacity }) => {
-		const insets = useSafeAreaInsets();
-		const navigation = useNavigation();
-		return (
-			<Animated.View style={[styles.navBar, { opacity },{paddingTop: insets.top}]}>
-				<TouchableOpacity onPress={() => navigation.goBack()}>
-					<AntDesign
-						name="left"
-						size={24}
-						color={"#fff"}
-						style={styles.icon}
-					/>
-				</TouchableOpacity>
-			</Animated.View>
-		);
-	};
 
 	const HeaderInfo = () => (
 		<View style={styles.headerInfo}>
@@ -691,280 +689,146 @@ function EditCompanyProfile() {
 		);
 	};
 
-	const AddressCard = () => {
-		const handleUpdateAddress = async () => {
-			// Vérifier si les champs obligatoires sont remplis
-			if (!addressData.city || !addressData.adress) {
-				showToast('error', 'Erreur', 'La ville et l\'adresse sont obligatoires');
-				return; // Si l'un des champs est manquant, ne pas envoyer la requête
-			}
-
-			// Créer un objet pour envoyer les données mises à jour
-			const entrepriseData = {
-				...entreprise, // Préserver les autres informations de l'entreprise
-				adress: {
-					city: addressData.city,
-					adress: addressData.adress,
-					latitude: addressData.latitude,
-					longitude: addressData.longitude,
-				},
-			};
-
-			try {
-				// Appel à Redux pour mettre à jour l'entreprise avec la nouvelle adresse
-				const result = await dispatch(updateEntreprise(entrepriseData)).unwrap();
-
-				if (result) {
-					// Si la mise à jour réussit, désactiver le mode édition et mettre à jour les données du formulaire
-					setIsEditingAddress(false);
-					setFormData((prev) => ({ ...prev, adress: addressData }));
-					showToast('success', 'Succès', 'Adresse mise à jour avec succès !');
-				}
-			} catch (error) {
-				console.error("Erreur lors de la mise à jour de l'adresse:", error);
-				showToast('error', 'Erreur', 'Erreur lors de la mise à jour de l\'adresse');
-			}
-		};
-
-		const handleOpenLocationModal = async () => {
-			if (!addressData.city || !addressData.adress) {
-				showToast('error', 'Erreur', 'Veuillez d\'abord saisir la ville et l\'adresse.');
-				return;
-			}
-
-			try {
-				const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
-					params: {
-						q: `${addressData.adress}, ${addressData.city}`,
-						format: "json",
-						limit: 1,
-					},
-				});
-
-				if (response.data.length > 0) {
-					const { lat, lon } = response.data[0];
-
-					setAddressData((prev) => ({
-						...prev,
-						latitude: parseFloat(lat),
-						longitude: parseFloat(lon),
-					}));
-				} else {
-					showToast('error', 'Erreur', 'Adresse introuvable. Veuillez vérifier les informations saisies.');
-				}
-			} catch (error) {
-				console.error("Erreur lors du géocodage:", error);
-				showToast('error', 'Erreur', 'Impossible d\'obtenir les coordonnées GPS.');
-			}
-
-			setShowLocationModal(true);
-		};
-
-		return (
-			<View style={styles.sectionCard}>
-				<View style={styles.sectionHeader}>
-					<View style={styles.sectionTitleContainer}>
-						<MaterialCommunityIcons
-							name="map-marker"
-							size={24}
-							color="#3A317B"
-							style={styles.sectionIcon}
-						/>
-						<Text style={styles.sectionTitle}>Adresse</Text>
-					</View>
-					{!isEditingAddress && (
-						<TouchableOpacity
-							style={styles.editButton}
-							onPress={() => {
-								setIsEditingAddress(true);
-								setTimeout(() => {
-									cityInputRef.current?.focus();
-								}, 100);
-							}}
-						>
-							<MaterialCommunityIcons name="pencil" size={24} color="#3A317B" />
-						</TouchableOpacity>
-					)}
+	const AddressCard = () => (
+		<View style={styles.sectionCard}>
+			<View style={styles.sectionHeader}>
+				<View style={styles.sectionTitleContainer}>
+					<MaterialCommunityIcons name="map-marker" size={24} color="#3A317B" style={styles.sectionIcon} />
+					<Text style={styles.sectionTitle}>Adresse</Text>
 				</View>
-
-				{!isEditingAddress ? (
-					<AddressDisplay />
-				) : (
-					<View style={styles.editContainer}>
-						{/* Ville Input */}
-						<TextInput
-							ref={cityInputRef}
-							style={[styles.textInput, styles.addressInput]}
-							value={addressData.city}
-							onChangeText={(text) => setAddressData((prev) => ({ ...prev, city: text }))}
-							placeholder="Ville"
-							returnKeyType="next"
-							onSubmitEditing={() => {
-								addressInputRef.current?.focus();
-							}}
-							editable={true}
-						/>
-						{errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
-
-						{/* Adresse Input */}
-						<TextInput
-							ref={addressInputRef}
-							style={[styles.textInput, styles.addressInput]}
-							value={addressData.adress}
-							onChangeText={(text) => setAddressData((prev) => ({ ...prev, adress: text }))}
-							placeholder="Adresse complète"
-							multiline={true}
-							numberOfLines={2}
-							textAlignVertical="top"
-							editable={true}
-						/>
-						{errors.adress && <Text style={styles.errorText}>{errors.adress}</Text>}
-
-						{/* Location Button (pour ouvrir la carte) */}
-						<TouchableOpacity style={styles.locationButton} onPress={handleOpenLocationModal}>
-							<MaterialCommunityIcons name="map-marker" size={24} color="#3A317B" />
-							<Text style={styles.locationButtonText}>
-								{addressData.latitude !== 0 && addressData.longitude !== 0
-									? "Modifier la localisation"
-									: "Ajouter la localisation"}
-							</Text>
-						</TouchableOpacity>
-
-						{/* Location Modal */}
-						{showLocationModal && (
-							<LocationMapModal
-								visible={showLocationModal}
-								onClose={() => setShowLocationModal(false)}
-								onLocationSelect={(latitude, longitude) => {
-									setAddressData((prev) => ({
-										...prev,
-										latitude,
-										longitude,
-									}));
-								}}
-								initialLocation={{
-									latitude: addressData.latitude || 33.5731104,
-									longitude: addressData.longitude || -7.5898434,
-								}}
-							/>
-						)}
-
-						{/* Buttons */}
-						<View style={styles.editButtonsContainer}>
-							<TouchableOpacity
-								style={[styles.editButton, styles.cancelButton]}
-								onPress={() => {
-									setIsEditingAddress(false);
-									setAddressData({
-										adress: formData.adress?.adress || "",
-										city: formData.adress?.city || "",
-										latitude: formData.adress?.latitude || 0,
-										longitude: formData.adress?.longitude || 0,
-									});
-								}}
-							>
-								<Text style={styles.cancelButtonText}>Annuler</Text>
-							</TouchableOpacity>
-							<TouchableOpacity
-								style={[styles.editButton, styles.saveButton]}
-								onPress={handleUpdateAddress}
-							>
-								<Text style={styles.saveButtonText}>Enregistrer</Text>
-							</TouchableOpacity>
-						</View>
-					</View>
-				)}
+				<TouchableOpacity onPress={() => setIsEditingAddress(!isEditingAddress)}>
+					<MaterialCommunityIcons name={isEditingAddress ? "check" : "pencil"} size={24} color="#3A317B" />
+				</TouchableOpacity>
 			</View>
-		);
+			{isEditingAddress ? (
+				<View style={styles.addressEditContainer}>
+					<TextInput
+						style={styles.input}
+						value={addressData.city}
+						onChangeText={(text) => setAddressData(prev => ({ ...prev, city: text }))}
+						placeholder="Ville"
+						placeholderTextColor="#999"
+					/>
+					<TextInput
+						style={styles.input}
+						value={addressData.adress}
+						onChangeText={(text) => setAddressData(prev => ({ ...prev, adress: text }))}
+						placeholder="Adresse complète"
+						placeholderTextColor="#999"
+					/>
+					<TouchableOpacity
+						style={styles.locationButton}
+						onPress={handleOpenLocationModal}
+					>
+						<MaterialCommunityIcons name="map-marker" size={20} color="#3A317B" />
+						<Text style={styles.locationButtonText}>
+							{addressData.latitude !== 0 ? "Modifier la localisation" : "Ajouter la localisation"}
+						</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.saveButton}
+						onPress={handleUpdateAddress}
+					>
+						<Text style={styles.saveButtonText}>Enregistrer</Text>
+					</TouchableOpacity>
+				</View>
+			) : (
+				<AddressDisplay />
+			)}
+		</View>
+	);
+
+	const handleSetLocation = (location) => {
+		setAddressData(prev => ({
+			...prev,
+			latitude: location.latitude,
+			longitude: location.longitude
+		}));
+		setShowLocationModal(false);
+	};
+
+	const handleOpenLocationModal = () => {
+		if (!addressData.city || !addressData.adress) {
+			showToast('error', 'Erreur', 'Veuillez d\'abord saisir la ville et l\'adresse.');
+			return;
+		}
+		setShowLocationModal(true);
 	};
 
 
-
 	return (
-		<KeyboardAvoidingView
-			behavior={Platform.OS === "ios" ? "padding" : "height"}
+		<SafeAreaView
 			style={{ flex: 1 }}
-			keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
 		>
-			<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-				<View style={{ flex: 1 }}>
-					{notification.visible && (
-						<Animated.View style={[
-							styles.notification,
-							notification.type === 'success' ? styles.notificationSuccess : styles.notificationError
-						]}>
-							<View style={styles.notificationContent}>
-								<MaterialCommunityIcons
-									name={notification.type === 'success' ? 'check-circle' : 'alert-circle'}
-									size={24}
-									color="#fff"
-									style={styles.notificationIcon}
-								/>
-								<Text style={styles.notificationText}>{notification.message}</Text>
-							</View>
-						</Animated.View>
-					)}
-					<ScrollView
-						ref={scrollViewRef}
-						style={styles.container}
-						keyboardShouldPersistTaps="handled"
-						showsVerticalScrollIndicator={false}
-						contentContainerStyle={{
-							paddingBottom: keyboardVisible ? keyboardHeight + 20 : 20
-						}}
-					>
-						<Animated.View style={[styles.header, {
-							transform: [{
-								translateY: scrollY.interpolate({
-									inputRange: [0, HEADER_SCROLL_DISTANCE],
-									outputRange: [0, -HEADER_SCROLL_DISTANCE],
-									extrapolate: 'clamp',
-								})
-							}]
-						}]}>
-							<View style={styles.headerBackground}>
-								<TopNavBar opacity={scrollY.interpolate({
-									inputRange: [0, HEADER_SCROLL_DISTANCE],
-									outputRange: [1, 0],
-									extrapolate: 'clamp',
-								})} />
-								<View style={styles.headerContent}>
-									<TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
-										{(image || profileImage) ? (
-											<Image
-												source={
-													image
-														? { uri: image }
-														: { uri: profileImage }
-												}
-												style={styles.profileImage}
-											/>
-										) : (
-											<View style={styles.placeholderContainer}>
-												<MaterialCommunityIcons name="account" size={40} color="#666" />
-											</View>
-										)}
-										<View style={styles.cameraIconContainer}>
-											<MaterialCommunityIcons name="camera" size={20} color="#fff" />
+			<View style={{ flex: 1 }}>
+				<ScrollView
+					ref={scrollViewRef}
+					style={styles.container}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={false}
+					contentContainerStyle={{
+						paddingBottom: keyboardVisible ? keyboardHeight + 20 : 20
+					}}
+				>
+					<View>
+						<TopNavBar
+							showProfile={false}
+							theme={"purple"}
+							borderRadius={false}
+						/>
+						<LinearGradient
+							colors={['#3A317B', '#2D2665']}
+							start={{ x: 0, y: 0 }}
+							end={{ x: 1, y: 0 }}
+							style={styles.headerContent}
+						>
+							<View style={styles.headerContent}>
+								<TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
+									{(image || profileImage) ? (
+										<Image
+											source={
+												image
+													? { uri: image }
+													: { uri: profileImage }
+											}
+											style={styles.profileImage}
+										/>
+									) : (
+										<View style={styles.placeholderContainer}>
+											<MaterialCommunityIcons name="account" size={40} color="#666" />
 										</View>
-									</TouchableOpacity>
-									<HeaderInfo />
-								</View>
+									)}
+									<View style={styles.cameraIconContainer}>
+										<MaterialCommunityIcons name="camera" size={20} color="#fff" />
+									</View>
+								</TouchableOpacity>
+								<HeaderInfo />
 							</View>
-						</Animated.View>
+						</LinearGradient>
+					</View>
 
-						<View style={styles.content}>
-							<View style={{paddingTop: 20}}></View>
-							{AboutCard()}
-							<IndustriesCard />
-							{AddressCard()}
-							<View style={styles.bottomSpacing} />
-						</View>
-					</ScrollView>
+					<View style={styles.content}>
+						<AboutCard />
+						<IndustriesCard />
+						<AddressCard />
 
-				</View>
-			</TouchableWithoutFeedback>
-		</KeyboardAvoidingView>
+						<View style={styles.bottomSpacing} />
+					</View>
+				</ScrollView>
+
+			</View>
+			<LocationMapModal
+                showModal={showLocationModal}
+                handleCloseModal={() => setShowLocationModal(false)}
+                handleSetLocation={handleSetLocation}
+                initialLocation={{
+                    latitude: addressData.latitude || 31.7917,
+                    longitude: addressData.longitude || -7.0926,
+                    latitudeDelta: 10,
+                    longitudeDelta: 10,
+                }}
+            />
+		</SafeAreaView>
 	);
 }
 
@@ -974,7 +838,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 	},
 	content: {
-		paddingTop: HEADER_MAX_HEIGHT + 50,
+		paddingTop : 20,
 		paddingHorizontal: 16,
 		paddingBottom: 100,
 	},
@@ -988,18 +852,13 @@ const styles = StyleSheet.create({
 		zIndex: 1,
 		height: HEADER_MAX_HEIGHT,
 	},
-	headerBackground: {
-		flex: 1,
-		backgroundColor: '#3A317B',
-		borderBottomLeftRadius: 30,
-		borderBottomRightRadius: 30,
-		paddingBottom: 20,
-	},
 	headerContent: {
 		flex: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
-		paddingBottom: 20,
+		borderBottomLeftRadius: 30,
+		borderBottomRightRadius: 30,
+		paddingBottom : 20
 	},
 	imageContainer: {
 		width: 120,
@@ -1167,13 +1026,14 @@ const styles = StyleSheet.create({
 	},
 	sectionHeader: {
 		flexDirection: 'row',
-		justifyContent: 'space-between',
 		alignItems: 'center',
-		marginBottom: 10,
+		marginBottom: 15,
+		width: '100%',
 	},
 	sectionTitleContainer: {
 		flexDirection: 'row',
 		alignItems: 'center',
+		flex: 1,
 	},
 	sectionIcon: {
 		marginRight: 8,
@@ -1327,27 +1187,16 @@ const styles = StyleSheet.create({
 		zIndex: 0,
 	},
 	editButton: {
-		paddingVertical: 8,
-		paddingHorizontal: 16,
-		borderRadius: 6,
-		minWidth: 100,
-		alignItems: 'center',
+		padding: 0,
+		marginLeft: 'auto',
 	},
 	cancelButton: {
 		backgroundColor: '#f5f5f5',
 		borderWidth: 1,
 		borderColor: '#ddd',
 	},
-	saveButton: {
-		backgroundColor: '#3A317B',
-	},
 	cancelButtonText: {
 		color: '#666',
-		fontSize: 14,
-		fontWeight: '500',
-	},
-	saveButtonText: {
-		color: '#fff',
 		fontSize: 14,
 		fontWeight: '500',
 	},
@@ -1471,19 +1320,6 @@ const styles = StyleSheet.create({
 	addressInput: {
 		marginBottom: 16,
 	},
-	locationButton: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		backgroundColor: '#f5f5f5',
-		padding: 12,
-		borderRadius: 8,
-		marginBottom: 16,
-	},
-	locationButtonText: {
-		marginLeft: 8,
-		color: '#3A317B',
-		fontSize: 16,
-	},
 	aboutInput: {
 		minHeight: 120,
 		textAlignVertical: 'top',
@@ -1544,7 +1380,44 @@ const styles = StyleSheet.create({
 		backgroundColor: "transparent",
 		width: '100%',
 		height: 80
-	}
+	},
+	addressEditContainer: {
+		padding: 15,
+		gap: 10,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: '#ddd',
+		borderRadius: 8,
+		padding: 10,
+		marginBottom: 10,
+		backgroundColor: '#fff',
+	},
+	saveButton: {
+		backgroundColor: '#3A317B',
+		padding: 12,
+		borderRadius: 8,
+		alignItems: 'center',
+	},
+	saveButtonText: {
+		color: '#fff',
+		fontSize: 16,
+		fontWeight: '600',
+	},
+	locationButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		backgroundColor: '#f0f0f0',
+		padding: 10,
+		borderRadius: 8,
+		marginTop: 5,
+		marginBottom: 10,
+	},
+	locationButtonText: {
+		marginLeft: 10,
+		color: '#3A317B',
+		fontSize: 16,
+	},
 });
 
 export default EditCompanyProfile;

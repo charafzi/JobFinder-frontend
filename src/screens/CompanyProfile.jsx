@@ -4,11 +4,9 @@ import {
 	Text,
 	StyleSheet,
 	Image,
-	ScrollView,
 	TouchableOpacity,
 	SafeAreaView,
 	StatusBar,
-	Dimensions,
 	Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -20,15 +18,8 @@ import {
 	fetchEntrepriseByEmail,
 	getProfilePicture
 } from '../redux/slices/EntrepriseProfile/entrepriseProfileThunks';
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import TopNavBar from "../components/TopNavBar";
 import {LinearGradient} from "expo-linear-gradient";
-
-const { width } = Dimensions.get('window');
-const HEADER_MAX_HEIGHT = 350;
-const HEADER_MIN_HEIGHT = 90;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 
 const CompanyProfile = () => {
@@ -297,7 +288,6 @@ const CompanyProfile = () => {
 								</Text>
 								<TouchableOpacity
 									style={styles.mapContainer}
-									onPress={() => console.log('Map pressed')}
 								>
 									<MapView
 										style={styles.map}
