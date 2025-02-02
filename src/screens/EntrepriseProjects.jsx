@@ -127,9 +127,8 @@ const EntrepriseProjects = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Color.background} />
+      <TopNavBar></TopNavBar>
       <View style={styles.content}>
-        <TopNavBar></TopNavBar>
         <Text style={styles.header}>Offre d'emploi</Text>
         {isLoading && !refreshing && !isLoadingMore ? (
           <LoadingIndicator />
