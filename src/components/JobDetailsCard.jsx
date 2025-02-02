@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity, ScrollView} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import {ENTREPRISE_IMAGE_URL} from "../config/axiosConfig";
@@ -9,6 +9,25 @@ const JobDetailsCard =  React.memo( ({
                             offre
 }) => {
     const [showFullResponse, setShowFullResponse] = useState(false);
+    const [mapReady, setMapReady] = useState(false);
+    const [mapRegion, setMapRegion] = useState(null);
+
+    useEffect(() => {
+        if (offre.adress.latitude && offre.adress.longitude) {
+            const lat = offre.adress.latitude;
+            const lng = offre.adress.longitude;
+            // Add a small delay to ensure proper initialization
+            setTimeout(() => {
+                setMapRegion({
+                    latitude: lat,
+                    longitude: lng,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                });
+                setMapReady(true);
+            }, 500);
+        }
+    }, [offre.adress.latitude, offre.adress.longitude]);
 
     const toggleResponseView = () => {
         setShowFullResponse(!showFullResponse);
@@ -104,22 +123,25 @@ const JobDetailsCard =  React.memo( ({
         <Text style={styles.sectionTitle}>Location</Text>
         <Text style={styles.address}>{offre.adress.adress || 'Overlook Avenue, Belleville, NJ, USA'}</Text>
         <View style={styles.mapContainer}>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: offre.adress.latitude || 40.7128,
-              longitude: offre.adress.longitude || -74.0060,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-          >
-            <Marker
-              coordinate={{
-                latitude: offre.adress.latitude || 40.7128,
-                longitude: offre.adress.longitude || -74.0060,
-              }}
-            />
-          </MapView>
+          {console.log('Map coordinates:', {
+            latitude: offre.adress.latitude,
+            longitude: offre.adress.longitude
+          })}
+          {mapReady && mapRegion && (
+            <MapView
+              style={styles.map}
+              initialRegion={mapRegion}
+              region={mapRegion}
+            >
+              <Marker
+                coordinate={{
+                  latitude: Number(offre.adress.latitude),
+                  longitude: Number(offre.adress.longitude)
+                }}
+                title={offre.company.name}
+              />
+            </MapView>
+          )}
         </View>
       </View>
 
@@ -241,9 +263,13 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 10,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginHorizontal: 5,
   },
   map: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   infoGrid: {
     flexDirection: 'row',

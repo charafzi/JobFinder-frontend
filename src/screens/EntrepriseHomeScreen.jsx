@@ -91,7 +91,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
                 <TopNavBar
                     theme={"purple"}
                     showBackButton={false}
-                    showNotification={false}
+                    showNotification={true}
                     showWelcome={true}
                     showProfile={true}
                 />
@@ -108,7 +108,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
             <TopNavBar
                 theme={"purple"}
                 showBackButton={false}
-                showNotification={false}
+                showNotification={true}
                 showWelcome={true}
                 showProfile={true}
             ></TopNavBar>

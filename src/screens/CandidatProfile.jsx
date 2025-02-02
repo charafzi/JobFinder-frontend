@@ -1,79 +1,85 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef,  } from 'react';
+import {StyleSheet} from "react-native";
 import { useDispatch, useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { 
+import {
   View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  SafeAreaView, 
-  StatusBar,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
   Platform, 
   Dimensions,
-  Animated,
   ActivityIndicator,
-  Modal,
-  TextInput,
-  ScrollView
+  ScrollView,
+  Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import BottomTabNavigation from '../navigator/BottomTabNavigator';
-import { 
-  fetchFormations, 
-  fetchExperiences, 
-  fetchLangues, 
-  fetchCompetences, 
+import {
+  fetchFormations,
+  fetchExperiences,
+  fetchLangues,
+  fetchCompetences,
   fetchAbout,
-  getProfilePicture 
+  getProfilePicture
 } from '../redux/slices/candidat/candidatProfileThunks';
 import { resetProfile } from '../redux/slices/candidat/candidatProfileSlice';
+import TopNavBar from "../components/TopNavBar";
+import {LinearGradient} from "expo-linear-gradient";
 
-const { width } = Dimensions.get('window');
-const HEADER_MAX_HEIGHT = 390;
+const HEADER_MAX_HEIGHT = 360;
 const HEADER_MIN_HEIGHT = 90;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-const TopNavBar = ({ opacity }) => {
-  const navigation = useNavigation();
-  return (
-    <Animated.View style={[styles.topNavBar]}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back-ios" size={24} color="#fff" />
-      </TouchableOpacity>
-    </Animated.View>
-  );
+const niveauEtudeOptions = [
+  { label: 'Bac', value: 'BAC' },
+  { label: 'Bac +1', value: 'BAC_PLUS_1' },
+  { label: 'Bac +2', value: 'BAC_PLUS_2' },
+  { label: 'Bac +3', value: 'BAC_PLUS_3' },
+  { label: 'Bac +4', value: 'BAC_PLUS_4' },
+  { label: 'Bac +5', value: 'BAC_PLUS_5' },
+  { label: '> Bac +5', value: 'SUPERIEUR_BAC_PLUS_5' },
+];
+
+const getNiveauEtudeLabel = (value) => {
+  const option = niveauEtudeOptions.find(opt => opt.value === value);
+  return option ? option.label : value;
 };
 
 const ProfileSection = ({ title, icon, content, isExpanded, onToggle }) => {
+  const rotationValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(rotationValue, {
+      toValue: isExpanded ? 1 : 0,
+      useNativeDriver: true,
+      tension: 125,
+      friction: 8
+    }).start();
+  }, [isExpanded]);
+
+  const rotation = rotationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg']
+  });
+
   return (
-    <TouchableOpacity 
-      style={[
-        styles.profileSection,
-        isExpanded && styles.profileSectionExpanded
-      ]} 
-      onPress={onToggle}
-    >
-      <View style={styles.sectionHeader}>
+    <View style={[styles.profileSection, isExpanded && styles.profileSectionExpanded]}>
+      <TouchableOpacity onPress={onToggle} style={styles.sectionHeader}>
         <View style={styles.sectionTitleContainer}>
           {icon}
           <Text style={styles.sectionTitle}>{title}</Text>
         </View>
-        <Icon 
-          name={isExpanded ? "edit" : "add"} 
-          size={24} 
-          color={isExpanded ? "#666" : "#FF9228"} 
-        />
-      </View>
+        <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+          <MaterialCommunityIcons name="plus" size={24} color="#FF9228" />
+        </Animated.View>
+      </TouchableOpacity>
       {isExpanded && (
         <View style={styles.sectionContent}>
           {content}
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -130,7 +136,7 @@ const CandidatProfile = () => {
   const candidatId = useSelector(state => state.auth.id);
   const { firstName, lastName, email } = useSelector(state => state.auth.candidat);
   const [isLoadingImage, setIsLoadingImage] = useState(false);
-  
+
   const {
     formations,
     experiences,
@@ -177,8 +183,6 @@ const CandidatProfile = () => {
     fetchProfilePicture();
   }, [fetchProfilePicture]);
 
-  const scrollY = useRef(new Animated.Value(0)).current;
-  
   const [expandedSections, setExpandedSections] = useState({
     aboutMe: false,
     workExperience: false,
@@ -187,11 +191,6 @@ const CandidatProfile = () => {
     language: false,
     appreciation: false,
   });
-
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
-  );
 
   const isLoading = Object.values(loading).some(value => value === true);
   const hasError = Object.values(error).some(value => value !== null);
@@ -228,7 +227,7 @@ const CandidatProfile = () => {
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{formation.nomEcole}</Text>
                 <View style={styles.levelBadge}>
-                  <Text style={styles.levelText}>{formation.niveauEtude}</Text>
+                  <Text style={styles.levelText}>{getNiveauEtudeLabel(formation.niveauEtude)}</Text>
                 </View>
               </View>
               <View style={styles.cardDivider} />
@@ -321,7 +320,9 @@ const CandidatProfile = () => {
         langues.map((langue, index) => (
           <View key={index} style={styles.languageItem}>
             <Text style={styles.languageName}>{langue.nomLangue || 'Non spécifié'}</Text>
-            <Text style={styles.languageLevel}>{langue.niveau}</Text>
+            <View style={styles.levelBadge}>
+              <Text style={styles.languageLevel}>{langue.niveau}</Text>
+            </View>
           </View>
         ))
       ) : (
@@ -332,79 +333,60 @@ const CandidatProfile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
-      <Animated.View 
-        style={[
-          styles.header,
-          {
-            transform: [
-              { translateY: scrollY.interpolate({
-                inputRange: [0, HEADER_SCROLL_DISTANCE],
-                outputRange: [0, -HEADER_SCROLL_DISTANCE],
-                extrapolate: 'clamp',
-              })}
-            ]
-          }
-        ]}
-      >
-        <View style={[styles.headerBackground, { height: HEADER_MAX_HEIGHT }]}>
-          <TopNavBar />
-          <Animated.View 
-            style={[
-              styles.headerContent,
-              { 
-                opacity: scrollY.interpolate({
-                  inputRange: [0, HEADER_SCROLL_DISTANCE],
-                  outputRange: [1, 0],
-                  extrapolate: 'clamp',
-                })
-              }
-            ]}
+      <View style={[styles.header]}>
+        <View style={[{ height: HEADER_MAX_HEIGHT }]}>
+          <TopNavBar
+            showProfile={false}
+            theme={"purple"}
+            borderRadius={false}
+          />
+          <LinearGradient
+            colors={['#3A317B', '#2D2665']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.headerContent}
           >
-            <Animated.View style={[styles.avatarContainer, { transform: [{ scale: 1 }] }]}>
-              {isLoadingImage ? (
-                <ActivityIndicator size="large" color="#3A317B" />
-              ) : profilePicture ? (
-                <Image
-                  source={{ uri: profilePicture }}
-                  style={styles.profileImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <MaterialCommunityIcons 
-                  name="account-circle" 
-                  size={94} 
-                  color="#3A317B" 
-                />
-              )}
-            </Animated.View>
-            <Text style={styles.userName}>{firstName} {lastName}</Text>
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => {
-                navigation.navigate('EditProfileCandidat', {
-                  candidatId: candidatId,
-                  firstName: firstName,
-                  lastName: lastName
-                });
-              }}
-            >
-              <Icon name="edit" size={18} color="#fff" style={styles.editIcon} />
-              <Text style={styles.editButtonText}>Modifier le profil</Text>
-            </TouchableOpacity>
-          </Animated.View>
+            <View style={styles.headerContent}>
+              <View style={styles.avatarContainer}>
+                {isLoadingImage ? (
+                  <ActivityIndicator size="large" color="#3A317B" />
+                ) : profilePicture ? (
+                  <Image
+                    source={{ uri: profilePicture }}
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <MaterialCommunityIcons
+                    name="account-circle"
+                    size={94}
+                    color="#3A317B"
+                  />
+                )}
+              </View>
+              <Text style={styles.userName}>{firstName} {lastName}</Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  navigation.navigate('EditProfileCandidat', {
+                    candidatId: candidatId,
+                    firstName: firstName,
+                    lastName: lastName
+                  });
+                }}
+              >
+                <Icon name="edit" size={18} color="#fff" style={styles.editIcon} />
+                <Text style={styles.editButtonText}>Modifier le profil</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </View>
-      </Animated.View>
+      </View>
 
-      <Animated.ScrollView
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
-        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.spacer} />
-        
         <ProfileSection
           title="À propos"
           icon={<MaterialCommunityIcons name="account-details" size={24} color="#FF9228" />}
@@ -444,10 +426,7 @@ const CandidatProfile = () => {
           isExpanded={expandedSections.language}
           onToggle={() => setExpandedSections(prev => ({...prev, language: !prev.language}))}
         />
-      </Animated.ScrollView>
-      <View style={styles.bottomTabContainer}>
-        <BottomTabNavigation />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -470,14 +449,13 @@ const styles = StyleSheet.create({
   headerBackground: {
     flex: 1,
     backgroundColor: '#3A317B',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   headerContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 60,
-    paddingBottom: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    paddingBottom : 20
   },
   avatarContainer: {
     width: 94,
@@ -551,7 +529,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   content: {
-    paddingTop: HEADER_MAX_HEIGHT + 20,
+    paddingTop: HEADER_MAX_HEIGHT,
     paddingHorizontal: 16,
     paddingBottom: 80,
     gap: 16,
@@ -655,6 +633,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   levelText: {
     fontSize: 12,
@@ -676,7 +657,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: {
-    marginLeft: 8,
     fontSize: 13,
     color: '#666',
   },
@@ -744,13 +724,6 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
   },
-  bottomTabContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -770,7 +743,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight + 20,
     height: HEADER_MIN_HEIGHT,
     backgroundColor: 'transparent',
     zIndex: 2,

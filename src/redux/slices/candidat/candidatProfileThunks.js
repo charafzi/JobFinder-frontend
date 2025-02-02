@@ -262,7 +262,7 @@ export const fetchExperiencesOld = createAsyncThunk(
   'candidatProfile/fetchExperiencesOld',
   async (candidatId) => {
     try {
-     // console.log('Fetching experiences for candidatId:', candidatId);
+     // console.log('Fetching experiences for id:', id);
       const response = await axiosInstance.get(`/api/experience/candidat/${candidatId}`);
      // console.log('Experiences response:', response.data);
       return response.data;
@@ -296,7 +296,7 @@ export const createLangue = createAsyncThunk(
       console.log('createLangue thunk - input:', langueData);
       
       if (!langueData.candidatId || isNaN(langueData.candidatId)) {
-        console.error('Invalid candidatId:', langueData.candidatId);
+        console.error('Invalid id:', langueData.candidatId);
         throw new Error('ID du candidat invalide');
       }
 
@@ -406,7 +406,7 @@ export const fetchCompetences = createAsyncThunk(
   'candidatProfile/fetchCompetences',
   async (candidatId) => {
     try {
-      //console.log('Fetching competences for candidatId:', candidatId);
+      //console.log('Fetching competences for id:', id);
       const response = await axiosInstance.get(`/api/competences/candidat/${candidatId}`);
       //console.log('Competences response:', response.data);
       return response.data;
@@ -582,29 +582,17 @@ export const deleteAbout = createAsyncThunk(
 // Upload Profile Picture
 export const uploadProfilePicture = createAsyncThunk(
   'candidatProfile/uploadProfilePicture',
-  async ({ email, imageUri }) => {
+  async ({ candidatId, formData }) => {
     try {
-      console.log('Uploading profile picture for candidat:', email);
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'profile_picture.jpg'
-      });
-
-      console.log('FormData created:', formData);
+      console.log('Uploading profile picture for candidat:', candidatId);
 
       const response = await axiosInstance.post(
-        `/api/candidat/profile-picture/${email}`,
+        `/api/candidat/profile-picture/${candidatId}`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
         }
       );
 
@@ -615,8 +603,6 @@ export const uploadProfilePicture = createAsyncThunk(
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        method: error.config?.method,
-        url: error.config?.url
       });
       throw error;
     }

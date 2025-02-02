@@ -52,50 +52,23 @@ export const getProfilePicture = createAsyncThunk(
   'entrepriseProfile/getProfilePicture',
   async (id) => {
     try {
-      console.log('Fetching profile picture for id:', id);
       const response = await axiosInstance.get(`/api/entreprise/profile-picture/${id}`, {
         responseType: 'blob',
         headers: {
           Accept: 'image/*'
         }
       });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      console.log('Response data type:', response.headers['content-type']);
-      console.log('Full response:', JSON.stringify({
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        data: response.data
-      }, null, 2));
 
-      if (!response.data) {
-        console.error('No data received in response');
-        throw new Error('No data received');
-      }
-
-      // Create a blob URL
+      const blob = response.data;
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-          const base64data = reader.result;
-          console.log('Successfully converted image to base64');
-          resolve(base64data);
+          resolve(reader.result);
         };
-        reader.onerror = () => {
-          console.error('Error reading blob data');
-          reject(new Error('Failed to read blob data'));
-        };
-        reader.readAsDataURL(response.data);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Detailed error in getProfilePicture:', {
-        error: error,
-        response: error.response,
-        message: error.message,
-        stack: error.stack
-      });
       throw error;
     }
   }
@@ -105,26 +78,17 @@ export const uploadProfilePicture = createAsyncThunk(
   'entrepriseProfile/uploadProfilePicture',
   async ({ formData, entrepriseId }) => {
     try {
-      // Vérifier que l'ID est un nombre valide
-      const id = parseInt(entrepriseId);
-      if (isNaN(id)) {
-        throw new Error('ID invalide');
-      }
-
-      // Utiliser exactement la même URL que dans Postman
-      const response = await axiosInstance({
+      await axiosInstance({
         method: 'post',
-        url: `/api/entreprise/profile-picture/${id}`,
+        url: `/api/entreprise/profile-picture/${entrepriseId}`,
         data: formData,
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-
-      return response.data;
+      return true;
     } catch (error) {
-      console.error('Erreur uploadProfilePicture:', error);
-      throw error.response?.data || error.message || 'Failed to upload profile picture';
+      throw error;
     }
   }
 );
@@ -133,12 +97,12 @@ export const fetchSecteursActivite = createAsyncThunk(
   'entrepriseProfile/fetchSecteursActivite',
   async () => {
     try {
-      console.log('Fetching secteurs d\'activité...');
+      //console.log('Fetching secteurs d\'activité...');
       const response = await axiosInstance.get(`${BASE_URL}/secteurs-activites`);
-      console.log('Secteurs d\'activité received:', response.data);
+      //console.log('Secteurs d\'activité received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching secteurs d\'activité:', error);
+      //console.error('Error fetching secteurs d\'activité:', error);
       throw error.response?.data || 'Failed to fetch secteurs d\'activité';
     }
   }
@@ -149,13 +113,13 @@ export const updateEntrepriseSecteurs = createAsyncThunk(
   async ({ entrepriseId, secteurIds }, { rejectWithValue }) => {
     try {
       const url = `${API_BASE_URL}/api/entreprise/${entrepriseId}/secteurs`;
-      console.log('Making request to:', url);
-      console.log('Request payload:', secteurIds);
+      //console.log('Making request to:', url);
+      //console.log('Request payload:', secteurIds);
 
       const response = await axiosInstance.put(url, secteurIds);
       
-      console.log('Response status:', response.status);
-      console.log('Response data:', response.data);
+      //console.log('Response status:', response.status);
+      //console.log('Response data:', response.data);
       
       return response.data;
     } catch (error) {
@@ -180,15 +144,3 @@ export const updateEntrepriseSecteurs = createAsyncThunk(
     }
   }
 );
-
-// export const fetchSecteursActivites = createAsyncThunk(
-//   'entrepriseProfile/fetchSecteursActivites',
-//   async () => {
-//     try {
-//       const response = await axiosInstance.get(`${BASE_URL}/secteurs-activites`);
-//       return response.data;
-//     } catch (error) {
-//       throw error.response?.data || 'Failed to fetch secteurs d\'activité';
-//     }
-//   }
-// );

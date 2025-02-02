@@ -18,7 +18,7 @@ import {Color} from "../constants/Color";
 const NotificationsScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const { notifications, error, isLoading, last, totalPages, currentPage, unreadCount } = useSelector(state => state.notifications);
-    const { id } = useSelector((state) => state.auth);
+    const { id, isCandidat } = useSelector((state) => state.auth);
     const flatListRef = useRef(null);
     const isLoadingMore = useRef(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -97,7 +97,15 @@ const NotificationsScreen = ({ navigation }) => {
             await dispatch(markNotificationSeen(notification.id));
             dispatch(getUnreadNotificationsCount(id));
         }
-        navigation.navigate("applications");
+        if(isCandidat){
+            navigation.navigate("applications");
+        }else{
+            console.warn("Data Notification "+notification.data)
+            console.warn("Data Notification Offre Id "+notification.data.offreId)
+            if(notification.data && notification.data.offreId){
+                navigation.navigate("entrepriseCandidates", { offerId: Number.parseInt(notification.data.offreId)});
+            }
+        }
     }, [id]);
 
     const renderEmpty = useCallback(() => (

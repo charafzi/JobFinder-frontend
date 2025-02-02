@@ -57,7 +57,7 @@ const LocationMapModal = ({
             moveOnMarkerPress={false}
           >
             {selectedLocation && (
-              <Marker 
+              <Marker
                 coordinate={selectedLocation}
                 draggable
                 onDragEnd={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
