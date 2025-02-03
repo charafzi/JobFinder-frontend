@@ -145,7 +145,7 @@ const SearchScreen = () => {
 
     return (
       <View style={styles.mainContainer}>
-          <TopNavBar showBackButton={false} theme="purple" />
+          <TopNavBar showBackButton={false} theme="purple" showWelcome={true}/>
           <View style={styles.searchBar}>
               <Search />
           </View>

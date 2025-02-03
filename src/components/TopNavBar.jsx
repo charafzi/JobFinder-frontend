@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     View,
     Text,
@@ -6,12 +6,12 @@ import {
     Image,
     StyleSheet,
 } from "react-native";
-import {Color} from "../constants/Color";
+import { Color } from "../constants/Color";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { CANDIDAT_IMAGE_URL, ENTREPRISE_IMAGE_URL } from "../config/axiosConfig";
 import { useDispatch, useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -41,10 +41,14 @@ const TopNavBar = React.memo(({
     onBackPress,
     showProfile = true,
     showNotification = true,
+    showLogout = false,
     borderRadius = true,
     theme = "default"
 }) => {
-    const { isCandidat, id, email, entreprise } = useSelector((state) => state.auth);
+    const { isCandidat, id, email, entreprise, candidat } = useSelector((state) => state.auth);
+    const { profileVersion } = useSelector((state) =>
+        isCandidat ? state.candidatProfile : state.entrepriseProfile
+    );
     const { unreadCount } = useSelector((state) => state.notifications);
     const dispatch = useDispatch();
     const insets = useSafeAreaInsets();
@@ -56,6 +60,13 @@ const TopNavBar = React.memo(({
             dispatch(getUnreadNotificationsCount(id));
         }
     }, [id, showNotification]);
+
+    const profileImageUrl = useMemo(() => {
+        const baseUrl = isCandidat
+            ? `${CANDIDAT_IMAGE_URL}${id}`
+            : `${ENTREPRISE_IMAGE_URL}${id}`;
+        return `${baseUrl}?v=${profileVersion}&r=${Math.random()}&t=${Date.now()}`;
+    }, [id, isCandidat, profileVersion]);
 
     const handleBackPress = () => {
         if (onBackPress) {
@@ -106,13 +117,34 @@ const TopNavBar = React.memo(({
                 {showWelcome &&
                     <View style={styles.headerContainer}>
                         <Text style={styles.name}>Welcome Back</Text>
-                        <Text style={[styles.name, { color: '#BEAFFE' }]}>{entreprise.name}</Text>
+                        {isCandidat ?
+                            (<Text style={[styles.name, { color: '#BEAFFE' }]}>{candidat.firstName}</Text>)
+                            : (<Text style={[styles.name, { color: '#BEAFFE' }]}>{entreprise.name}</Text>)
+                        }
                         <Text style={styles.name}>!</Text>
                     </View>
                 }
                 <Text style={[styles.title, colorConfig.titleColor]}>{title}</Text>
 
                 <View style={styles.rightIcons}>
+                    {showLogout && <TouchableOpacity
+                        style={styles.logoutButton}
+                        onPress={() => {
+                            dispatch({ type: 'LOGOUT' });
+                            navigation.dispatch(
+                                CommonActions.reset({
+                                    index: 0,
+                                    routes: [{ name: 'login' }],
+                                })
+                            );
+                        }}
+                    >
+                        <MaterialCommunityIcons
+                            name="logout"
+                            size={24}
+                            color={colorConfig.iconColor}
+                        />
+                    </TouchableOpacity>}
                     {showNotification && (
                         <TouchableOpacity
                             style={styles.iconButton}
@@ -131,7 +163,7 @@ const TopNavBar = React.memo(({
                         <TouchableOpacity onPress={onProfilePress}>
                             {id ? (
                                 <Image
-                                    source={{ uri: isCandidat ? CANDIDAT_IMAGE_URL + id : ENTREPRISE_IMAGE_URL + id }}
+                                    source={{ uri: profileImageUrl }}
                                     style={styles.profilePic}
                                     onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
                                 />
