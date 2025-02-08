@@ -29,13 +29,13 @@ import { useSelector } from "react-redux";
 import { useHasSavedLocation } from "../hooks/useHasSavedLocation";
 import LocationChoiceModal from "../components/LocationChoiceModal";
 import MapView, { Marker } from 'react-native-maps';
+import showToast from "../utils/showToast";
 
 const AddJob = ({ navigation }) => {
   const tabBarHeight = useBottomTabBarHeight();
   const ref = useRef(null);
   const entreprise = useSelector((state) => state.auth.entreprise);
   const id = useSelector((state) => state.auth.id);
-  console.log('Company ID from auth state:', id);  // Add this line to debug
   useScrollToTop(ref);
   const {
     control,
@@ -221,15 +221,28 @@ const AddJob = ({ navigation }) => {
         latitude: parseFloat(data.latitude)
       }
     };
-
-    console.log("AddJob - Deadline Date:", data.deadlineDate);
-    console.log("AddJob - Formatted Deadline Date:", formattedData.deadlineDate);
-    console.log("Formatted Form Data:", formattedData);
+    showToast(
+      "success", 
+      "Success", 
+      "Job details saved successfully"
+    );
     navigation.navigate("jobPreview", formattedData);
   };
 
   const onError = (errors) => {
     console.log("Form Errors:", errors);
+    Object.entries(errors).forEach(([fieldName, error], index) => {
+      const formattedFieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+      
+      // Ajouter un délai de 300ms entre chaque toast
+      setTimeout(() => {
+        showToast(
+          "error",
+          `${formattedFieldName} Error`,
+          error.message
+        );
+      }, index * 300);
+    });
   };
 
   const renderFormField = useCallback(
