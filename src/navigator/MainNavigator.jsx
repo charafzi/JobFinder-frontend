@@ -36,7 +36,7 @@ const StackNavigator = () => {
   const { isLoggedIn } = useSelector((state) => state.auth);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isLoggedIn ? "tabNavigator" : "login"} >
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={isLoggedIn ? "tabNavigator" : "logoscreen"} >
         <Stack.Screen name="tabNavigator" component={TabNavigator} />
         <Stack.Screen name="logoscreen" component={LogoScreen} />
         <Stack.Screen name="welcome" component={Welcome} />

@@ -23,9 +23,9 @@ const DashboardStats = ({ offresCount, totalCandidatures, candidaturesAcceptees}
                     />
 
                     <Text style={[styles.countText, styles.countNumber, { backgroundColor: "#AFECFE", }]}>{offresCount}</Text>
-                    <Text style={styles.text}>Offres d'Emploi</Text>
+                    <Text style={styles.text}>Job Postings</Text>
                 </TouchableOpacity>
-                <View style={{  }}>
+                <View>
                     <TouchableOpacity
                         style={{
                             backgroundColor: "#BEAFFE",
@@ -37,7 +37,7 @@ const DashboardStats = ({ offresCount, totalCandidatures, candidaturesAcceptees}
                         }}
                     >
                         <Text style={[styles.countText, styles.countNumber, { backgroundColor: "#BEAFFE", }]}>{totalCandidatures}</Text>
-                        <Text style={styles.text}>Candidatures</Text>
+                        <Text style={styles.text}>Applications</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={{
@@ -51,7 +51,7 @@ const DashboardStats = ({ offresCount, totalCandidatures, candidaturesAcceptees}
                         }}
                     >
                         <Text style={[styles.countText, styles.countNumber, { backgroundColor: "#FFD6AD", }]}>{candidaturesAcceptees}</Text>
-                        <Text style={styles.text}>candidatures acceptées</Text>
+                        <Text style={styles.text}>Accepted Applications</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#AFECFE",
         alignItems: "center",
         justifyContent: 'center',
-        paddingVertical: "9%",
-        paddingHorizontal: "6%",
+        paddingVertical: "10%",
+        paddingHorizontal: "10%",
         borderRadius: 10,
     },
     icon: {
