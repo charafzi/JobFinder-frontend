@@ -1,5 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getEntrepriseOffres, getNombreOffresParEntreprise } from "./getEntrepriseOffresThunk";
+import {
+  getEntrepriseOffres,
+  getNombreOffresParEntreprise,
+  getRecentEntrepriseOffres,
+} from "./getEntrepriseOffresThunk";
 import { createEntrepriseOffre } from "./createEntrepriseOffreThunk";
 
 const initialState = {
@@ -14,6 +18,8 @@ const initialState = {
   totalPages: null,
   last: false,
   nombreOffres: 0,
+  entrepriseRecentList: [], // Nouvelle liste dédiée à l'accueil
+  recentLoading: false,
 };
 
 const EntrepriseOffreSlice = createSlice({
@@ -90,6 +96,19 @@ const EntrepriseOffreSlice = createSlice({
       .addCase(getNombreOffresParEntreprise.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || "Failed to fetch number of offers";
+      })
+      // Nouveau cas pour les offres récentes
+      .addCase(getRecentEntrepriseOffres.pending, (state) => {
+        state.recentLoading = true;
+      })
+      .addCase(getRecentEntrepriseOffres.fulfilled, (state, action) => {
+        state.recentLoading = false;
+        state.entrepriseRecentList = action.payload.content; // Écrase la liste existante
+        state.totalPages = action.payload.totalPages;
+      })
+      .addCase(getRecentEntrepriseOffres.rejected, (state, action) => {
+        state.recentLoading = false;
+        state.error = action.payload;
       });
   },
 });
