@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import showToast from "../utils/showToast";
 import TopNavBar from "../components/TopNavBar";
 import DashboardStats from "../components/DashboardStats";
-import { getEntrepriseOffres, getNombreOffresParEntreprise } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
+import { getNombreOffresParEntreprise, getRecentEntrepriseOffres } from "../redux/slices/entrepriseOffres/getEntrepriseOffresThunk";
 import { getNombreCandidaturesAccepteesParEntreprise, getNombreCandidaturesParEntreprise } from "../redux/slices/candidatureEntreprise/candidaturesThunk";
 
 
@@ -24,7 +24,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
     const tabBarHeight = useBottomTabBarHeight();
     const flatListRef = useRef(null);
     const dispatch = useDispatch();
-    const { nombreOffres, entrepriseOffresList, error, isLoading, totalPages } = useSelector((state) => state.entrepriseOffres);
+    const { nombreOffres, error, recentLoading, entrepriseRecentList, totalPages } = useSelector((state) => state.entrepriseOffres);
     const { nombreCandidaturesAcceptees, nombreCandidatures, } = useSelector((state) => state.entrepCandidatures);
     const { id: entrepriseId } = useSelector((state) => state.auth);
 
@@ -39,13 +39,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             if (entrepriseId) {
-                dispatch(getEntrepriseOffres({
-                    entrepriseId,
-                    page: 0,
-                    size: 3, // Récupérer seulement 3 offres
-                    sortBy: 'PUB_DATE', // Trier par date de publication
-                    sortDirection: 'DESC', // Les plus récentes en premier
-                }));
+                dispatch(getRecentEntrepriseOffres(entrepriseId));
                 dispatch(getNombreOffresParEntreprise(entrepriseId));
                 dispatch(getNombreCandidaturesParEntreprise(entrepriseId));
                 dispatch(getNombreCandidaturesAccepteesParEntreprise(entrepriseId));
@@ -69,7 +63,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
     ), []);
 
     const renderEmpty = () => {
-        if (isLoading) return <LoadingIndicator />;
+        if (recentLoading) return <LoadingIndicator />;
         if (error) {
             return (
                 <Text style={styles.emptyMessage}>
@@ -84,7 +78,7 @@ const EntrepriseHomeScreen = ({ navigation }) => {
         );
     };
 
-    if (isLoading || !entrepriseOffresList) {
+    if (recentLoading || !entrepriseRecentList) {
         return (
             <SafeAreaView style={styles.mainContainer}>
                 <StatusBar barStyle="dark-content" backgroundColor={Color.background} animated />
@@ -113,26 +107,26 @@ const EntrepriseHomeScreen = ({ navigation }) => {
                 showProfile={true}
             ></TopNavBar>
             <View style={styles.container}>
-                    <FlatList
-                        ref={flatListRef}
-                        data={entrepriseOffresList || []}
-                        renderItem={renderItem}
-                        keyExtractor={(item) => item?.id?.toString() || Math.random().toString()}
-                        ListHeaderComponent={ListHeaderComponent}
-                        ListFooterComponent={
-                            <View style={{ paddingBottom: tabBarHeight + 30, marginBottom: tabBarHeight }}>
-                                {totalPages > 1 && (
-                                    <TouchableOpacity
-                                        style={styles.showMoreButton}
-                                        onPress={() => navigation.navigate("entrepriseProjects")}
-                                    >
-                                        <Text style={styles.showMoreText}>Voir Tout</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        }
-                        ListEmptyComponent={renderEmpty}
-                    />
+                <FlatList
+                    ref={flatListRef}
+                    data={entrepriseRecentList || []}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item?.id?.toString() || Math.random().toString()}
+                    ListHeaderComponent={ListHeaderComponent}
+                    ListFooterComponent={
+                        <View style={{ paddingBottom: tabBarHeight + 30, marginBottom: tabBarHeight }}>
+                            {totalPages > 1 && (
+                                <TouchableOpacity
+                                    style={styles.showMoreButton}
+                                    onPress={() => navigation.navigate("entrepriseProjects")}
+                                >
+                                    <Text style={styles.showMoreText}>See All</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    }
+                    ListEmptyComponent={renderEmpty}
+                />
             </View>
         </SafeAreaView>
     );
@@ -168,6 +162,7 @@ const styles = StyleSheet.create({
     emptyMessage: {
         textAlign: "center",
         marginTop: 20,
-        color: Color.text,
+        color: Color.red,
+        fontWeight: "bold",
     },
 });
