@@ -129,7 +129,7 @@ const EntrepriseProjects = () => {
     <SafeAreaView style={styles.container}>
       <TopNavBar></TopNavBar>
       <View style={styles.content}>
-        <Text style={styles.header}>Offre d'emploi</Text>
+        <Text style={styles.header}>Our Projects</Text>
         {isLoading && !refreshing && !isLoadingMore ? (
           <LoadingIndicator />
         ) : (
@@ -177,10 +177,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
     marginBottom: 10,
-  },
+  }, 
   emptyMessage: {
     textAlign: "center",
     marginTop: 20,
-    color: Color.text,
+    color: Color.red,
+    fontWeight: "bold",
   },
 });
